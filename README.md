@@ -20,8 +20,7 @@ Information on tracers used is stored in HDF group `tracers`. This group must ha
 
 A tracer datasets must have an attribute `type` which must be of one of the following values:
  * `point`, i.e galaxies 
- * `cmb`, for CMB (for e.g. ISW studies)
- * `cmbl`, for CMB kappa reconstruction
+ * `cmb`, for CMB (for e.g. ISW studies, WL, etc (note that CMB kappa vs CMB primary will be distinguished below)
  * (other we'll add as needs arise)
  
 If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store.
@@ -36,7 +35,7 @@ Mean values are stored in a HDF datasets called `mean` which might exist inside 
  * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
  * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
  * `T1`: index of tracer 1 defined above
- * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `P` for point sources, `E` for E-mode, `B` for B-mode, `+`/`-` for corresponding WL correlation funcs. 
+ * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
  * `T2`: index of tracer 2 defined above
  * `Q2`: quantity from tracer 1
  * `value` : actual mean mesurement
