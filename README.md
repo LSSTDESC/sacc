@@ -26,5 +26,33 @@ A tracer datasets must have an attribute `type` which must be of one of the foll
  
 If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store.
 
-[TBC]
+### Windows ###
+
+Window functions are optional (see below). Window functions are stored in an HDF group `windows`. Inside this groups there are small datasets named as numbers starting with 0.  Each such datasets need to a 2D array of `l` and `w` or `s` and `w` (for configuration space). Units of `s` need not be specified -- they will be defined in the data vector. These windows specify how Cl needs to be integrated over l in order to produce measurement.
+
+## Mean values ##
+
+Mean values are stored in a HDF datasets called `mean` which might exist inside the same HDF5 as metadata, but not neccessarily so. If it contains a single config space measurement, it must also have an attribute `sunit` to specify angular units (what are valid units can be up to final user code). It is a 2D dataset which must have the following fields:
+ * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
+ * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
+ * `T1`: index of tracer 1 defined above
+ * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `P` for point sources, `E` for E-mode, `B` for B-mode, `+`/`-` for corresponding WL correlation funcs. 
+ * `T2`: index of tracer 2 defined above
+ * `Q2`: quantity from tracer 1
+ * `value` : actual mean mesurement
+ * `error`: actual diagonal error (for plotting)
+ 
+It can also have the following fields:
+ * `window` : specifying index of the window defined above, or -1 if no window.
+ * `Delta ls` : specifying window width assuming top-hat windows
+ 
+## Precision matrix ##
+ 
+Precision matrix defined the NxN matrix corresponding to Cinverse to the data vector of size N. It is a HDF dataset called `precision`, which might exist inside the same HDF5 as metadata, but not neccessarily so. It must have an attribute called `type` which must be one of the following:
+ * `diagonal` : A vector of size `N` is stored
+ * `ell_block_diagonal` : A double loop over non-repeating elements of C, storing just those points where ell/s values match. 
+ * `dense`: Just a full 2D monty.
+ 
+ 
+
 
