@@ -23,7 +23,13 @@ A tracer datasets must have an attribute `type` which must be of one of the foll
  * `cmb`, for CMB (for e.g. ISW studies, WL, etc (note that CMB kappa vs CMB primary will be distinguished below)
  * (other we'll add as needs arise)
  
-If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store.
+If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store (to help checking mocks with results, etc.)
+
+Uncertainities in N(z) can be presently described using a set of zero average (but not neccessarily orthogonal) vectors stored in columns `DNz_0`, `DNz_1`, etc. Their amplitude should correspond to their variance. In short, the covariance error on Nz is given as sum vv^T, where sum is over v=`DNz_0`, `DNz_1`,... Additionally, overall uncertainties expressed in terms of translating and stretching Nz should be in attributes `Nz_sigma_logmean` and `Nz_sigma_logwidth` where the translating variable is 1+z or equivalently (up to a sign) a=1/(1+z).
+
+Often many 'tracers' in this sense will really be the same parent population chopped into pieces. In that case each tracer can optionally carry a `exp_sample`, which is an identifying string tying the same tracers together. E.g. all LSST galaxies will carry `exp_sample="lsst_gal"` and those from red magic will have `exp_sample="lsst_redm"`.
+
+
 
 ### Windows ###
 
