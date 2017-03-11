@@ -22,10 +22,9 @@ class SACC(object):
         for t in self.tracers:
             t.saveToHDF(tracer_group)
         if self.mean is not None:
-            #mean.saveToHDF
-            pass
+            self.mean.saveToHDF(f)
         if self.precision is not None:
-            pass
+            self.precision.saveToHDF(f)
         return 
 
     @classmethod

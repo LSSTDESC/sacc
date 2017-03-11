@@ -24,11 +24,35 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
 # and also add CMB
 tracers.append (sacc.Tracer("Planck","cmb", None, None))
 
+# Now, let's have cross-correlation of everything with everything
+# dummy values
+lvals=np.arange(100,1000,100)
+Ntracer=len(tracers)
+type,ell,t1,q1,t2,q2,val,err=[],[],[],[],[],[],[],[]
+for t1i in range(Ntracer):
+    for t2i in range(t1i,Ntracer):
+        for l in lvals:
+            type.append('F')
+            ell.append(l)
+            t1.append(t1i)
+            q1.append('P' if t1i<8 else 'I') ##last is CMB
+            t2.append(t2i)
+            q2.append('P' if t2i<8 else 'I')
+            val.append(np.random.uniform(0,10))
+            err.append(np.random.uniform(0,1))
+
+mean=sacc.MeanVec(type,ell,t1,q1,t2,q2,val,err)
+
+## now covariance matrix
+Np=mean.size()
+icov=np.zeros ((Np,Np))
+for i in range(Np):
+    for j in range (i,Np):
+        if ell[i]==ell[j]:
+            icov[i,j]=1/(err[i]*err[j])
+precision=sacc.Precision(icov,"ell_block_diagonal",mean)
+            
+
 # create SACC object
-s=sacc.SACC(tracers)
+s=sacc.SACC(tracers,mean,precision)
 s.saveToHDF ("test.sacc")
-
-
-                
-
-    

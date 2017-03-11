@@ -6,7 +6,8 @@ import numpy as np
 import h5py
 
 class MeanVec(object):
-    def __init__ (self, typ=None, ls=None, T1=None, Q1=None, T2=None, Q2=None, value=None, error=None, window=None, deltaLS=None):
+    def __init__ (self, typ, ls, T1, Q1, T2, Q2, value, error, window=None, deltaLS=None, sunit=None):
+        self.sunit=sunit ## angular separation unit
         self.dtype=[('type','S1'),('ls','f4'), ('T1','i4'),('Q1','S1'), ('T2','i4'),('Q2','S1'), ('value','f8'), ('error','f8')]
         if typ is not None:
             N=len(typ)
@@ -28,8 +29,13 @@ class MeanVec(object):
             if deltaLS is not None:
                 self.data['Delta_ls']=deltaLS
 
+    def size(self):
+        return len(self.data)
+                
     def saveToHDF (self, group):
-        raise NotImplementedError
+        g=group.create_dataset("mean",data=self.data)
+        if self.sunit is not None:
+            g.attrs.create("sunit",self.sunit)
 
     def loadFromHDF (self, dataset):
         raise NotImplementedError
