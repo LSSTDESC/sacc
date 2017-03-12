@@ -8,8 +8,12 @@ tracers=[]
 for i,z in enumerate([0.3,0.5,0.7,0.9]):
     zar=np.arange(z-0.1,z+0.1,0.001)
     Nz=np.exp(-(z-zar)**2/(2*0.03**2))
-    tracers.append(sacc.Tracer("des_gals_"+str(i),"point",zar,Nz,exp_sample="des_gals",
-                               Nz_sigma_logmean=0.01, Nz_sigma_logwidth=0.1))
+    bias=np.ones(len(zar))*(i+0.5)
+    T=sacc.Tracer("des_gals_"+str(i),"point",zar,Nz,exp_sample="des_gals",
+                               Nz_sigma_logmean=0.01, Nz_sigma_logwidth=0.1)
+    T.addColumns({'b':bias})
+    tracers.append(T)
+    
 for i,z in enumerate([0.5,0.7,0.9,1.1]):
     zar=np.arange(z-0.1,z+0.1,0.001)
     Nz=np.exp(-(z-zar)**2/(2*0.025**2))
@@ -19,8 +23,12 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
     DNz[:,0]-=DNz[:,0].mean()
     DNz[:,1]=(z-zar)**3*0.01
     DNz[:,1]-=DNz[:,1].mean()
-    tracers.append(sacc.Tracer("lsst_gals_"+str(i),"point",zar,Nz,exp_sample="lsst_gals",
-                               DNz=DNz))
+    bias=np.ones(len(zar))*(i+0.7)
+    T=sacc.Tracer("lsst_gals_"+str(i),"point",zar,Nz,exp_sample="lsst_gals",
+                               DNz=DNz)
+    T.addColumns({'b':bias})
+    tracers.append(T)
+
 # and also add CMB
 tracers.append (sacc.Tracer("Planck","cmb", None, None))
 
@@ -50,6 +58,10 @@ for i in range(Np):
     for j in range (i,Np):
         if ell[i]==ell[j]:
             icov[i,j]=1/(err[i]*err[j])
+            if (i!=j):
+                icov[i,j]/=10
+            icov[j,i]=icov[i,j]
+            
 precision=sacc.Precision(icov,"ell_block_diagonal",mean)
             
 

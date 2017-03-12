@@ -27,10 +27,12 @@ class Tracer(object):
         """
         self.extra_cols.update(columns)
         for k,c in self.extra_cols.items():
-            if (len(c)==len(self.Nz)):
+            if (len(c)!=len(self.Nz)):
                 print("Badly sized column!")
                 raise RuntimeError
 
+    def extraColumn(self, key):
+        return self.extra_cols[key]
 
     def meanZ(self):
         if self.type=="cmb":
@@ -68,7 +70,9 @@ class Tracer(object):
             a.create("Nz_sigma_logmean",self.sigma_logmean)
         if self.sigma_logwidth is not None:
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
-
+        if len(self.extra_cols.keys())>0:
+            a.create("extra_cols",self.extra_cols.keys())
+            
     @classmethod
     def loadFromHDF (Tracer, group, name):
         t=group['tracers'][name]
@@ -92,11 +96,16 @@ class Tracer(object):
             DNz=None
         else:
             DNz=np.array(DNZ).T
-        exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth=None,None,None
+        exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,ecols=None,None,None,None
         for n,v in a.items():
             if n=='exp_sample': exp_sample=v
             if n=='Nz_sigma_logmean': Nz_sigma_logmean=v
             if n=='Nz_sigma_logwidth': Nz_sigma_logwidth=v
-
-        return Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
+            if n=="extra_cols": ecols=v
+        ec={}
+        for n in ecols:
+            ec[n]=d[n]
+        T=Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
+        T.addColumns(ec)
+        return T
     

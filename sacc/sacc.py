@@ -40,7 +40,26 @@ class SACC(object):
             print ("Precision matrix type:",self.precision.mode)
         else:
             print ("No precision matrix.")
-        
+
+
+    def sortTracers(self):
+        """
+        returns a list of tuples, like this
+        (t1i,t2i,ells,ndx)
+        where t1i,t2i are indices of first and second tracer
+        ells is the list of ells used 
+        ndx is the list of indices in data vector corresponding to this.
+        """
+        Nt=len(self.tracers)
+        toret=[]
+        for t1i in range(Nt):
+            for t2i in range(t1i,Nt):
+                ndx=np.where( ((self.mean.data['T1']==t1i) & (self.mean.data['T2']==t2i)) |
+                              ((self.mean.data['T1']==t2i) & (self.mean.data['T2']==t1i)) )
+                ells=self.mean.data['ls'][ndx]
+                if len(ells)>0:
+                    toret.append((t1i,t2i,ells,ndx))
+        return toret
             
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'w')
