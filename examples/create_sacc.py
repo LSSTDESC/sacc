@@ -54,5 +54,5 @@ precision=sacc.Precision(icov,"ell_block_diagonal",mean)
             
 
 # create SACC object
-s=sacc.SACC(tracers,mean,precision)
+s=sacc.SACC(tracers,mean,precision,save_mean=False, mean_filename="test.sacc")
 s.saveToHDF ("test.sacc")
