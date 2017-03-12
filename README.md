@@ -2,6 +2,28 @@
 
 SACC (Save All Correlations and Covariances, an utterly crappy acronym inspired by usually equally bad attempts by David A) is  a format and reference library for general storage of 2-dimensional power spectra and correlation functions and their covariance matrices in the HDF5 format. It is very loosely inspired by Joe Zunz's [2point](https://github.com/joezuntz/2point).
 
+# Quick start
+
+Install by saying
+
+```
+./setup.py install
+```
+For local installation might need to add `--user` to that.
+You can create a fake datasets by 
+```
+./examples/create_sacc.py
+```
+which you can reload using
+```
+./examples/load_sacc.py
+```
+and finally run 
+```
+./examples/split_sacc.py
+```
+to load the dataset created by `create_sacc.py`, split it into three files and reload it again for test.
+
 # Description of the format
 
 The format has been designed with two goals in mind:
