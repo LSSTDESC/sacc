@@ -37,6 +37,18 @@ class MeanVec(object):
         if self.sunit is not None:
             g.attrs.create("sunit",self.sunit)
 
-    def loadFromHDF (self, dataset):
-        raise NotImplementedError
+    def saveToHDFFile(self,filename):
+        f=h5py.File(filename,'w')
+        self.saveToHDF(f)
+        f.close()
+
+    @classmethod
+    def loadFromHDF (MeanVec,group):
+        m=group['mean']
+        d=m.value
+        sunit=m.attrs['sunit'] if 'sunit' in m.attrs.keys() else None
+        window=d['window'] if 'window' in d.dtype.names else None
+        deltaLS=d['Delta_ls'] if 'Delta_ls' in d.dtype.names else None
+        return  MeanVec(d['type'],d['ls'],d['T1'],d['Q1'],d['T2'],d['Q2'],d['value'],d['error'],window, deltaLS,sunit)
+            
         

@@ -14,6 +14,8 @@ class Tracer(object):
         self.z=z
         self.Nz=Nz
         self.exp_sample=exp_sample
+        if (self.type=="cmb"):
+            self.exp_sample=name
         self.sigma_logmean=Nz_sigma_logmean
         self.sigma_logwidth=Nz_sigma_logwidth
         self.DNz=DNz
@@ -29,10 +31,17 @@ class Tracer(object):
                 print("Badly sized column!")
                 raise RuntimeError
 
+
+    def meanZ(self):
+        if self.type=="cmb":
+            return -1 ## yes, yes, we could be funny and put 1150 here.
+        return (self.z*self.Nz).sum()/self.Nz.sum()
+            
     def saveToHDF (self, group):
         ## first create dataset
         if self.type=="cmb":
-            group.create_dataset(self.name,data=[])
+            g=group.create_dataset(self.name,data=[])
+            g.attrs['type']=self.type
             return 
         dt=[('z','f4'), ('Nz','f4')]
         if self.DNz is not None:
@@ -59,7 +68,35 @@ class Tracer(object):
             a.create("Nz_sigma_logmean",self.sigma_logmean)
         if self.sigma_logwidth is not None:
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
-        
-    def loadFromHDF (self, dataset):
-        raise NotImplementedError
-        
+
+    @classmethod
+    def loadFromHDF (Tracer, group, name):
+        t=group['tracers'][name]
+        d=t.value
+        a=t.attrs
+        type=a['type']
+        if type=='cmb':
+            return Tracer(name,type,[],[])
+        z=d['z']
+        Nz=d['Nz']
+        numDNZ=0
+        DNZ=[]
+        while True:
+            fn="DNz_"+str(DNZ)
+            if fn in d.dtype.names:
+                DNZ.append(d[fn])
+                DNZ+=1
+            else:
+                break
+        if numDNZ==0:
+            DNz=None
+        else:
+            DNz=np.array(DNZ).T
+        exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth=None,None,None
+        for n,v in a.items():
+            if n=='exp_sample': exp_sample=v
+            if n=='Nz_sigma_logmean': Nz_sigma_logmean=v
+            if n=='Nz_sigma_logwidth': Nz_sigma_logwidth=v
+
+        return Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
+    

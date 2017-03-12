@@ -12,7 +12,7 @@ The format has been designed with two goals in mind:
  
 ## Metadata ##
  
-Metadata is stored in a HDF group, typically the root group in the file pointed to by the user. The actual mean vector and precision matrix (C inverse) can be stored in the same group as HDF datasets named "mean" and "precision" respectively and if these do not exist their location can be optional specified by creating an empty dataset with the same name and attaching an attribute `file_path` instead. Note that use can always manually override these options. Instead of "precision" you can also have a "covariance" instead (and then store C), but not both.
+Metadata is stored in a HDF group, typically the root group in the file pointed to by the user. The actual mean vector and precision matrix (C inverse) can be stored in the same group as HDF datasets named "mean" and "precision" respectively and if these do not exist their location can be optional specified by specifying the filename in `mean_file_path` and `precision_file_path` instead. Note that use can always manually override these options. (Instead of "precision" you can also have a "covariance" instead (and then store C), but not both. [not yet implemented])
 
 ### Tracers ###
 
@@ -31,7 +31,7 @@ Often many 'tracers' in this sense will really be the same parent population cho
 
 
 
-### Windows ###
+### Windows [not yet implemented] ###
 
 Window functions are optional (see below). Window functions are stored in an HDF group `windows`. Inside this groups there are small datasets named as numbers starting with 0.  Each such datasets need to a 2D array of `l` and `w` or `s` and `w` (for configuration space). Units of `s` need not be specified -- they will be defined in the data vector. These windows specify how Cl needs to be integrated over l in order to produce measurement.
 
