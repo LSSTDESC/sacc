@@ -7,13 +7,13 @@ import h5py
 
 class MeanVec(object):
     def __init__ (self, values):
-        self.data=values
+        self.vector=values
 
     def size(self):
-        return len(self.data)
+        return len(self.vector)
                 
     def saveToHDF (self, group):
-        g=group.create_dataset("mean",data=self.data)
+        g=group.create_dataset("mean",data=self.vector)
 
     def saveToHDFFile(self,filename):
         f=h5py.File(filename,'w')

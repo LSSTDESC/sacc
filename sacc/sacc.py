@@ -45,7 +45,20 @@ class SACC(object):
         else:
             print ("No precision matrix.")
 
+    def size(self):
+        return self.binning.size()
 
+    def lrange(self,t1i,t2i):
+        ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                      ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+        return self.binning.binar['ls'][ndx]
+
+    def ilrange(self,t1i,t2i):
+        ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                      ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+        return ndx
+
+        
     def sortTracers(self):
         """
         returns a list of tuples, like this
@@ -58,9 +71,9 @@ class SACC(object):
         toret=[]
         for t1i in range(Nt):
             for t2i in range(t1i,Nt):
-                ndx=np.where( ((self.mean.data['T1']==t1i) & (self.mean.data['T2']==t2i)) |
-                              ((self.mean.data['T1']==t2i) & (self.mean.data['T2']==t1i)) )
-                ells=self.mean.data['ls'][ndx]
+                ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                              ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+                ells=self.binning.binar['ls'][ndx]
                 if len(ells)>0:
                     toret.append((t1i,t2i,ells,ndx))
         return toret
