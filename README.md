@@ -51,10 +51,10 @@ Uncertainities in N(z) can be presently described using a set of zero average (b
 
 Often many 'tracers' in this sense will really be the same parent population chopped into pieces. In that case each tracer can optionally carry a `exp_sample`, which is an identifying string tying the same tracers together. E.g. all LSST galaxies will carry `exp_sample="lsst_gal"` and those from red magic will have `exp_sample="lsst_redm"`.
 
-### Indices ###
+### Binning / Indices ###
 
 Information of which index in the mean/precision matrix correspond to
-which correlation is stored in the dataset named `indices`, which also
+which correlation is stored in the dataset named `binning`, which also
 must exist. It is a table with the following columns:
  * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
  * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
@@ -62,12 +62,13 @@ must exist. It is a table with the following columns:
  * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
  * `T2`: index of tracer 2 defined above
  * `Q2`: quantity from tracer 1
-If any of the `type==C` need to also specify column
- * `sunit`: a string with unit
 It can also optionally have the following fields:
  * `window` : specifying index of the window defined above, or -1 if no window.
  * `Delta ls` : specifying window width assuming top-hat windows
  * `error`: actual diagonal error (for plotting)
+
+If any of the `type==C` need to also specify attribute `sunit` (a
+string with unit for separation)
 
 This uniquely defines that each datapoint in the mean vector means. 
 
