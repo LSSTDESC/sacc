@@ -6,7 +6,7 @@ import numpy as np
 import h5py
 
 class Precision(object):
-    def __init__ (self, matrix=None, mode="dense", mean=None):
+    def __init__ (self, matrix=None, mode="dense", binning=None):
         ##
         ## mode must be dense, ell_block_diagonal, diagonal
         ##
@@ -15,19 +15,19 @@ class Precision(object):
             raise NotImplemented
         self.matrix=matrix
         self.mode=mode
-        self.mean=mean
+        self.binning=binning
         
-    def saveToHDF (self, group): ## might need mean for certain modes of saving
+    def saveToHDF (self, group): ## might need binning for certain modes of saving
         if self.mode=="dense":
             d=group.create_dataset("precision",data=self.matrix)
         elif self.mode=="diagonal":
             d=group.create_dataset("precision", data=self.matrix.diagonal())
         elif self.mode=="ell_block_diagonal":
             vec=[]
-            Np=self.mean.size()
+            Np=self.binning.size()
             for i in range(Np):
                 for j in range(i,Np):
-                    if self.mean.data["ls"][i]==self.mean.data["ls"][j]:
+                    if self.binning.binar["ls"][i]==self.binning.binar["ls"][j]:
                         vec.append(self.matrix[i,j])
             d=group.create_dataset("precision",data=vec)
         d.attrs.create("type",self.mode)
@@ -38,7 +38,7 @@ class Precision(object):
         f.close()
         
     @classmethod
-    def loadFromHDF (Precision, group, mean=None):
+    def loadFromHDF (Precision, group, binning=None):
         mode=group['precision'].attrs['type']
         data=group['precision'].value
         if mode=="dense":
@@ -47,17 +47,17 @@ class Precision(object):
             d=np.diag(data)
         elif mode=="ell_block_diagonal":
             vec=data
-            if mean is None:
-                print ("Cannot have type==ell_block_diagonal and not mean")
-            Np=mean.size()
+            if binning is None:
+                print ("Cannot have type==ell_block_diagonal and not binning")
+            Np=binning.size()
             matrix=np.zeros((Np,Np))
             k=0
             for i in range(Np):
                 for j in range(i,Np):
-                    if mean.data["ls"][i]==mean.data["ls"][j]:
+                    if binning.binar["ls"][i]==binning.binar["ls"][j]:
                         matrix[i,j]=vec[k]
                         matrix[j,i]=vec[k]
                         k+=1
-        return Precision(matrix,mode,mean)
+        return Precision(matrix,mode,binning)
         
         

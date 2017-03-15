@@ -6,36 +6,14 @@ import numpy as np
 import h5py
 
 class MeanVec(object):
-    def __init__ (self, typ, ls, T1, Q1, T2, Q2, value, error, window=None, deltaLS=None, sunit=None):
-        self.sunit=sunit ## angular separation unit
-        self.dtype=[('type','S1'),('ls','f4'), ('T1','i4'),('Q1','S1'), ('T2','i4'),('Q2','S1'), ('value','f8'), ('error','f8')]
-        if typ is not None:
-            N=len(typ)
-            if window is not None:
-                self.dtype.append(('window','i4'))
-            if deltaLS is not None:
-                self.dtype.append(('Delta_ls','f4'))
-            self.data=np.zeros(N,dtype=self.dtype)
-            self.data['type']=typ
-            self.data['ls']=ls
-            self.data['T1']=T1
-            self.data['Q1']=Q1
-            self.data['T2']=T2 
-            self.data['Q2']=Q2
-            self.data['value']=value
-            self.data['error']=error
-            if window is not None:
-                self.data['window']=window
-            if deltaLS is not None:
-                self.data['Delta_ls']=deltaLS
+    def __init__ (self, values):
+        self.vector=values
 
     def size(self):
-        return len(self.data)
+        return len(self.vector)
                 
     def saveToHDF (self, group):
-        g=group.create_dataset("mean",data=self.data)
-        if self.sunit is not None:
-            g.attrs.create("sunit",self.sunit)
+        g=group.create_dataset("mean",data=self.vector)
 
     def saveToHDFFile(self,filename):
         f=h5py.File(filename,'w')
@@ -46,9 +24,7 @@ class MeanVec(object):
     def loadFromHDF (MeanVec,group):
         m=group['mean']
         d=m.value
-        sunit=m.attrs['sunit'] if 'sunit' in m.attrs.keys() else None
-        window=d['window'] if 'window' in d.dtype.names else None
-        deltaLS=d['Delta_ls'] if 'Delta_ls' in d.dtype.names else None
-        return  MeanVec(d['type'],d['ls'],d['T1'],d['Q1'],d['T2'],d['Q2'],d['value'],d['error'],window, deltaLS,sunit)
+        return  MeanVec(d)
+    
             
         

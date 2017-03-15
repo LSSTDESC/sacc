@@ -49,10 +49,11 @@ for t1i in range(Ntracer):
             val.append(np.random.uniform(0,10))
             err.append(np.random.uniform(0,1))
 
-mean=sacc.MeanVec(type,ell,t1,q1,t2,q2,val,err)
+binning=sacc.Binning(type,ell,t1,q1,t2,q2)
+mean=sacc.MeanVec(val)
 
 ## now covariance matrix
-Np=mean.size()
+Np=binning.size()
 icov=np.zeros ((Np,Np))
 for i in range(Np):
     for j in range (i,Np):
@@ -61,11 +62,10 @@ for i in range(Np):
             if (i!=j):
                 icov[i,j]/=10
             icov[j,i]=icov[i,j]
-            
-precision=sacc.Precision(icov,"ell_block_diagonal",mean)
+precision=sacc.Precision(icov,"ell_block_diagonal",binning)
             
 
 # create SACC object
-s=sacc.SACC(tracers,mean,precision)
+s=sacc.SACC(tracers,binning,mean,precision)
 s.printInfo()
 s.saveToHDF ("test.sacc")

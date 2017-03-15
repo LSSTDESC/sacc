@@ -3,17 +3,21 @@
 #
 from __future__ import print_function, division
 from tracer import Tracer
+from binning import Binning
 from meanvec import MeanVec
 from precision import Precision
 import numpy as np
 import h5py
 
 
-
 class SACC(object):
 
-    def __init__ (self, tracers, mean=None, precision=None, windows=None):
+    def __init__ (self, tracers, binning, mean=None, precision=None, windows=None):
         self.tracers=tracers
+        self.binning=binning
+        assert([type(t)==type(Tracer) for t in self.tracers])
+        #print(type(self.binning),type(Binning))
+        #assert(type(self.binning)==type(Binning)) ## this assert always fails, not sure why
         self.mean=mean
         self.precision=precision
         self.windows=windows
@@ -32,8 +36,8 @@ class SACC(object):
                     print ("       Tomographic sample #%i: <z>=%4.2f"%(cc,t.meanZ()))
                     cc+=1
         print ("--------------------------------")
-        if self.mean is not None:
-            print ("Total number of points:",self.mean.size())
+        if self.binning is not None:
+            print ("Total number of points:",self.binning.size())
         else:
             print ("No mean vector.")
         if self.precision is not None:
@@ -41,7 +45,20 @@ class SACC(object):
         else:
             print ("No precision matrix.")
 
+    def size(self):
+        return self.binning.size()
 
+    def lrange(self,t1i,t2i):
+        ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                      ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+        return self.binning.binar['ls'][ndx]
+
+    def ilrange(self,t1i,t2i):
+        ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                      ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+        return ndx
+
+        
     def sortTracers(self):
         """
         returns a list of tuples, like this
@@ -54,9 +71,9 @@ class SACC(object):
         toret=[]
         for t1i in range(Nt):
             for t2i in range(t1i,Nt):
-                ndx=np.where( ((self.mean.data['T1']==t1i) & (self.mean.data['T2']==t2i)) |
-                              ((self.mean.data['T1']==t2i) & (self.mean.data['T2']==t1i)) )
-                ells=self.mean.data['ls'][ndx]
+                ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                              ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
+                ells=self.binning.binar['ls'][ndx]
                 if len(ells)>0:
                     toret.append((t1i,t2i,ells,ndx))
         return toret
@@ -67,6 +84,7 @@ class SACC(object):
         tracer_group.attrs.create("tracer_list",[t.name for t in self.tracers])
         for t in self.tracers:
             t.saveToHDF(tracer_group)
+        self.binning.saveToHDF(f)
         if save_mean:
             if self.mean is not None:
                 self.mean.saveToHDF(f)
@@ -89,6 +107,7 @@ class SACC(object):
         tracer_group=f['tracers']
         tnames=tracer_group.attrs['tracer_list']
         tracers=[Tracer.loadFromHDF(f,n) for n in tnames]
+        binning=Binning.loadFromHDF(f)
         ##
         ## if mean specified, we use it, otherwise look for mean group and mean filename
         ## in attributes.
@@ -107,16 +126,16 @@ class SACC(object):
         precision=None
         if precision_filename is not None:
             fm=h5py.File(precision_filename,'r')
-            precision=Precision.loadFromHDF(fm,mean)
+            precision=Precision.loadFromHDF(fm,binning)
         else:
             if 'precision' in f.keys():
-                precision=Precision.loadFromHDF(f,mean)
+                precision=Precision.loadFromHDF(f,binning)
             else:
                 if 'precision_file_path' in f.attrs.keys():
                     fm=h5py.File(f.attrs['precision_file_path'],'r')
-                    precision=Precision.loadFromHDF(fm,mean)
+                    precision=Precision.loadFromHDF(fm,binning)
         f.close()
-        return SACC(tracers,mean,precision)
+        return SACC(tracers,binning,mean,precision)
 
                     
         

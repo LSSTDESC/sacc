@@ -51,7 +51,26 @@ Uncertainities in N(z) can be presently described using a set of zero average (b
 
 Often many 'tracers' in this sense will really be the same parent population chopped into pieces. In that case each tracer can optionally carry a `exp_sample`, which is an identifying string tying the same tracers together. E.g. all LSST galaxies will carry `exp_sample="lsst_gal"` and those from red magic will have `exp_sample="lsst_redm"`.
 
+### Binning / Indices ###
 
+Information of which index in the mean/precision matrix correspond to
+which correlation is stored in the dataset named `binning`, which also
+must exist. It is a table with the following columns:
+ * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
+ * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
+ * `T1`: index of tracer 1 defined above
+ * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
+ * `T2`: index of tracer 2 defined above
+ * `Q2`: quantity from tracer 1
+It can also optionally have the following fields:
+ * `window` : specifying index of the window defined above, or -1 if no window.
+ * `Delta ls` : specifying window width assuming top-hat windows
+ * `error`: actual diagonal error (for plotting)
+
+If any of the `type==C` need to also specify attribute `sunit` (a
+string with unit for separation)
+
+This uniquely defines that each datapoint in the mean vector means. 
 
 ### Windows [not yet implemented] ###
 
@@ -59,19 +78,13 @@ Window functions are optional (see below). Window functions are stored in an HDF
 
 ## Mean values ##
 
-Mean values are stored in a HDF datasets called `mean` which might exist inside the same HDF5 as metadata, but not neccessarily so. If it contains a single config space measurement, it must also have an attribute `sunit` to specify angular units (what are valid units can be up to final user code). It is a 2D dataset which must have the following fields:
- * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
- * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
- * `T1`: index of tracer 1 defined above
- * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
- * `T2`: index of tracer 2 defined above
- * `Q2`: quantity from tracer 1
- * `value` : actual mean mesurement
- * `error`: actual diagonal error (for plotting)
+Mean values are stored in a HDF datasets called `mean` which might
+exist inside the same HDF5 as metadata, but not necessarily so (see
+`mean_file_path` comment above)
+
+It is a single 1D vector for floats whose meaning is defined by
+`indices` dataset above. 
  
-It can also have the following fields:
- * `window` : specifying index of the window defined above, or -1 if no window.
- * `Delta ls` : specifying window width assuming top-hat windows
  
 ## Precision matrix ##
  

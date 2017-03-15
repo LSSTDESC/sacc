@@ -40,17 +40,17 @@ ctracers=[sacc2ccl_tracer(t) for t in s.tracers]
 for t1i,t2i,ells,ndx in s.sortTracers():
     if (ctracers[t1i] is not None) and (ctracers[t2i] is not None):
         cl_model = ccl.angular_cl(ccl_cosmo,ctracers[t1i],ctracers[t2i],ells)
-        s.mean.data['value'][ndx]=cl_model
+        s.mean.vector[ndx]=cl_model
     else:
-        s.mean.data['value'][ndx]=0.0 ## we don't yet know how to deal with CMB
+        s.mean.vector[ndx]=0.0 ## we don't yet know how to deal with CMB
 
 ## now get covariance and sample from it:
 cov=la.inv(s.precision.matrix)
 chol=la.cholesky(cov)
 # (perhaps need chol.T below ? double check)
-noise=np.dot(chol, np.random.normal(0.,1.,len(s.mean.data)))
+noise=np.dot(chol, np.random.normal(0.,1.,len(s.mean.vector)))
 ## Add noise
-s.mean.data['value']+=noise
+s.mean.vector['value']+=noise
 ## Save file new file
 s.saveToHDF("test_ccl.sacc")
 
