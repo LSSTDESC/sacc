@@ -102,7 +102,6 @@ class SACC(object):
        
     @classmethod
     def loadFromHDF (SACC,filename,mean_filename=None, precision_filename=None):
-        print (filename)
         f=h5py.File(filename,'r')
         tracer_group=f['tracers']
         tnames=tracer_group.attrs['tracer_list']
