@@ -103,8 +103,9 @@ class Tracer(object):
             if n=='Nz_sigma_logwidth': Nz_sigma_logwidth=v
             if n=="extra_cols": ecols=v
         ec={}
-        for n in ecols:
-            ec[n]=d[n]
+        if ecols is not None:
+            for n in ecols:
+                ec[n]=d[n]
         T=Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
         T.addColumns(ec)
         return T
