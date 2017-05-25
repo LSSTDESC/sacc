@@ -8,7 +8,7 @@ from meanvec import MeanVec
 from precision import Precision
 import numpy as np
 import h5py
-
+import matplotlib.pyplot as plt
 
 class SACC(object):
 
@@ -77,7 +77,38 @@ class SACC(object):
                 if len(ells)>0:
                     toret.append((t1i,t2i,ells,ndx))
         return toret
-            
+    def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True, show_legend=True, out_name=None):
+        """
+        Plots the mean vector associated to the different tracers
+        in the sacc file. The tracers to plot can be selected
+        passing a list to tr_number (if None it plots all of them).
+        If you want to plot the cross-correlations
+        between these bins just set the argument plot_cross to True.
+        """      
+        if tr_number is None:
+            tr_number=np.arange(len(self.tracers))
+        if plot_cross:
+            for tr_i in tr_number:
+                for tr_j in range(tr_i,len(tr_number)):
+                    tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
+                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'-',label='%i,%i' %(tr_i,tr_j))
+        else:
+            for tr_i in tr_number:
+                tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_i)
+                plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'-',label='%i,%i' %(tr_i,tr_i))
+        if set_logx:
+            plt.xscale('log')
+        if set_logy:
+            plt.yscale('log')
+        plt.xlabel(r'$l$')
+        plt.ylabel(r'$C_{l}$')
+        if show_legend:
+            plt.legend(loc='best')
+        if out_name is None:
+            plt.show()
+        else:
+            plt.savefig(out_name)
+        
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'w')
         tracer_group=f.create_group("tracers")
