@@ -8,7 +8,6 @@ from meanvec import MeanVec
 from precision import Precision
 import numpy as np
 import h5py
-import matplotlib.pyplot as plt
 
 class SACC(object):
 
@@ -77,6 +76,7 @@ class SACC(object):
                 if len(ells)>0:
                     toret.append((t1i,t2i,ells,ndx))
         return toret
+
     def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True, show_legend=True, out_name=None):
         """
         Plots the mean vector associated to the different tracers
@@ -85,6 +85,7 @@ class SACC(object):
         If you want to plot the cross-correlations
         between these bins just set the argument plot_cross to True.
         """      
+        import matplotlib.pyplot as plt
         if tr_number is None:
             tr_number=np.arange(len(self.tracers))
         if plot_cross:
