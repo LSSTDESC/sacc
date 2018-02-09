@@ -44,7 +44,7 @@ class Precision(object):
         if mode=="dense":
             matrix=data
         elif mode=="diagonal":
-            d=np.diag(data)
+            matrix=np.diag(data)
         elif mode=="ell_block_diagonal":
             vec=data
             if binning is None:
