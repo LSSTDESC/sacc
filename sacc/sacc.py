@@ -23,9 +23,11 @@ class SACC(object):
         if windows is not None:
             print ("Windows not yet implemented. Will be ignored.")
 
-
+    def get_exp_sample_set(self):
+        l=set([t.exp_sample for t in self.tracers])
+        
     def printInfo(self):
-        exps=set([t.exp_sample for t in self.tracers])
+        exps=self.get_exp_sample_set()
         print ("--------------------------------")
         for e in exps:
             print (" EXP_SAMPLE:",e)
@@ -43,6 +45,7 @@ class SACC(object):
             print ("Precision matrix type:",self.precision.mode)
         else:
             print ("No precision matrix.")
+
 
     def size(self):
         return self.binning.size()
