@@ -24,7 +24,8 @@ class SACC(object):
             print ("Windows not yet implemented. Will be ignored.")
 
     def get_exp_sample_set(self):
-        l=set([t.exp_sample for t in self.tracers])
+        return set([t.exp_sample for t in self.tracers])
+        
         
     def printInfo(self):
         exps=self.get_exp_sample_set()
