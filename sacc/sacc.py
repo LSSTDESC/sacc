@@ -1,6 +1,9 @@
-#
-# SACC : Tracer class
-#
+"""
+SACC is the main container class of the SACC module.
+
+"""
+
+
 from __future__ import print_function, division
 from tracer import Tracer
 from binning import Binning
@@ -9,19 +12,40 @@ from precision import Precision
 import numpy as np
 import h5py
 
-class SACC(object):
 
-    def __init__ (self, tracers, binning, mean=None, precision=None, windows=None):
+
+class SACC(object):
+    """
+    The main container class for 2pt measurements.
+
+    Parameters
+    ----------
+
+    tracers : list of Tracer objects
+       List of tracer objects used in the measurement and referenced in 
+       binning parameter
+    binning : Binning object
+       Binning object describing what measurement does each index in the mean
+       vector and precision matrix contain
+    mean : array_like or MeanVec object
+       Vector representing the actual measurement, the mean of the gaussian.
+       If not a MeanVec object, will try to cast it into one 
+    precision: Precision object
+       Object representing the precision (i.e. inverse covariance) matrix.
+
+    """
+
+    
+    def __init__ (self, tracers, binning, mean=None, precision=None):
         self.tracers=tracers
         self.binning=binning
         assert([type(t)==type(Tracer) for t in self.tracers])
         #print(type(self.binning),type(Binning))
         #assert(type(self.binning)==type(Binning)) ## this assert always fails, not sure why
+        if type(mean)!=MeanVec:
+            mean=MeanVec(mean)
         self.mean=mean
         self.precision=precision
-        self.windows=windows
-        if windows is not None:
-            print ("Windows not yet implemented. Will be ignored.")
 
     def get_exp_sample_set(self):
         return set([t.exp_sample for t in self.tracers])
