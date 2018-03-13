@@ -24,75 +24,37 @@ and finally run
 ```
 to load the dataset created by `create_sacc.py`, split it into three files and reload it again for test.
 
-# Description of the format
+# Conceptual Summary
 
-The format has been designed with two goals in mind:
- * flexibilty to store a wide variety of data 
- * realisations that we will need iterations on many realisations, so we need flexibility to carry data vectors or covariances separate from the metadata, since one or both will be reused in reruns of whatever analysis.
- 
- The description of some 2point function measurement can be divided into roughly three parts: metadata, mean vector and covariance.
- 
-## Metadata ##
- 
-Metadata is stored in a HDF group, typically the root group in the file pointed to by the user. The actual mean vector and precision matrix (C inverse) can be stored in the same group as HDF datasets named "mean" and "precision" respectively and if these do not exist their location can be optional specified by specifying the filename in `mean_file_path` and `precision_file_path` instead. Note that use can always manually override these options. (Instead of "precision" you can also have a "covariance" instead (and then store C), but not both. [not yet implemented])
+To describe a generic 2-point correlation function or power spectrum
+measurements, one needs several ingredients:
 
-### Tracers ###
+ * *tracer* describes a set of tracers in one photometric bin. The
+   tracer description contains the distribution N(z) of tracers and
+   possibly some uncertainty in N(z) in terms of templates to
+   marginalise over. A different photometric bin will be a different
+   tracer, but one can link tracers of the "same kind" (i.e. LSST
+   galaxies) by a common ID root in tracer name. We also allow for
+   external "tracers" such as CMB kappa measurement.
+ * *binning* describes a binning of the power spectrum. In short, it
+   is a list of measurements, where each measurement is defined by an
+   ell (or separation in case of configuration space), the pair of
+   tracers it refers to, the actual quantity measured (e.g. shear or
+   numebr density) and the window function. The binning specifies
+   what is measured, but not the actual numbers. We can measure auto
+   and cross power with different binnings.
+ * *mean* is the vector of measurements. It has the same number of
+   entries as binning
+ * *precision* is the inverse covariance matrix corresponding to mean
+   measurements
+   
+The `sacc` is essentially a container for the tuples of tracers,
+binnings, mean vector and precision matrix. 
 
-Information on tracers used is stored in HDF group `tracers`. This group must have an attribute `tracer_list` which is a list of strings defining tracer names. Ordering is important, because index in this list defines the index by which tracers are referred to later. For each tracer name there must be a subdataset inside `tracers` group which defines this tracer. 
+# Documentation
 
-A tracer datasets must have an attribute `type` which must be of one of the following values:
- * `point`, i.e galaxies 
- * `cmb`, for CMB (for e.g. ISW studies, WL, etc (note that CMB kappa vs CMB primary will be distinguished below)
- * (other we'll add as needs arise)
- 
-If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store (to help checking mocks with results, etc.)
-
-Uncertainities in N(z) can be presently described using a set of zero average (but not neccessarily orthogonal) vectors stored in columns `DNz_0`, `DNz_1`, etc. Their amplitude should correspond to their variance. In short, the covariance error on Nz is given as sum vv^T, where sum is over v=`DNz_0`, `DNz_1`,... Additionally, overall uncertainties expressed in terms of translating and stretching Nz should be in attributes `Nz_sigma_logmean` and `Nz_sigma_logwidth` where the translating variable is 1+z or equivalently (up to a sign) a=1/(1+z).
-
-Often many 'tracers' in this sense will really be the same parent population chopped into pieces. In that case each tracer can optionally carry a `exp_sample`, which is an identifying string tying the same tracers together. E.g. all LSST galaxies will carry `exp_sample="lsst_gal"` and those from red magic will have `exp_sample="lsst_redm"`.
-
-### Binning / Indices ###
-
-Information of which index in the mean/precision matrix correspond to
-which correlation is stored in the dataset named `binning`, which also
-must exist. It is a table with the following columns:
- * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
- * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
- * `T1`: index of tracer 1 defined above
- * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
- * `T2`: index of tracer 2 defined above
- * `Q2`: quantity from tracer 1
-It can also optionally have the following fields:
- * `window` : specifying index of the window defined above, or -1 if no window.
- * `Delta ls` : specifying window width assuming top-hat windows
- * `error`: actual diagonal error (for plotting)
-
-If any of the `type==C` need to also specify attribute `sunit` (a
-string with unit for separation)
-
-This uniquely defines that each datapoint in the mean vector means. 
-
-### Windows [not yet implemented] ###
-
-Window functions are optional (see below). Window functions are stored in an HDF group `windows`. Inside this groups there are small datasets named as numbers starting with 0.  Each such datasets need to a 2D array of `l` and `w` or `s` and `w` (for configuration space). Units of `s` need not be specified -- they will be defined in the data vector. These windows specify how Cl needs to be integrated over l in order to produce measurement.
-
-## Mean values ##
-
-Mean values are stored in a HDF datasets called `mean` which might
-exist inside the same HDF5 as metadata, but not necessarily so (see
-`mean_file_path` comment above)
-
-It is a single 1D vector for floats whose meaning is defined by
-`indices` dataset above. 
- 
- 
-## Precision matrix ##
- 
-Precision matrix defined the NxN matrix corresponding to Cinverse to the data vector of size N. It is a HDF dataset called `precision`, which might exist inside the same HDF5 as metadata, but not neccessarily so. It must have an attribute called `type` which must be one of the following:
- * `diagonal` : A vector of size `N` is stored
- * `ell_block_diagonal` : A double loop over non-repeating elements of C, storing just those points where ell/s values match. 
- * `dense`: Just a full 2D monty.
- 
- 
+Thus python module should allow reading anbd writing files in `sacc`
+format. If you need to read these files in other context, please see
+documentation [here](doc/format.md)
 
 
