@@ -4,15 +4,15 @@
 from __future__ import print_function, division
 import numpy as np
 import h5py
+from window import Window
 
 class Binning(object):
-    def __init__ (self, typ, ls, T1, Q1, T2, Q2, window=None, deltaLS=None, sunit=None):
+    def __init__ (self, typ, ls, T1, Q1, T2, Q2, windows=None, deltaLS=None, sunit=None):
         self.sunit=sunit ## angular separation unit
         self.dtype=[('type','S1'),('ls','f4'), ('T1','i4'),('Q1','S1'), ('T2','i4'),('Q2','S1')]
         if typ is not None:
             N=len(typ)
-            if window is not None:
-                self.dtype.append(('window','i4'))
+            self.windows=windows
             if deltaLS is not None:
                 self.dtype.append(('Delta_ls','f4'))
             self.binar=np.zeros(N,dtype=self.dtype)
@@ -22,8 +22,6 @@ class Binning(object):
             self.binar['Q1']=Q1
             self.binar['T2']=T2 
             self.binar['Q2']=Q2
-            if window is not None:
-                self.binar['window']=window
             if deltaLS is not None:
                 self.binar['Delta_ls']=deltaLS
 
@@ -34,7 +32,12 @@ class Binning(object):
         g=group.create_dataset("binning",data=self.binar)
         if self.sunit is not None:
             g.attrs.create("sunit",self.sunit)
-
+        g.attrs.create("have_windows",self.windows is not None)
+        if self.windows is not None:
+            gw=group.create_group("windows")
+            for i,w in enumerate(self.windows):
+                w.saveToHDF(gw,i)
+            
     def saveToHDFFile(self,filename):
         f=h5py.File(filename,'w')
         self.saveToHDF(f)
@@ -45,8 +48,11 @@ class Binning(object):
         m=group['binning']
         d=m.value
         sunit=m.attrs['sunit'] if 'sunit' in m.attrs.keys() else None
-        window=d['window'] if 'window' in d.dtype.names else None
+        if m.attrs['have_windows']:
+            windows=[Window.loadFromHDF(group['windows'],i) for i in range(len(d))]
+        else:
+            windows=None
         deltaLS=d['Delta_ls'] if 'Delta_ls' in d.dtype.names else None
-        return  Binning(d['type'],d['ls'],d['T1'],d['Q1'],d['T2'],d['Q2'],window, deltaLS,sunit)
+        return  Binning(d['type'],d['ls'],d['T1'],d['Q1'],d['T2'],d['Q2'],windows=windows, deltaLS=deltaLS, sunit=sunit)
             
         

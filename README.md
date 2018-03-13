@@ -55,6 +55,6 @@ binnings, mean vector and precision matrix.
 
 Thus python module should allow reading anbd writing files in `sacc`
 format. If you need to read these files in other context, please see
-documentation [here](doc/format.md)
+documentation [here](doc/format.md).
 
 

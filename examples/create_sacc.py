@@ -36,12 +36,14 @@ tracers.append (sacc.Tracer("Planck","cmb", None, None))
 # dummy values
 lvals=np.arange(100,1000,100)
 Ntracer=len(tracers)
-type,ell,t1,q1,t2,q2,val,err=[],[],[],[],[],[],[],[]
+type,ell,t1,q1,t2,q2,val,err,wins=[],[],[],[],[],[],[],[],[]
 for t1i in range(Ntracer):
     for t2i in range(t1i,Ntracer):
         for l in lvals:
             type.append('F')
             ell.append(l)
+            ## create some windows
+            wins.append(sacc.Window(np.arange(l-50,l+50),np.exp(-(1.0*np.arange(-50,50))**2/(2*20.**2))))
             t1.append(t1i)
             q1.append('P' if t1i<8 else 'I') ##last is CMB
             t2.append(t2i)
@@ -49,7 +51,7 @@ for t1i in range(Ntracer):
             val.append(np.random.uniform(0,10))
             err.append(np.random.uniform(0,1))
 
-binning=sacc.Binning(type,ell,t1,q1,t2,q2)
+binning=sacc.Binning(type,ell,t1,q1,t2,q2,windows=wins)
 mean=sacc.MeanVec(val)
 
 ## now covariance matrix
