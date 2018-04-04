@@ -5,16 +5,23 @@ SACC is the main container class of the SACC module.
 
 
 from __future__ import print_function, division
-from tracer import Tracer
-from binning import Binning
-from meanvec import MeanVec
-from precision import Precision
+from .tracer import Tracer
+from .binning import Binning
+from .meanvec import MeanVec
+from .precision import Precision
 import numpy as np
 import h5py
-
+import sys
+PY3 = sys.version_info[0] == 3
 
 
 class SACC(object):
+    
+    ## format version, bump up every time you break thins
+    ## irreparrably
+    _format_version=1
+
+
     """
     The main container class for 2pt measurements.
 
@@ -36,7 +43,7 @@ class SACC(object):
     """
 
     
-    def __init__ (self, tracers, binning, mean=None, precision=None):
+    def __init__ (self, tracers, binning, mean=None, precision=None, meta={}):
         self.tracers=tracers
         self.binning=binning
         assert([type(t)==type(Tracer) for t in self.tracers])
@@ -46,7 +53,8 @@ class SACC(object):
             mean=MeanVec(mean)
         self.mean=mean
         self.precision=precision
-
+        self.meta=meta
+        
     def get_exp_sample_set(self):
         return set([t.exp_sample for t in self.tracers])
         
@@ -54,6 +62,12 @@ class SACC(object):
     def printInfo(self):
         exps=self.get_exp_sample_set()
         print ("--------------------------------")
+
+        if len(self.meta)>0:
+            print ("Meta information:")
+            for key,value in (self.meta.items() if PY3 else self.meta.iteritems()):
+                print ("  ",key,":",value)
+            print ("--------------------------------")
         for e in exps:
             print (" EXP_SAMPLE:",e)
             cc=0
@@ -140,6 +154,12 @@ class SACC(object):
         
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'w')
+        meta=f.create_dataset("meta",data=[])
+        meta.attrs.create("_format_version",self._format_version)
+        if self.meta is not None:
+            for key,value in (self.meta.items() if PY3 else self.meta.iteritems()):
+                meta.attrs.create(key,value)
+        
         tracer_group=f.create_group("tracers")
         tracer_group.attrs.create("tracer_list",[t.name for t in self.tracers])
         for t in self.tracers:
@@ -163,6 +183,17 @@ class SACC(object):
     @classmethod
     def loadFromHDF (SACC,filename,mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'r')
+        fmeta=f['meta'].attrs
+        if (fmeta['_format_version']>SACC._format_version):
+            print("Loading file with format version %i on sacc format version %i.",
+                  (fmeta['_format_version'],self._format_version))
+            raise NotImplementedError()
+        meta={}
+
+        for key,value in (fmeta.items() if PY3 else fmeta.iteritems()):
+            if key[0]!='_':
+                meta[key]=value
+
         tracer_group=f['tracers']
         tnames=tracer_group.attrs['tracer_list']
         tracers=[Tracer.loadFromHDF(f,n) for n in tnames]
@@ -187,14 +218,14 @@ class SACC(object):
             fm=h5py.File(precision_filename,'r')
             precision=Precision.loadFromHDF(fm,binning)
         else:
-            if 'precision' in f.keys():
+            if 'error' in f.keys():
                 precision=Precision.loadFromHDF(f,binning)
             else:
                 if 'precision_file_path' in f.attrs.keys():
                     fm=h5py.File(f.attrs['precision_file_path'],'r')
                     precision=Precision.loadFromHDF(fm,binning)
         f.close()
-        return SACC(tracers,binning,mean,precision)
+        return SACC(tracers,binning,mean,precision,meta)
 
                     
         

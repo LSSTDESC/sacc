@@ -4,7 +4,7 @@
 from __future__ import print_function, division
 import numpy as np
 import h5py
-from window import Window
+from .window import Window
 
 class Binning(object):
     def __init__ (self, typ, ls, T1, Q1, T2, Q2, windows=None, deltaLS=None, sunit=None):

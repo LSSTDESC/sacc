@@ -45,7 +45,7 @@ class Tracer(object):
             g=group.create_dataset(self.name,data=[])
             g.attrs['type']=self.type
             return 
-        dt=[('z','f4'), ('Nz','f4')]
+        dt=[('z',np.dtype('f4')), ('Nz',np.dtype('f4'))]
         if self.DNz is not None:
             _,numDNz=self.DNz.shape
         else:
@@ -71,7 +71,7 @@ class Tracer(object):
         if self.sigma_logwidth is not None:
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
         if len(self.extra_cols.keys())>0:
-            a.create("extra_cols",self.extra_cols.keys())
+            a.create("extra_cols",[s.encode("ascii") for s in self.extra_cols.keys()])
             
     @classmethod
     def loadFromHDF (Tracer, group, name):
@@ -105,7 +105,7 @@ class Tracer(object):
         ec={}
         if ecols is not None:
             for n in ecols:
-                ec[n]=d[n]
+                ec[n.decode()]=d[n.decode()]
         T=Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
         T.addColumns(ec)
         return T
