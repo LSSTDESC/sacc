@@ -112,11 +112,14 @@ class SACC(object):
         toret=[]
         for t1i in range(Nt):
             for t2i in range(t1i,Nt):
-                ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
-                              ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
-                ells=self.binning.binar['ls'][ndx]
-                if len(ells)>0:
-                    toret.append((t1i,t2i,ells,ndx))
+                ndxx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
+                              ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )[0]
+                types=np.unique(self.binning.binar['type'][ndxx])
+                for typ in types :
+                    ndx=ndxx[self.binning.binar['type'][ndxx]==typ]
+                    ells=self.binning.binar['ls'][ndx]
+                    if len(ells)>0:
+                        toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
     def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True, show_legend=True, out_name=None):

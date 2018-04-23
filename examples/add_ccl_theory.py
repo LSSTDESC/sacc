@@ -37,7 +37,8 @@ ctracers=[sacc2ccl_tracer(t) for t in s.tracers]
 #
 # next, caclulate theory predictions
 #
-for t1i,t2i,ells,ndx in s.sortTracers():
+for t1i,t2i,typ,ells,ndx in s.sortTracers():
+    print(typ)
     if (ctracers[t1i] is not None) and (ctracers[t2i] is not None):
         cl_model = ccl.angular_cl(ccl_cosmo,ctracers[t1i],ctracers[t2i],ells)
         s.mean.vector[ndx]=cl_model
