@@ -17,7 +17,7 @@ for i,z in enumerate([0.3,0.5,0.7,0.9]):
     zar=np.arange(z-0.1,z+0.1,0.001)
     Nz=np.exp(-(z-zar)**2/(2*0.03**2))
     bias=np.ones(len(zar))*(i+0.5)
-    T=sacc.Tracer(b"des_gals_%i"%i,b"point",zar,Nz,exp_sample=b"des_gals",
+    T=sacc.Tracer(b"des_gals_%i"%i,b"spin0",zar,Nz,exp_sample=b"des_gals",
                                Nz_sigma_logmean=0.01, Nz_sigma_logwidth=0.1)
     T.addColumns({'b':bias})
     tracers.append(T)
@@ -35,13 +35,13 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
     DNz[:,1]=(z-zar)**3*0.01
     DNz[:,1]-=DNz[:,1].mean()
     bias=np.ones(len(zar))*(i+0.7)
-    T=sacc.Tracer(b"lsst_gals_%i"%i,b"point",zar,Nz,exp_sample=b"lsst_gals",
+    T=sacc.Tracer(b"lsst_gals_%i"%i,b"spin0",zar,Nz,exp_sample=b"lsst_gals",
                                DNz=DNz)
     T.addColumns({'b':bias})
     tracers.append(T)
 
 # and also add CMB
-tracers.append (sacc.Tracer(b"Planck","cmb", None, None))
+tracers.append (sacc.Tracer(b"Planck","spin0", None, None))
 
 # Now, let's have cross-correlation of everything with everything
 # at 100 ell bins for density correlations
@@ -52,7 +52,7 @@ for t1i in range(Ntracer):
     for t2i in range(t1i,Ntracer):
         for l in lvals:
             ## we have Fourier space measurement
-            type.append('F')
+            type.append('FF')
             ## at this nominal ell
             ell.append(l)
             ## but in detail  the measurement
@@ -63,8 +63,8 @@ for t1i in range(Ntracer):
             t2.append(t2i)
             ## Here we have density cross-correlations so "P" as point
             ## except for CMB where 
-            q1.append('P' if t1i<8 else 'K') ##last is CMB, where we have kappa
-            q2.append('P' if t2i<8 else 'K')
+            q1.append('S')
+            q2.append('S')
             ## values and errors
             val.append(np.random.uniform(0,10))
             err.append(np.random.uniform(1,2))

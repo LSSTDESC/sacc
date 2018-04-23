@@ -9,7 +9,7 @@ from .window import Window
 class Binning(object):
     def __init__ (self, typ, ls, T1, Q1, T2, Q2, windows=None, deltaLS=None, sunit=None):
         self.sunit=sunit ## angular separation unit
-        self.dtype=[('type','S1'),('ls','f4'), ('T1','i4'),('Q1','S1'), ('T2','i4'),('Q2','S1')]
+        self.dtype=[('type','S2'),('ls','f4'), ('T1','i4'),('Q1','S1'), ('T2','i4'),('Q2','S1')]
         if typ is not None:
             N=len(typ)
             self.windows=windows

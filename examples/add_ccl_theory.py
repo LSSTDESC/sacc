@@ -21,12 +21,12 @@ s=sacc.SACC.loadFromHDF("test.sacc")
 # first, let's convert sacc tracers to CCL tracers
 #
 def sacc2ccl_tracer(t):
-    if t.type=="point":
+    if len(t.z)!=1 :
         toret=ccl.ClTracerNumberCounts(ccl_cosmo,has_rsd=False,
-                                    has_magnification=False
-                                    ,z_n=t.z,n=t.Nz,z_b=t.z
-                                    ,b=t.extraColumn('b'),z_s=t.z,
-                                    s=np.zeros(len(t.z)))
+                                       has_magnification=False,
+                                       n=(t.z,t.Nz),
+                                       bias=(t.z,t.extraColumn('b')),
+                                       mag_bias=(t.z,np.zeros(len(t.z))))
     else:
         toret=None
     return toret
@@ -45,15 +45,11 @@ for t1i,t2i,ells,ndx in s.sortTracers():
         s.mean.vector[ndx]=0.0 ## we don't yet know how to deal with CMB
 
 ## now get covariance and sample from it:
-cov=la.inv(s.precision.matrix)
+cov=s.precision.cmatrix
 chol=la.cholesky(cov)
 # (perhaps need chol.T below ? double check)
 noise=np.dot(chol, np.random.normal(0.,1.,len(s.mean.vector)))
 ## Add noise
-s.mean.vector['value']+=noise
+s.mean.vector+=noise
 ## Save file new file
 s.saveToHDF("test_ccl.sacc")
-
-    
-    
-

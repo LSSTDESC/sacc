@@ -15,8 +15,8 @@ Metadata is stored in a HDF group, typically the root group in the file pointed 
 Information on tracers used is stored in HDF group `tracers`. This group must have an attribute `tracer_list` which is a list of strings defining tracer names. Ordering is important, because index in this list defines the index by which tracers are referred to later. For each tracer name there must be a subdataset inside `tracers` group which defines this tracer. 
 
 A tracer datasets must have an attribute `type` which must be of one of the following values:
- * `point`, i.e galaxies 
- * `cmb`, for CMB (for e.g. ISW studies, WL, etc (note that CMB kappa vs CMB primary will be distinguished below)
+ * `spin0`: e.g. number counts, kappa, magnification, CMB temperature
+ * `spin2`: e.g. CMB polarization, lensing shear
  * (other we'll add as needs arise)
  
 If it is CMB or CMB lensing, no further info is required (it is assumed that e.g. reconstruction noise, resolution, etc are all corrected for and reflected in the errorbars). For tracer, the datasets must contain a at least 2D array with fiels `z` and `Nz` (with obvious meaning). The datset can optionally contain columns with fiducial values of bias (`b`) and anything else you might want to store (to help checking mocks with results, etc.)
@@ -30,10 +30,10 @@ Often many 'tracers' in this sense will really be the same parent population cho
 Information of which index in the mean/precision matrix correspond to
 which correlation is stored in the dataset named `binning`, which also
 must exist. It is a table with the following columns:
- * `type`: Letter `F`/`C` for Fourier/Configuration space measurements. Can later add more letters for compensated measured. 
+ * `type`: 2-letter value. Use `FF` for Fourier/harmonic-space measurements. In configuration space, use `+R` and `+C` for the real (EE+BB) and complex (BE+EB) parts of the `+` correlation and `-R` or `-C` for the `-` correlation function (corresponding to the EE-BB and BE-EB terms respectively).
  * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
  * `T1`: index of tracer 1 defined above
- * `Q1`: quantity from tracer 1. Use `I` for intenstiy, `E`/`B` for CMB polarization and WL, `P` for point sources, `+`/`-` for corresponding WL correlation funcs, `K` for WL kappa, might need to invent more sources.
+ * `Q1`: quantity from tracer 1. Use `S` for scalar (e.g. temperature, number counts, lensing convergence), `E`/`B` for spin-2 (e.g. CMB polarization and WL).
  * `T2`: index of tracer 2 defined above
  * `Q2`: quantity from tracer 1
 It can also optionally have the following fields:

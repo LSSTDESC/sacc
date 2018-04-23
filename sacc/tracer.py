@@ -14,8 +14,6 @@ class Tracer(object):
         self.z=z
         self.Nz=Nz
         self.exp_sample=exp_sample
-        if (self.type=="cmb"):
-            self.exp_sample=name
         self.sigma_logmean=Nz_sigma_logmean
         self.sigma_logwidth=Nz_sigma_logwidth
         self.DNz=DNz
@@ -35,17 +33,19 @@ class Tracer(object):
         return self.extra_cols[key]
 
     def meanZ(self):
-        if self.type=="cmb":
-            return -1 ## yes, yes, we could be funny and put 1150 here.
+        if self.z is None :
+            return -1
         return (self.z*self.Nz).sum()/self.Nz.sum()
             
     def saveToHDF (self, group):
         ## first create dataset
-        if self.type=="cmb":
-            g=group.create_dataset(self.name,data=[])
-            g.attrs['type']=self.type
-            return 
-        dt=[('z',np.dtype('f4')), ('Nz',np.dtype('f4'))]
+        dt=[('z',np.dtype('f4')),('Nz',np.dtype('f4'))]
+
+        if self.z is None :
+            lenz=1
+        else :
+            lenz=len(self.z)
+
         if self.DNz is not None:
             _,numDNz=self.DNz.shape
         else:
@@ -53,10 +53,16 @@ class Tracer(object):
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
         for k,c in self.extra_cols.items():
-            dt.append((k,c.dtype))
-        data=np.zeros(len(self.Nz),dtype=dt)
-        data['z']=self.z
-        data['Nz']=self.Nz
+            dt.append((k.encode('ascii'),c.dtype))
+        data=np.zeros(lenz,dtype=dt)
+        if self.z is not None :
+            data['z']=self.z
+        else :
+            data['z']=np.array([-1.])
+        if self.Nz is not None :
+            data['Nz']=self.Nz
+        else :
+            data['Nz']=np.array([-1.])
         for i in range(numDNz):
             data['DNz_'+str(i)]=self.DNz[:,i]
         for k,c in self.extra_cols.items():
@@ -79,8 +85,6 @@ class Tracer(object):
         d=t.value
         a=t.attrs
         type=a['type']
-        if type=='cmb':
-            return Tracer(name,type,[],[])
         z=d['z']
         Nz=d['Nz']
         numDNZ=0
