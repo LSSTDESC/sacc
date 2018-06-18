@@ -45,7 +45,7 @@ class Tracer(object):
             g=group.create_dataset(self.name,data=[])
             g.attrs['type']=self.type
             return 
-        dt=[('z',np.dtype('f4')), ('Nz',np.dtype('f4'))]
+        dt=[('z',np.float), ('Nz',np.float)]
         if self.DNz is not None:
             _,numDNz=self.DNz.shape
         else:
@@ -53,7 +53,7 @@ class Tracer(object):
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
         for k,c in self.extra_cols.items():
-            dt.append((k,c.dtype))
+            dt.append((str(k),c.dtype)) 
         data=np.zeros(len(self.Nz),dtype=dt)
         data['z']=self.z
         data['Nz']=self.Nz
