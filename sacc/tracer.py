@@ -63,9 +63,9 @@ class Tracer(object):
             data[k]=c
         dset=group.create_dataset(self.name, data=data)
         a=dset.attrs
-        a.create("type",self.type)
+        a.create("type",self.type.encode('ascii'))
         if self.exp_sample is not None:
-            a.create("exp_sample",self.exp_sample)
+            a.create("exp_sample",self.exp_sample.encode('ascii'))
         if self.sigma_logmean is not None:
             a.create("Nz_sigma_logmean",self.sigma_logmean)
         if self.sigma_logwidth is not None:
