@@ -38,9 +38,14 @@ class Tracer(object):
         return (self.z*self.Nz).sum()/self.Nz.sum()
             
     def saveToHDF (self, group):
+        ## if CMB, go empty
+        if self.type=="cmb":
+            g=group.create_dataset(self.name,data=[])
+            g.attrs['type']=self.type
+            return 
+
         ## first create dataset
         dt=[('z',np.dtype('f4')),('Nz',np.dtype('f4'))]
-
         if self.z is None :
             lenz=1
         else :
@@ -78,6 +83,7 @@ class Tracer(object):
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
         if len(self.extra_cols.keys())>0:
             a.create("extra_cols",[s.encode("ascii") for s in self.extra_cols.keys()])
+
             
     @classmethod
     def loadFromHDF (Tracer, group, name):
