@@ -58,7 +58,10 @@ class Tracer(object):
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
         for k,c in self.extra_cols.items():
-            dt.append((k.encode('ascii'),c.dtype))
+            #dt.append((k.encode("ascii"),c.dtype))
+            dt.append((k,c.dtype))
+            #dt.append(("b",c.dtype))
+        print ("dtype=",dt)
         data=np.zeros(lenz,dtype=dt)
         if self.z is not None :
             data['z']=self.z
@@ -74,7 +77,8 @@ class Tracer(object):
             data[k]=c
         dset=group.create_dataset(self.name, data=data)
         a=dset.attrs
-        a.create("type",self.type)
+        #print (self.type,type(self.type),self.type.encode("ascii"))
+        a.create("type","aa".encode("ascii"))#self.type)
         if self.exp_sample is not None:
             a.create("exp_sample",self.exp_sample)
         if self.sigma_logmean is not None:
