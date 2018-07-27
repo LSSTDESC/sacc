@@ -161,10 +161,12 @@ class SACC(object):
         meta.attrs.create("_format_version",self._format_version)
         if self.meta is not None:
             for key,value in (self.meta.items() if PY3 else self.meta.iteritems()):
-                meta.attrs.create(key,value)
+                if isinstance(value,str) :
+                    value=value.encode('ascii')
+                meta.attrs.create(key.encode('ascii'),value)
         
         tracer_group=f.create_group("tracers")
-        tracer_group.attrs.create("tracer_list",[t.name for t in self.tracers])
+        tracer_group.attrs.create("tracer_list",[t.name.encode('ascii') for t in self.tracers])
         for t in self.tracers:
             t.saveToHDF(tracer_group)
         self.binning.saveToHDF(f)
