@@ -9,11 +9,11 @@ import numpy as np
 class Tracer(object):
     def __init__ (self, name, type, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
                   Nz_sigma_logwidth=None, DNz=None):
-        self.name=name
-        self.type=type
+        self.name=str(name)
+        self.type=str(type)
         self.z=z
         self.Nz=Nz
-        self.exp_sample=exp_sample
+        self.exp_sample=str(exp_sample)
         self.sigma_logmean=Nz_sigma_logmean
         self.sigma_logwidth=Nz_sigma_logwidth
         self.DNz=DNz
@@ -92,7 +92,7 @@ class Tracer(object):
         t=group['tracers'][name]
         d=t.value
         a=t.attrs
-        type=a['type']
+        type=str(a['type'])
         z=d['z']
         Nz=d['Nz']
         numDNZ=0
