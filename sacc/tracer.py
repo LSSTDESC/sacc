@@ -7,17 +7,27 @@ import numpy as np
 
 
 class Tracer(object):
-    def __init__ (self, name, type, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
-                  Nz_sigma_logwidth=None, DNz=None):
+    def __init__ (self, name, type_in, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
+                  Nz_sigma_logwidth=None, DNz=None, Mproxy_name=None, Mproxy_min=None, Mproxy_max=None):
         self.name=str(name)
-        self.type=str(type)
+        self.type=str(type_in)
         self.z=z
         self.Nz=Nz
         self.exp_sample=str(exp_sample)
         self.sigma_logmean=Nz_sigma_logmean
         self.sigma_logwidth=Nz_sigma_logwidth
         self.DNz=DNz
+        self.Mproxy_name=str(Mproxy_name)
+        self.Mproxy_min=Mproxy_min
+        self.Mproxy_max=Mproxy_max
         self.extra_cols={}
+
+        if (not(self.Mproxy_name==str(None))) and (self.type != "spin0"):
+            raise RuntimeError, "%s Cluster tracer should have type 'spin0'." % (self.name)
+        if (not(self.Mproxy_name==str(None))) and ((self.Mproxy_min is None) or (self.Mproxy_max is None)):
+            raise RuntimeError, "%s Mproxy_min and Mproxy_max should be specified." % (self.name)
+        if (not(self.Mproxy_name==str(None))) and (self.Mproxy_min >= self.Mproxy_max):
+            raise RuntimeError, "%s Mproxy_min should be smaller than Mproxy_max." % (self.name)
         
     def addColumns (self, columns):
         """
@@ -58,8 +68,8 @@ class Tracer(object):
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
         for k,c in self.extra_cols.items():
-            #dt.append((k.encode("ascii"),c.dtype))
-            dt.append((k,c.dtype))
+            dt.append((k.encode("ascii"),c.dtype))
+            #dt.append((k,c.dtype))
             #dt.append(("b",c.dtype))
         data=np.zeros(lenz,dtype=dt)
         if self.z is not None :
@@ -83,6 +93,12 @@ class Tracer(object):
             a.create("Nz_sigma_logmean",self.sigma_logmean)
         if self.sigma_logwidth is not None:
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
+        if not self.Mproxy_name:
+            a.create("Mproxy_name",self.Mproxy_name.encode('ascii'))
+        if self.Mproxy_min is not None:
+            a.create("Mproxy_min",self.Mproxy_min)
+        if self.Mproxy_max is not None:
+            a.create("Mproxy_max",self.Mproxy_max)
         if len(self.extra_cols.keys())>0:
             a.create("extra_cols",[s.encode("ascii") for s in self.extra_cols.keys()])
 
@@ -108,17 +124,20 @@ class Tracer(object):
             DNz=None
         else:
             DNz=np.array(DNZ).T
-        exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,ecols=None,None,None,None
+        exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,Mproxy_name,Mproxy_min,Mproxy_max,ecols=None,None,None,None,None,None,None
         for n,v in a.items():
             if n=='exp_sample': exp_sample=v
             if n=='Nz_sigma_logmean': Nz_sigma_logmean=v
             if n=='Nz_sigma_logwidth': Nz_sigma_logwidth=v
+            if n=='Mproxy_name': Mproxy_name=v
+            if n=='Mproxy_min': Mproxy_min=v
+            if n=='Mproxy_max': Mproxy_max=v
             if n=="extra_cols": ecols=v
         ec={}
         if ecols is not None:
             for n in ecols:
                 ec[n.decode()]=d[n.decode()]
-        T=Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz)
+        T=Tracer(name,type,z,Nz,exp_sample,Nz_sigma_logmean,Nz_sigma_logwidth,DNz,Mproxy_name,Mproxy_min,Mproxy_max)
         T.addColumns(ec)
         return T
     
