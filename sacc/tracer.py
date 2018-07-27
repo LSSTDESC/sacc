@@ -7,10 +7,10 @@ import numpy as np
 
 
 class Tracer(object):
-    def __init__ (self, name, type_in, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
+    def __init__ (self, name, type, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
                   Nz_sigma_logwidth=None, DNz=None, Mproxy_name=None, Mproxy_min=None, Mproxy_max=None):
         self.name=str(name)
-        self.type=str(type_in)
+        self.type=str(type)
         self.z=z
         self.Nz=Nz
         self.exp_sample=str(exp_sample)
@@ -46,7 +46,19 @@ class Tracer(object):
         if self.z is None :
             return -1
         return (self.z*self.Nz).sum()/self.Nz.sum()
-            
+
+    def is_CL(self):
+        if (not(self.Mproxy_name==str(None))) and (self.type == "spin0"):
+            return True
+        else:
+            return False
+
+    def is_WL(self):
+        if (self.Mproxy_name==str(None)) and (self.type == "spin2"):
+            return True
+        else:
+            return False
+    
     def saveToHDF (self, group):
         ## if CMB, go empty
         if self.type=="cmb":

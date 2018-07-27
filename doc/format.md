@@ -30,7 +30,7 @@ Often many 'tracers' in this sense will really be the same parent population cho
 Information of which index in the mean/precision matrix correspond to
 which correlation is stored in the dataset named `binning`, which also
 must exist. It is a table with the following columns:
- * `type`: 2-letter value. Use `FF` for Fourier/harmonic-space measurements. In configuration space, use `+R` and `+C` for the real (EE+BB) and complex (BE+EB) parts of the `+` correlation and `-R` or `-C` for the `-` correlation function (corresponding to the EE-BB and BE-EB terms respectively).
+ * `type`: 2-letter value. Use `FF` for Fourier/harmonic-space measurements. In configuration space, use `+R` and `+C` for the real (EE+BB) and complex (BE+EB) parts of the `+` correlation and `-R` or `-C` for the `-` correlation function (corresponding to the EE-BB and BE-EB terms respectively). For 1-pt functions (e.g., cluster counts), use `+N`.
  * `ls`: value of ell or separation (even when we have windows, for e.g. plotting)
  * `T1`: index of tracer 1 defined above
  * `Q1`: quantity from tracer 1. Use `S` for scalar (e.g. temperature, number counts, lensing convergence), `E`/`B` for spin-2 (e.g. CMB polarization and WL).
