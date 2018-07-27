@@ -61,7 +61,6 @@ class Tracer(object):
             #dt.append((k.encode("ascii"),c.dtype))
             dt.append((k,c.dtype))
             #dt.append(("b",c.dtype))
-        print ("dtype=",dt)
         data=np.zeros(lenz,dtype=dt)
         if self.z is not None :
             data['z']=self.z

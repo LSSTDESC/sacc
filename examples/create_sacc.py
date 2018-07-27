@@ -17,7 +17,7 @@ for i,z in enumerate([0.3,0.5,0.7,0.9]):
     zar=np.arange(z-0.1,z+0.1,0.001)
     Nz=np.exp(-(z-zar)**2/(2*0.03**2))
     bias=np.ones(len(zar))*(i+0.5)
-    T=sacc.Tracer(b"des_gals_%i"%i,b"spin0",zar,Nz,exp_sample=b"des_gals",
+    T=sacc.Tracer("des_gals_%i"%i,"spin0",zar,Nz,exp_sample="des_gals",
                                Nz_sigma_logmean=0.01, Nz_sigma_logwidth=0.1)
     T.addColumns({'b':bias})
     tracers.append(T)
@@ -35,13 +35,13 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
     DNz[:,1]=(z-zar)**3*0.01
     DNz[:,1]-=DNz[:,1].mean()
     bias=np.ones(len(zar))*(i+0.7)
-    T=sacc.Tracer(b"lsst_gals_%i"%i,b"spin0",zar,Nz,exp_sample=b"lsst_gals",
+    T=sacc.Tracer("lsst_gals_%i"%i,"spin0",zar,Nz,exp_sample="lsst_gals",
                                DNz=DNz)
     T.addColumns({'b':bias})
     tracers.append(T)
 
 # and also add CMB
-tracers.append (sacc.Tracer(b"Planck","spin0", None, None))
+tracers.append (sacc.Tracer("Planck","spin0", None, None))
 
 # Now, let's have cross-correlation of everything with everything
 # at 100 ell bins for density correlations
@@ -88,7 +88,7 @@ for i in range(Np):
 precision=sacc.Precision(cov,"ell_block_diagonal",is_covariance=True, binning=binning)
             
 ## Add some meta data
-meta={b'Creator':b'McGyver',b'Project':b'Victory'}
+meta={"Creator":"McGyver","Project":"Victory"}
 
 
 ## finally, create SACC object
