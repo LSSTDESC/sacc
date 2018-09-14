@@ -6,6 +6,19 @@ import numpy as np
 import h5py
 from .window import Window
 
+def enc(x):
+    """
+    If an object is a bytes instance or None, return it as-is
+    Otherwise if it is a string object, return it as ascii bytes
+
+    Under python 2 bytes and string are the same, so this will
+    always return the object as-is.
+    """
+    if x is None or isinstance(x, bytes):
+        return x
+    else:
+        return x.encode('ascii')
+
 class Binning(object):
     def __init__ (self, typ, ls, T1, Q1, T2, Q2, windows=None, deltaLS=None, sunit=None):
         self.sunit=sunit ## angular separation unit
@@ -27,6 +40,70 @@ class Binning(object):
 
     def size(self):
         return len(self.binar)
+
+    def get_quantity_pairs(self, typ=None):
+        """Return an array of the pairs of quantities included in this data
+
+        Args:
+            typ (string, bytes, or None): The type of pair to restrict to. By default use all pairs.
+
+        Returns:
+            pairs (array): nx2 array of quantity code pairs (bytes).
+
+        """
+        typ = enc(typ)
+        quants = [(row['Q1'], row['Q2']) for row in self.binar if (typ==None or row['type']==typ)]
+        return np.unique(quants, axis=0)
+
+    def get_bin_pairs(self, Q1, Q2, typ=None):
+        """Return an array of the pairs of bin indices included in this data
+
+        Args:
+            Q1 (string or bytes): First quantity in pair, e.g. 'S' for shear, 'P' for position
+            Q2 (string or bytes): Second quantity in pair
+            typ (string, bytes, or None): The type of pair to restrict to. By default use all pairs.
+        Returns:
+            pairs (array): nx2 array of integer bin pairs.
+
+        """
+        Q1 = enc(Q1)
+        Q2 = enc(Q2)
+        typ = enc(typ)
+        pairs = [(row['T1'], row['T2'])
+            for row in self.binar
+            if row['Q1']==Q1
+                and row['Q2']==Q2
+                and (typ==None or row['type']==typ)
+        ]
+        return np.unique(pairs, axis=0)
+
+    def get_angle(self, Q1, Q2, i, j, typ=None):
+        """Return an array of the angle (ell or theta) values for a bin
+
+        Args:
+            Q1 (string or bytes): First quantity in pair, e.g. 'S' for shear, 'P' for position
+            Q2 (string or bytes): Second quantity in pair
+            i (int): First bin index
+            j (int): Second bin index
+            typ (string, bytes, or None): The type of pair to restrict to. By default use all pairs.
+        Returns:
+            theta (array): Values of the angular quantity. Will be length zero if no matches.
+
+        """        
+        Q1 = enc(Q1)
+        Q2 = enc(Q2)
+        if typ is not None:
+            typ = enc(typ)
+        theta = [row['ls']
+            for row in self.binar
+            if row['T1']==i
+                and row['T2']==j
+                and row['Q1']==Q1
+                and row['Q2']==Q2
+                and (typ==None or row['type']==typ)
+        ]
+        return np.array(theta)
+
                 
     def saveToHDF (self, group):
         g=group.create_dataset("binning",data=self.binar)
