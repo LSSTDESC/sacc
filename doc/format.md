@@ -36,6 +36,7 @@ must exist. It is a table with the following columns:
  * `Q1`: quantity from tracer 1. Use `S` for scalar (e.g. temperature, number counts, lensing convergence), `E`/`B` for spin-2 (e.g. CMB polarization and WL).
  * `T2`: index of tracer 2 defined above
  * `Q2`: quantity from tracer 1
+ 
 It can also optionally have the following fields:
  * `window` : specifying index of the window defined above, or -1 if no window.
  * `Delta ls` : specifying window width assuming top-hat windows
