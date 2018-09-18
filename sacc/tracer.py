@@ -17,17 +17,20 @@ class Tracer(object):
         self.sigma_logmean=Nz_sigma_logmean
         self.sigma_logwidth=Nz_sigma_logwidth
         self.DNz=DNz
-        self.Mproxy_name=str(Mproxy_name)
+        self.Mproxy_name=Mproxy_name#str(Mproxy_name)
         self.Mproxy_min=Mproxy_min
         self.Mproxy_max=Mproxy_max
         self.extra_cols={}
 
-        if (not(self.Mproxy_name==str(None))) and (self.type != "spin0"):
-            raise RuntimeError, "%s Cluster tracer should have type 'spin0'." % (self.name)
-        if (not(self.Mproxy_name==str(None))) and ((self.Mproxy_min is None) or (self.Mproxy_max is None)):
-            raise RuntimeError, "%s Mproxy_min and Mproxy_max should be specified." % (self.name)
-        if (not(self.Mproxy_name==str(None))) and (self.Mproxy_min >= self.Mproxy_max):
-            raise RuntimeError, "%s Mproxy_min should be smaller than Mproxy_max." % (self.name)
+        #For clusters, specify whether the mass proxy information is correctly passed.
+        if (self.Mproxy_name is not None):
+            print("Name is: "+self.Mproxy_name)
+            if self.type != "spin0":
+                raise RuntimeError("%s Cluster tracer should have type 'spin0'." % (self.name))
+            if (self.Mproxy_min is None) or (self.Mproxy_max is None):
+                raise RuntimeError("%s Mproxy_min and Mproxy_max should be specified." % (self.name))
+            if (self.Mproxy_min >= self.Mproxy_max):
+                raise RuntimeError("%s Mproxy_min should be smaller than Mproxy_max." % (self.name))
         
     def addColumns (self, columns):
         """
@@ -80,9 +83,10 @@ class Tracer(object):
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
         for k,c in self.extra_cols.items():
-            dt.append((k.encode("ascii"),c.dtype))
-            #dt.append((k,c.dtype))
+            #dt.append((k.encode("ascii"),c.dtype))
+            dt.append((k,c.dtype))
             #dt.append(("b",c.dtype))
+        print("here:\n",dt)
         data=np.zeros(lenz,dtype=dt)
         if self.z is not None :
             data['z']=self.z
@@ -105,7 +109,7 @@ class Tracer(object):
             a.create("Nz_sigma_logmean",self.sigma_logmean)
         if self.sigma_logwidth is not None:
             a.create("Nz_sigma_logwidth",self.sigma_logwidth)
-        if not self.Mproxy_name:
+        if self.Mproxy_name is not None:
             a.create("Mproxy_name",self.Mproxy_name.encode('ascii'))
         if self.Mproxy_min is not None:
             a.create("Mproxy_min",self.Mproxy_min)
