@@ -51,13 +51,13 @@ class Tracer(object):
         return (self.z*self.Nz).sum()/self.Nz.sum()
 
     def is_CL(self):
-        if (not(self.Mproxy_name==str(None))) and (self.type == "spin0"):
+        if (self.Mproxy_name is not None) and (self.type == "spin0"):
             return True
         else:
             return False
 
     def is_WL(self):
-        if (self.Mproxy_name==str(None)) and (self.type == "spin2"):
+        if (self.Mproxy_name is None) and (self.type == "spin2"):
             return True
         else:
             return False

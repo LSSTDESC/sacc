@@ -71,6 +71,7 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
                                DNz=DNz)
     tracers.append(T)
 
+print tracers
 
 # Now, let's have cross-correlation of everything with everything
 # at 100 ell bins for density correlations
@@ -80,38 +81,39 @@ rvals=np.logspace(np.log10(0.5), np.log10(3), 10)
 Ntracer=len(tracers)
 type,bins,t1,q1,t2,q2,val,err,wins=[],[],[],[],[],[],[],[],[]
 for t1i in range(Ntracer):
+    ## cluster number counts
     if tracers[t1i].is_CL():
-        for r in rvals:
-            ## we have number counts
-            type.append('+N')
-            bins.append(-1.)
-            ## We refer to tracers by their index
-            t1.append(t1i)
-            t2.append(-1)
-            ## Here we have cluster number counts
-            q1.append('S')
-            q2.append('0')
-            ## values and errors
-            val.append(t1i+1)
-            err.append(np.sqrt(float(t1i+1)))
-        for t2i in range(t1i,Ntracer):
-            if tracers[t2i].is_WL():
-                for r in rvals:
-                    ## we have configuration space measurement
-                    type.append('+R')
-                    ## at this nominal rbins
-                    bins.append(r)
-                    ## We refer to tracers by their index
-                    t1.append(t1i)
-                    t2.append(t2i)
-                    ## Here we have density-shear cross-correlations
-                    q1.append('S')
-                    q2.append('E')
-                    ## values and errors
-                    val.append(np.random.uniform(0,10))
-                    err.append(np.random.uniform(1,2))
-    else:
-        for t2i in range(t1i,Ntracer):
+        type.append('+N')
+        bins.append(-1.)
+        ## We refer to tracers by their index
+        t1.append(t1i)
+        t2.append(-1)
+        ## Here we have cluster number counts
+        q1.append('S')
+        q2.append('0')
+        ## values and errors
+        val.append(t1i+1)
+        err.append(np.sqrt(float(t1i+1)))
+
+    for t2i in range(t1i,Ntracer):
+        ## cluster weak lensing
+        if tracers[t1i].is_CL() and tracers[t2i].is_WL():
+            for r in rvals:
+                ## we have configuration space measurement
+                type.append('+R')
+                ## at this nominal rbins
+                bins.append(r)
+                ## We refer to tracers by their index
+                t1.append(t1i)
+                t2.append(t2i)
+                ## Here we have density-shear cross-correlations
+                q1.append('S')
+                q2.append('E')
+                ## values and errors
+                val.append(np.random.uniform(0,10))
+                err.append(np.random.uniform(1,2))
+            print len(type)
+        if (tracers[t1i].is_CL() or tracers[t2i].is_CL() or tracers[t1i].is_WL() or tracers[t2i].is_WL()) == False:
             for l in lvals:
                 ## we have Fourier space measurement
                 type.append('FF')
@@ -131,7 +133,6 @@ for t1i in range(Ntracer):
                 val.append(np.random.uniform(0,10))
                 err.append(np.random.uniform(1,2))
 
-        
 binning=sacc.Binning(type,bins,t1,q1,t2,q2,windows=wins)
 mean=sacc.MeanVec(val)
 
@@ -150,7 +151,7 @@ for i in range(Np):
             cov[i,j] = err[i]*err[j]
             if i != j:
                 cov[i,j] /= 10.
-                cov[j,i] = cov[i,j]
+            cov[j,i] = cov[i,j]
         else:
             if bins[i]==bins[j]:
                 cov[i,j]=err[i]*err[j]
