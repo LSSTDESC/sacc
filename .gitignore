@@ -1,3 +1,6 @@
+# Actual SACC files created by the example scripts.
+*.sacc
+
 # emacs backup files
 *~
 
