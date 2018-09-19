@@ -9,6 +9,29 @@ import numpy as np
 class Tracer(object):
     def __init__ (self, name, type, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
                   Nz_sigma_logwidth=None, DNz=None, Mproxy_name=None, Mproxy_min=None, Mproxy_max=None):
+        """Default initializer for the Tracer object.
+
+        A tracer is an object for which we have a data vector for. The term derives from
+        tracers of the density field of the Universe. This method will be better documented
+        in the future...
+
+        Args:
+            name (:obj:`str`): Name for the tracer.
+            type (:obj:`str`): The type of tracer, i.e. whether it is a spin0 or spin2 observable.
+            z (float): 
+            Nz ():
+            exp_sample (): 
+            NZ_sigma_logmean ():
+            NZ_sigma_logwidth ():
+            DNz ():
+            Mproxy_name (:obj:`str`, optional): Name of the mass proxy if the tracer is clusters.
+                Defaults to None.
+            Mproxy_min (float): Minimum value of the mass proxy bin if the tracer is clusters. 
+                Defaults to None.
+            Mproxy_max (float): Maximum value of the mass proxy bin if the tracer is clusters. 
+                Defaults to None.
+        
+        """
         self.name=str(name)
         self.type=str(type)
         self.z=z
@@ -24,7 +47,6 @@ class Tracer(object):
 
         #For clusters, specify whether the mass proxy information is correctly passed.
         if (self.Mproxy_name is not None):
-            print("Name is: "+self.Mproxy_name)
             if self.type != "spin0":
                 raise RuntimeError("%s Cluster tracer should have type 'spin0'." % (self.name))
             if (self.Mproxy_min is None) or (self.Mproxy_max is None):
@@ -51,18 +73,19 @@ class Tracer(object):
         return (self.z*self.Nz).sum()/self.Nz.sum()
 
     def is_CL(self):
-        if (self.Mproxy_name is not None) and (self.type == "spin0"):
-            return True
-        else:
-            return False
+        """Is the tracer a cluster number count. Returns a boolean."""
+        return (self.Mproxy_name is not None) and (self.type == "spin0")
 
     def is_WL(self):
-        if (self.Mproxy_name is None) and (self.type == "spin2"):
-            return True
-        else:
-            return False
+        """TODO: WHAT IS THIS? Returns a boolean."""
+        return (self.Mproxy_name is None) and (self.type == "spin2")
     
     def saveToHDF (self, group):
+        """Save the tracer to an HDF file.
+        
+        More docstring here.
+
+        """
         ## if CMB, go empty
         if self.type=="cmb":
             g=group.create_dataset(self.name,data=[])
@@ -82,11 +105,12 @@ class Tracer(object):
             numDNz=0
         for i in range(numDNz):
             dt.append(("DNz_"+str(i),'f4'))
+        #TOM: TODO - wtf is going on here?
         for k,c in self.extra_cols.items():
             #dt.append((k.encode("ascii"),c.dtype))
             dt.append((k,c.dtype))
             #dt.append(("b",c.dtype))
-        print("here:\n",dt)
+        
         data=np.zeros(lenz,dtype=dt)
         if self.z is not None :
             data['z']=self.z
@@ -120,7 +144,12 @@ class Tracer(object):
 
             
     @classmethod
-    def loadFromHDF (Tracer, group, name):
+    def loadFromHDF(Tracer, group, name):
+        """Create a Tracer object from an HDF file.
+
+        More docstring here.
+
+        """
         t=group['tracers'][name]
         d=t.value
         a=t.attrs
