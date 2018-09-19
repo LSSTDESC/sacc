@@ -47,8 +47,10 @@ class Tracer(object):
 
         #For clusters, specify whether the mass proxy information is correctly passed.
         if (self.Mproxy_name is not None):
-            if self.type != "spin0":
-                raise RuntimeError("%s Cluster tracer should have type 'spin0'." % (self.name))
+            #Note, that the "spin0" could be a unicode or byte string.
+            #This is a hack until I understand Python 3 strings better...
+            if not (self.type != "spin0" or self.type != b"spin0"):
+                raise RuntimeError("%s Cluster tracer should have type 'spin0'.\n\tType is %s" % (self.name, self.type))
             if (self.Mproxy_min is None) or (self.Mproxy_max is None):
                 raise RuntimeError("%s Mproxy_min and Mproxy_max should be specified." % (self.name))
             if (self.Mproxy_min >= self.Mproxy_max):
@@ -73,11 +75,13 @@ class Tracer(object):
         return (self.z*self.Nz).sum()/self.Nz.sum()
 
     def is_CL(self):
-        """Is the tracer a cluster number count. Returns a boolean."""
+        """Is the tracer a cluster stack. Returns a boolean."""
         return (self.Mproxy_name is not None) and (self.type == "spin0")
 
     def is_WL(self):
-        """TODO: WHAT IS THIS? Returns a boolean."""
+        """Is the tracer a source for a lensing measurement. Returns a boolean.
+        TODO: is the check for the Mproxy_name necessary? All spin2 things could be a WL tracer...
+        """
         return (self.Mproxy_name is None) and (self.type == "spin2")
     
     def saveToHDF (self, group):
@@ -174,7 +178,7 @@ class Tracer(object):
             if n=='exp_sample': exp_sample=v
             if n=='Nz_sigma_logmean': Nz_sigma_logmean=v
             if n=='Nz_sigma_logwidth': Nz_sigma_logwidth=v
-            if n=='Mproxy_name': Mproxy_name=v
+            if n=='Mproxy_name': Mproxy_name=str(v)
             if n=='Mproxy_min': Mproxy_min=v
             if n=='Mproxy_max': Mproxy_max=v
             if n=="extra_cols": ecols=v
