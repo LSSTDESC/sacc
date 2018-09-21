@@ -121,7 +121,7 @@ class SACC(object):
             n_cl   = np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==-1)) |
                               ((self.binning.binar['T1']==-1) & (self.binning.binar['T2']==t1i)))[0]
             #If the ndx array is not empty, then append cluster-N counts information to the list
-            if len(n_cl)>0: toret.append((t1i, -1, b'+N', None, None))
+            if len(n_cl)>0: toret.append((t1i, -1, b'+N', None, n_cl))
             
             #Loop over all other proceeding tracers, in case we have 2pt statistics
             for t2i in range(t1i,Nt):
