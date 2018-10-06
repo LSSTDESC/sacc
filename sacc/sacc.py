@@ -99,7 +99,23 @@ class SACC(object):
                       ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
         return ndx
 
+    def cullLminLmax(self,lmin,lmax):
+        """ lmin and lmax are lists/arrays the lenght of tracers size"""
+        lmina=np.maximum(
+            np.array(lmin)[self.binning.binar['T1']],
+            np.array(lmin)[self.binning.binar['T2']])
+        lmaxa=np.minimum(
+            np.array(lmax)[self.binning.binar['T1']],
+            np.array(lmax)[self.binning.binar['T2']])
+        ndx=np.where((self.binning.binar['ls']>lmin) &
+             (self.binning.binar['ls']<lmax))[0]
+
+        self.binning.cullBinning(ndx)
+        self.mean.cullVector(ndx)
+        self.precision.cullMatrix(ndx)
         
+
+    
     def sortTracers(self):
         """Sort the tracers and return information on them in a tuple form.
         The return format is: (t1i,t2i,type,ells,ndx),
@@ -137,7 +153,8 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True, show_legend=True, out_name=None):
+    def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True,
+                     show_legend=True, out_name='show', prediction=None, clr='r',lofsf=1.0,label=None):
         """
         Plots the mean vector associated to the different tracers
         in the sacc file. The tracers to plot can be selected
@@ -146,17 +163,39 @@ class SACC(object):
         between these bins just set the argument plot_cross to True.
         """      
         import matplotlib.pyplot as plt
+        #ax = plt.axes()
+        #ax_color_cycle = ax._get_lines.prop_cycler
+        #clr=next(ax_color_cycle)['color']
         if tr_number is None:
             tr_number=np.arange(len(self.tracers))
+        if self.precision is not None:
+            errs=np.sqrt(self.precision.getCovarianceMatrix().diagonal())
+        else:
+            errs=None
+        
         if plot_cross:
             for tr_i in tr_number:
                 for tr_j in range(tr_i,len(tr_number)):
                     tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
-                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'-',label='%i,%i' %(tr_i,tr_j))
+                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'o',label='%i,%i' %(tr_i,tr_j),color=clr)
+                    if errs is not None:
+                        plt.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
+                    if prediction is not None:
+                        plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
         else:
             for tr_i in tr_number:
+                if label is None:
+                    label='%i,%i' %(tr_i,tr_i)
                 tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_i)
-                plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'-',label='%i,%i' %(tr_i,tr_i))
+                if errs is not None:
+                    plt.errorbar(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],
+                                 yerr=errs[tbin],fmt='.',label=label,color=clr)
+                else:
+                    plt.plot(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],'o',
+                             label=label,color=clr)
+
+                if prediction is not None:
+                    plt.plot(self.binning.binar['ls'][tbin]*lofsf,prediction[tbin],'-',color=clr)
         if set_logx:
             plt.xscale('log')
         if set_logy:
@@ -166,6 +205,8 @@ class SACC(object):
         if show_legend:
             plt.legend(loc='best')
         if out_name is None:
+            pass
+        elif out_name=='show':
             plt.show()
         else:
             plt.savefig(out_name)

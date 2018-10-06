@@ -11,7 +11,10 @@ class MeanVec(object):
 
     def size(self):
         return len(self.vector)
-                
+
+    def cullVector(self,ndxlist):
+        self.vector=self.vector[ndxlist]
+    
     def saveToHDF (self, group):
         g=group.create_dataset("mean",data=self.vector)
 

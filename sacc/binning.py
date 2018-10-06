@@ -38,6 +38,10 @@ class Binning(object):
             if deltaLS is not None:
                 self.binar['Delta_ls']=deltaLS
 
+
+    def cullBinning(self,ndxlist):
+        self.binar=self.binar[ndxlist]
+        
     def size(self):
         return len(self.binar)
 

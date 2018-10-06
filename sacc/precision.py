@@ -18,67 +18,71 @@ class Precision(object):
             raise NotImplemented
 
         if is_covariance:
-            self.cmatrix=matrix
-            self.pmatrix=None
+            self._cmatrix=matrix
+            self._pmatrix=None
         else:
-            self.pmatrix=matrix
-            self.cmatrix=None
+            self._pmatrix=matrix
+            self._cmatrix=None
             
         self.mode=mode
         self.binning=binning
         
 
-    def CullMatrix(self,ndxlist):
-        if self.cmatrix is not None:
-            _getCovarianceFromPrecision()
+    def cullMatrix(self,ndxlist):
+        if self._cmatrix is None:
+            self._getCovarianceFromPrecision()
         if self.mode=="diagonal":
-            self.cmatrix=self.cmatrix(ndxlist)
+            self._cmatrix=self._cmatrix(ndxlist)
         elif (self.mode in ['dense','ell_block_diagonal']):
             N=len(ndxlist)
             cmatrix=np.zeros((N,N))
             ## there should be a better way of doing this:
             for i in range(N):
-                cmatrix[i,ndx]=self.cmatrix[ndx[i],ndx]
-            self.cmatrix=cmatrix
+                cmatrix[i,ndxlist]=self._cmatrix[ndxlist[i],ndxlist]
+            self._cmatrix=cmatrix
 
-        if self.pmatrix is not None:
-            _getPrecisionFromCovariance()
+        if self._pmatrix is not None:
+            self._getPrecisionFromCovariance()
         
     def _getCovarianceFromPrecision(self):
-        if self.pmatrix is None:
+        if self._pmatrix is None:
             print ("Consider getting a job in McDonalds.")
             raise AssertionErrror()
         if self.mode=='diagonal':
-            self.cmatrix=1/la.inv(self.pmatrix)
+            self._cmatrix=1/la.inv(self._pmatrix)
         elif (self.mode in ['dense','ell_block_diagonal']):
-            self.cmatrix=la.inv(self.pmatrix)
+            self._cmatrix=la.inv(self._pmatrix)
         else:
             raise NotImplementedError()
         
     def _getPrecisionFromCovariance(self):
-        if self.cmatrix is None:
+        if self._cmatrix is None:
             print ("Consider getting a job in McDonalds.")
             raise AssertionErrror()
         if self.mode=='diagonal':
-            self.pmatrix=1/la.inv(self.cmatrix)
+            self._pmatrix=1/la.inv(self._cmatrix)
         elif (self.mode in ['dense','ell_block_diagonal']):
-            self.pmatrix=la.inv(self.cmatrix)
+            self._pmatrix=la.inv(self._cmatrix)
         else:
             raise NotImplementedError()
 
-    def precisionMatrix(self):
-        if self.pmatrix is None:
+    def getPrecisionMatrix(self):
+        if self._pmatrix is None:
             self._getPrecisionFromCovariance()
-        return self.pmatrix
-    
+        return self._pmatrix
+
+    def getCovarianceMatrix(self):
+        if self._cmatrix is None:
+            self._getCovarianceFromPrecision()
+        return self._cmatrix
             
     def saveToHDF (self, group): ## might need binning for certain modes of saving
         ## if we have covariance matrix, save that one, otherwise save precision
-        if self.cmatrix is not None:
-            matrix=self.cmatrix
+        if self._cmatrix is not None:
+            matrix=self._cmatrix
             savingC=True
         else:
-            matrix=self.pmatrix
+            matrix=self._pmatrix
             savingC=False
 
         if self.mode=="dense":
