@@ -101,20 +101,35 @@ class SACC(object):
 
         
     def sortTracers(self):
-        """
-        returns a list of tuples, like this
-        (t1i,t2i,ells,ndx)
-        where t1i,t2i are indices of first and second tracer
-        ells is the list of ells used 
-        ndx is the list of indices in data vector corresponding to this.
+        """Sort the tracers and return information on them in a tuple form.
+        The return format is: (t1i,t2i,type,ells,ndx),
+        where t1i,t2i are indices of first and second tracer,
+        type is the kind of data vector,
+        ells is the list of ells used, and ndx is the list of indices in the
+        data vector corresponding to this.
+
+        TODO: figure out how to make this compatible with 3-pt correlation functions.
+
+        Returns:
+            (tuple): Information about all tracers and how they are combined
         """
         Nt=len(self.tracers)
         toret=[]
+        #Loop over all tracers
         for t1i in range(Nt):
+            #Check if this tracer is a number count, '+N' type
+            n_cl   = np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==-1)) |
+                              ((self.binning.binar['T1']==-1) & (self.binning.binar['T2']==t1i)))[0]
+            #If the ndx array is not empty, then append cluster-N counts information to the list
+            if len(n_cl)>0: toret.append((t1i, -1, b'+N', None, n_cl))
+            
+            #Loop over all other proceeding tracers, in case we have 2pt statistics
             for t2i in range(t1i,Nt):
+                #Pick out which tracers correspond to tracers t1 and t2
                 ndxx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
                               ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )[0]
                 types=np.unique(self.binning.binar['type'][ndxx])
+                #Loop over the types of tracers this 2pt statistic could be, and figure out the ell bins
                 for typ in types :
                     ndx=ndxx[self.binning.binar['type'][ndxx]==typ]
                     ells=self.binning.binar['ls'][ndx]

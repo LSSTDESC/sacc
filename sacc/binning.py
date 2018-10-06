@@ -124,6 +124,7 @@ class Binning(object):
     def loadFromHDF (Binning,group):
         m=group['binning']
         d=m.value
+        d['type'] = [typ.decode("utf-8") for typ in d['type']]
         sunit=m.attrs['sunit'] if 'sunit' in m.attrs.keys() else None
         if m.attrs['have_windows']:
             windows=[Window.loadFromHDF(group['windows'],i) for i in range(len(d))]
