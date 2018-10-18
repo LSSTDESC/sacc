@@ -107,8 +107,8 @@ class SACC(object):
         lmaxa=np.minimum(
             np.array(lmax)[self.binning.binar['T1']],
             np.array(lmax)[self.binning.binar['T2']])
-        ndx=np.where((self.binning.binar['ls']>lmin) &
-             (self.binning.binar['ls']<lmax))[0]
+        ndx=np.where((self.binning.binar['ls']>lmina) &
+             (self.binning.binar['ls']<lmaxa))[0]
 
         self.binning.cullBinning(ndx)
         self.mean.cullVector(ndx)
@@ -183,16 +183,21 @@ class SACC(object):
                     if prediction is not None:
                         plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
         else:
-            for tr_i in tr_number:
-                if label is None:
-                    label='%i,%i' %(tr_i,tr_i)
+            for cc,tr_i in enumerate(tr_number):
+                if cc==0:
+                    if label is None:
+                        plabel='%i,%i' %(tr_i,tr_i)
+                    else:
+                        plabel=label
+                else:
+                    plabel=None
                 tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_i)
                 if errs is not None:
                     plt.errorbar(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],
-                                 yerr=errs[tbin],fmt='.',label=label,color=clr)
+                                 yerr=errs[tbin],fmt='.',label=plabel,color=clr)
                 else:
                     plt.plot(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],'o',
-                             label=label,color=clr)
+                             label=plabel,color=clr)
 
                 if prediction is not None:
                     plt.plot(self.binning.binar['ls'][tbin]*lofsf,prediction[tbin],'-',color=clr)

@@ -38,7 +38,7 @@ class Precision(object):
             cmatrix=np.zeros((N,N))
             ## there should be a better way of doing this:
             for i in range(N):
-                cmatrix[i,ndxlist]=self._cmatrix[ndxlist[i],ndxlist]
+                cmatrix[i,:]=self._cmatrix[ndxlist[i],ndxlist]
             self._cmatrix=cmatrix
 
         if self._pmatrix is not None:
