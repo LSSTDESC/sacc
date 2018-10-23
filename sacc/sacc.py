@@ -173,7 +173,7 @@ class SACC(object):
         else:
             errs=None
         
-        if plot_cross:
+        if plot_cross == True:
             for tr_i in tr_number:
                 for tr_j in range(tr_i,len(tr_number)):
                     tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
@@ -182,6 +182,18 @@ class SACC(object):
                         plt.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
                     if prediction is not None:
                         plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
+
+        elif plot_cross == 'only':
+            for tr_i in tr_number:
+                other_tr = np.delete(np.arange(len(self.tracers)), np.where(np.arange(len(self.tracers)) != tr_i))
+                for tr_j in other_tr:
+                    tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
+                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'o',label='%i,%i' %(tr_i,tr_j),color=clr)
+                    if errs is not None:
+                        plt.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
+                    if prediction is not None:
+                        plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
+
         else:
             for cc,tr_i in enumerate(tr_number):
                 if cc==0:
