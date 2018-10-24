@@ -153,8 +153,8 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, tr_number=None, plot_cross=False, set_logx=True, set_logy=True,
-                     show_legend=True, out_name='show', prediction=None, clr='r',lofsf=1.0,label=None):
+    def plot_vector (self, subplot, plot_corr='all', set_logx=True, set_logy=True,
+                     show_legend=True, prediction=None, clr='r',lofsf=1.0,label=None):
         """
         Plots the mean vector associated to the different tracers
         in the sacc file. The tracers to plot can be selected
@@ -166,67 +166,69 @@ class SACC(object):
         #ax = plt.axes()
         #ax_color_cycle = ax._get_lines.prop_cycler
         #clr=next(ax_color_cycle)['color']
-        if tr_number is None:
-            tr_number=np.arange(len(self.tracers))
+
         if self.precision is not None:
             errs=np.sqrt(self.precision.getCovarianceMatrix().diagonal())
         else:
             errs=None
         
-        if plot_cross == True:
-            for tr_i in tr_number:
-                for tr_j in range(tr_i,len(tr_number)):
-                    tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
-                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'o',label='%i,%i' %(tr_i,tr_j),color=clr)
-                    if errs is not None:
-                        plt.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
-                    if prediction is not None:
-                        plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
+        plot_cross = False
+        plot_auto = False
+        plot_pairs = []
 
-        elif plot_cross == 'only':
-            for tr_i in tr_number:
-                other_tr = np.delete(np.arange(len(self.tracers)), np.where(np.arange(len(self.tracers)) != tr_i))
+        if plot_corr == 'all':
+            # Plot the auto-correlation and the cross-correlation
+            plot_cross = True
+            plot_auto = True
+        elif plot_corr == 'cross':
+            # Plot ALL cross-correlations only
+            plot_cross = True
+        elif plot_corr == 'auto':
+            # Plot the auto-correlation only
+            plot_auto = True
+        elif hasattr(plot_corr, '__iter__'):
+            plot_pairs = plot_corr
+        else:
+            print('plot_corr needs to be \'all\', \'auto\',\'cross\', or a list of pairs of values.')
+
+        tracer_array = np.arange(len(self.tracers))
+        if plot_cross:
+            for tr_i in tracer_array:
+                other_tr = np.delete(nptracer_array, np.where(nptracer_array != tr_i))
                 for tr_j in other_tr:
-                    tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
-                    plt.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],'o',label='%i,%i' %(tr_i,tr_j),color=clr)
-                    if errs is not None:
-                        plt.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
-                    if prediction is not None:
-                        plt.plot(self.binning.binar['ls'][tbin],prediction[tbin],'-',color=clr)
+                    # Generate the appropriate list of tracer combinations to plot
+                    plot_pairs.append([tr_i, tr_j])
 
-        else:
-            for cc,tr_i in enumerate(tr_number):
-                if cc==0:
-                    if label is None:
-                        plabel='%i,%i' %(tr_i,tr_i)
-                    else:
-                        plabel=label
-                else:
-                    plabel=None
-                tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_i)
-                if errs is not None:
-                    plt.errorbar(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],
-                                 yerr=errs[tbin],fmt='.',label=plabel,color=clr)
-                else:
-                    plt.plot(self.binning.binar['ls'][tbin]*lofsf,self.mean.vector[tbin],'o',
-                             label=plabel,color=clr)
+        if plot_auto:
+            for tr_i in tracer_array:
+                plot_pairs.append([tr_i, tr_i])
 
-                if prediction is not None:
-                    plt.plot(self.binning.binar['ls'][tbin]*lofsf,prediction[tbin],'-',color=clr)
+        plot_pairs = np.array(plot_pairs)
+
+        ###################################
+        # Plotting routines below this line
+        ###################################
+
+        for (tr_i, tr_j) in plot_pairs:
+            tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
+            subplot.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j),color=clr)
+            if errs is not None:
+                subplot.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
+            subplot.scatter(self.binning.binar['ls'][tbin],self.mean.vector[tbin], s = 20, edgecolor = 'k', c = clr)
+            if prediction is not None:
+                subplot.plot(self.binning.binar['ls'][tbin],prediction[tbin],':',color=clr)
+
         if set_logx:
-            plt.xscale('log')
+            subplot.set_xscale('log')
         if set_logy:
-            plt.yscale('log')
-        plt.xlabel(r'$l$')
-        plt.ylabel(r'$C_{l}$')
+            subplot.set_yscale('log')
+        subplot.set_xlabel(r'$l$')
+        subplot.set_ylabel(r'$C_{l}$')
         if show_legend:
-            plt.legend(loc='best')
-        if out_name is None:
-            pass
-        elif out_name=='show':
-            plt.show()
-        else:
-            plt.savefig(out_name)
+            subplot.legend(loc='best')
+
+        plt.show()
+
         
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'w')
