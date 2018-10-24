@@ -229,7 +229,13 @@ class SACC(object):
             subplot.set_yscale('log')
         if show_axislabels:
             subplot.set_xlabel(r'$l$')
-            subplot.set_ylabel(r'$C_{l}$')
+            if weightpow == 0:
+                elltext = ''
+            elif weightpow == 1:
+                elltext = r'$\ell$'
+            else:
+                elltext = r'$\ell^' + '{%f}$' % weightpow
+            subplot.set_ylabel(elltext + r'$C_{l}$')
         if show_legend:
             subplot.legend(loc='best')
         
