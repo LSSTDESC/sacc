@@ -153,19 +153,18 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, subplot = None, plot_corr='all', set_logx=True, set_logy=True, show_axislabels = False,
+    def plot_vector (self, subplot = None, plot_corr='all', weightpow = 0, set_logx=True, set_logy=True, show_axislabels = False,
                      show_legend=True, prediction=None, clr='r',lofsf=1.0,label=None):
         """
         Plots the mean vector associated to the different tracers
-        in the sacc file. The tracers to plot can be selected
-        passing a list to tr_number (if None it plots all of them).
-        If you want to plot the cross-correlations
-        between these bins just set the argument plot_cross to True.
+        in the sacc file. The tracer correlations to plot can be selected by
+        passing a list of pairs of values in plot_corr.  It can also plot
+        the autocorrelation by passing 'auto', the cross-correlation by 
+        passng 'cross', and both by passing 'all'.  The C_ell's will be
+        weighted by a factor of ell^{weightpow}.
         """      
         import matplotlib.pyplot as plt
-        #ax = plt.axes()
-        #ax_color_cycle = ax._get_lines.prop_cycler
-        #clr=next(ax_color_cycle)['color']
+        
 
         if subplot is None:
             fig = plt.figure()
@@ -215,12 +214,14 @@ class SACC(object):
 
         for (tr_i, tr_j) in plot_pairs:
             tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
-            subplot.plot(self.binning.binar['ls'][tbin],self.mean.vector[tbin],label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j),color=clr)
+            ell = self.binning.binar['ls'][tbin]
+            C_ell = self.mean.vector[tbin]
+            subplot.plot(ell,C_ell * np.power(ell,weightpow),label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j),color=clr)
             if errs is not None:
-                subplot.errorbar(self.binning.binar['ls'][tbin],self.mean.vector[tbin],yerr=errs[tbin],color=clr)
-            subplot.scatter(self.binning.binar['ls'][tbin],self.mean.vector[tbin], s = 20, edgecolor = 'k', c = clr)
+                subplot.errorbar(ell,C_ell * np.power(ell,weightpow),yerr=errs[tbin]*np.power(ell,weightpow),color=clr)
+            subplot.scatter(ell, C_ell * np.power(ell,weightpow), s = 20, edgecolor = 'k', c = clr)
             if prediction is not None:
-                subplot.plot(self.binning.binar['ls'][tbin],prediction[tbin],':',color=clr)
+                subplot.plot(ell,prediction[tbin],':',color=clr)
 
         if set_logx:
             subplot.set_xscale('log')
