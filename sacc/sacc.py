@@ -153,7 +153,7 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, subplot, plot_corr='all', set_logx=True, set_logy=True,
+    def plot_vector (self, subplot, plot_corr='all', set_logx=True, set_logy=True, show_axislabels = False,
                      show_legend=True, prediction=None, clr='r',lofsf=1.0,label=None):
         """
         Plots the mean vector associated to the different tracers
@@ -222,13 +222,11 @@ class SACC(object):
             subplot.set_xscale('log')
         if set_logy:
             subplot.set_yscale('log')
-        subplot.set_xlabel(r'$l$')
-        subplot.set_ylabel(r'$C_{l}$')
+        if show_axislabels:
+            subplot.set_xlabel(r'$l$')
+            subplot.set_ylabel(r'$C_{l}$')
         if show_legend:
             subplot.legend(loc='best')
-
-        plt.show()
-
         
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
         f=h5py.File(filename,'w')
