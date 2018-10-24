@@ -153,7 +153,7 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, subplot, plot_corr='all', set_logx=True, set_logy=True, show_axislabels = False,
+    def plot_vector (self, subplot = None, plot_corr='all', set_logx=True, set_logy=True, show_axislabels = False,
                      show_legend=True, prediction=None, clr='r',lofsf=1.0,label=None):
         """
         Plots the mean vector associated to the different tracers
@@ -166,6 +166,10 @@ class SACC(object):
         #ax = plt.axes()
         #ax_color_cycle = ax._get_lines.prop_cycler
         #clr=next(ax_color_cycle)['color']
+
+        if subplot is None:
+            fig = plt.figure()
+            subplot = fig.add_subplot(111)
 
         if self.precision is not None:
             errs=np.sqrt(self.precision.getCovarianceMatrix().diagonal())
