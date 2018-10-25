@@ -153,8 +153,9 @@ class SACC(object):
                         toret.append((t1i,t2i,typ,ells,ndx))
         return toret
 
-    def plot_vector (self, subplot = None, plot_corr='all', weightpow = 0, set_logx=True, set_logy=True, show_axislabels = False,
-                     show_legend=True, prediction=None, clr='r',lofsf=1.0,label=None):
+
+    def plot_vector (self, subplot = None, plot_corr='all', weightpow = 2, set_logx=True, set_logy=True,
+                    show_axislabels = False, show_legend=True, prediction=None, clr='r', lofsf=1.0, label=None):
         """
         Plots the mean vector associated to the different tracers
         in the sacc file. The tracer correlations to plot can be selected by
@@ -216,10 +217,11 @@ class SACC(object):
             tbin = np.logical_and(self.binning.binar['T1']==tr_i,self.binning.binar['T2']==tr_j)
             ell = self.binning.binar['ls'][tbin]
             C_ell = self.mean.vector[tbin]
-            subplot.plot(ell,C_ell * np.power(ell,weightpow),label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j),color=clr)
+            subplot.plot(ell,C_ell * np.power(ell,weightpow),color=clr)
             if errs is not None:
-                subplot.errorbar(ell,C_ell * np.power(ell,weightpow),yerr=errs[tbin]*np.power(ell,weightpow),color=clr)
-            subplot.scatter(ell, C_ell * np.power(ell,weightpow), s = 20, edgecolor = 'k', c = clr)
+                subplot.errorbar(ell,C_ell * np.power(ell,weightpow),yerr=errs[tbin]*np.power(ell,weightpow), linestyle = 'None',color=clr)
+            subplot.scatter(ell,C_ell * np.power(ell,weightpow), s = 20, edgecolor = 'k', c = clr, 
+                label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j))
             if prediction is not None:
                 subplot.plot(ell,prediction[tbin],':',color=clr)
 
