@@ -198,7 +198,7 @@ class SACC(object):
         tracer_array = np.arange(len(self.tracers))
         if plot_cross:
             for tr_i in tracer_array:
-                other_tr = np.delete(nptracer_array, np.where(nptracer_array != tr_i))
+                other_tr = np.delete(nptracer_array, np.where(tracer_array != tr_i))
                 for tr_j in other_tr:
                     # Generate the appropriate list of tracer combinations to plot
                     plot_pairs.append([tr_i, tr_j])
