@@ -223,7 +223,7 @@ class SACC(object):
             subplot.scatter(ell,C_ell * np.power(ell,weightpow), s = 20, edgecolor = 'k', c = clr, 
                 label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j))
             if prediction is not None:
-                subplot.plot(ell,prediction[tbin],':',color=clr)
+                subplot.plot(ell,prediction[tbin] * np.power(ell,weightpow),':',color=clr)
 
         if set_logx:
             subplot.set_xscale('log')
