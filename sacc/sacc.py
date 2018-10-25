@@ -236,7 +236,7 @@ class SACC(object):
             elif weightpow == 1:
                 elltext = r'$\ell$'
             else:
-                elltext = r'$\ell^' + '{%f}$' % weightpow
+                elltext = r'$\ell^' + '{%i}$' % weightpow
             subplot.set_ylabel(elltext + r'$C_{l}$')
         if show_legend:
             subplot.legend(loc='best')
