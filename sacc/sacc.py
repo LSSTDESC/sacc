@@ -198,7 +198,7 @@ class SACC(object):
         tracer_array = np.arange(len(self.tracers))
         if plot_cross:
             for tr_i in tracer_array:
-                other_tr = np.delete(nptracer_array, np.where(nptracer_array != tr_i))
+                other_tr = np.delete(tracer_array, np.where(tracer_array != tr_i))
                 for tr_j in other_tr:
                     # Generate the appropriate list of tracer combinations to plot
                     plot_pairs.append([tr_i, tr_j])
@@ -223,7 +223,7 @@ class SACC(object):
             subplot.scatter(ell,C_ell * np.power(ell,weightpow), s = 20, edgecolor = 'k', c = clr, 
                 label= self.tracers[0].exp_sample+' $C_{%i%i}$' %(tr_i,tr_j))
             if prediction is not None:
-                subplot.plot(ell,prediction[tbin],':',color=clr)
+                subplot.plot(ell,prediction[tbin] * np.power(ell,weightpow),':',color=clr)
 
         if set_logx:
             subplot.set_xscale('log')
@@ -236,7 +236,7 @@ class SACC(object):
             elif weightpow == 1:
                 elltext = r'$\ell$'
             else:
-                elltext = r'$\ell^' + '{%f}$' % weightpow
+                elltext = r'$\ell^' + '{%i}$' % weightpow
             subplot.set_ylabel(elltext + r'$C_{l}$')
         if show_legend:
             subplot.legend(loc='best')
