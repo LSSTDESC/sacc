@@ -13,6 +13,6 @@ from .binning import Binning
 from .meanvec import MeanVec
 from .precision import Precision
 from .sacc import SACC
-
+from .coadd import coadd
 
 
