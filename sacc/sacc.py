@@ -114,7 +114,13 @@ class SACC(object):
         self.mean.cullVector(ndx)
         self.precision.cullMatrix(ndx)
         
-
+    def cullCross(self):
+        """ culls points that are not auto-correlations."""
+        ndx=np.where(self.binning.binar['T1']==self.binning.binar['T2'])[0]
+        self.binning.cullBinning(ndx)
+        self.mean.cullVector(ndx)
+        self.precision.cullMatrix(ndx)
+                    
     
     def sortTracers(self):
         """Sort the tracers and return information on them in a tuple form.
