@@ -1,10 +1,11 @@
 """
 :mod:`sacc` contains one main class and 4 subclasses:
+
 - :class:`sacc.sacc.SACC`
-- :class: `sacc.binning.Binning`
-- :class: `sacc.tracer.Tracer`
-- :class: `sacc.meanvec.MeanVec`
-- :class: `sacc.precision.Precision`
+- :class:`sacc.binning.Binning`
+- :class:`sacc.tracer.Tracer`
+- :class:`sacc.meanvec.MeanVec`
+- :class:`sacc.precision.Precision`
 
 Blah
 """

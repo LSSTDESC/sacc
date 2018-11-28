@@ -11,25 +11,22 @@ PY3 = sys.version_info[0] == 3
 
 class SACC(object):
     """
-    SACC objects are the main container class for 2pt measurements.
+    SACC creator from its individual components. 
+    
+    SACC objects are the main container class for 2-point measurements.
+    
+    :param Tracer tracers: list of `Tracer` objects used in the measurement and referenced in binning parameter
+    :param Binning binning: `Binning` object describing what measurement each index in the mean vector and precision matrix contains.
+    :param MeanVec or array_like mean: Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.
+    :param Precision precision: `Precision` object representing the covariance matrix or its inverse (a.k.a. the precision matrix).
+    :param dict meta: dictionary containing additional metadata.
     """
     
     ## format version, bump up every time you break thins
     ## irreparrably
     _format_version=1
 
-
     def __init__ (self, tracers, binning, mean=None, precision=None, meta={}):
-        """
-        SACC creator from its individual components.
-
-        :param Tracer tracers: list of `Tracer` objects used in the measurement and referenced in binning parameter
-        :param Binning binning: `Binning` object describing what measurement each index in the mean vector and precision matrix contains.
-        :param MeanVec or array_like mean: Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.
-        :param Precision precision: `Precision` object representing the covariance matrix or its inverse (a.k.a. the precision matrix).
-        :param dict meta: dictionary containing additional metadata.
-        """
-    
         self.tracers=tracers
         self.binning=binning
         assert([type(t)==type(Tracer) for t in self.tracers])
@@ -176,9 +173,10 @@ class SACC(object):
         """
         Plots the mean vector associated to the different tracers in the SACC file. The tracer correlations to plot can be selected by passing a list of pairs of values in plot_corr.  It can also plot the autocorrelation by passing 'auto', the cross-correlation by passng 'cross', and both by passing 'all'.  The correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).
 
-        :param str or array_like plot_corr: select which correlations to plot. This can be done by passing a list of tracer index pairs, 'auto' to plot all auto-correlations, 'cross'  to plot all cross-correlations or 'all' to plot everything.
+        TODO: finish describing all other parameters.
+        
+        :param str/array_like plot_corr: select which correlations to plot. This can be done by passing a list of tracer index pairs, 'auto' to plot all auto-correlations, 'cross'  to plot all cross-correlations or 'all' to plot everything.
         :param float weightpow: the correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).
-        TODO: finish describing all other parameters
         """      
         import matplotlib.pyplot as plt
         
