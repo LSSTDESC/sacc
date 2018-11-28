@@ -1,9 +1,3 @@
-"""
-SACC is the main container class of the SACC module.
-
-"""
-
-
 from __future__ import print_function, division
 from .tracer import Tracer
 from .binning import Binning
@@ -16,34 +10,26 @@ PY3 = sys.version_info[0] == 3
 
 
 class SACC(object):
+    """
+    SACC objects are the main container class for 2pt measurements.
+    """
     
     ## format version, bump up every time you break thins
     ## irreparrably
     _format_version=1
 
 
-    """
-    The main container class for 2pt measurements.
-
-    Parameters
-    ----------
-
-    tracers : list of Tracer objects
-       List of tracer objects used in the measurement and referenced in 
-       binning parameter
-    binning : Binning object
-       Binning object describing what measurement does each index in the mean
-       vector and precision matrix contain
-    mean : array_like or MeanVec object
-       Vector representing the actual measurement, the mean of the gaussian.
-       If not a MeanVec object, will try to cast it into one 
-    precision: Precision object
-       Object representing the precision (i.e. inverse covariance) matrix.
-
-    """
-
-    
     def __init__ (self, tracers, binning, mean=None, precision=None, meta={}):
+        """
+        SACC creator from its individual components.
+
+        :param Tracer tracers: list of `Tracer` objects used in the measurement and referenced in binning parameter
+        :param Binning binning: `Binning` object describing what measurement each index in the mean vector and precision matrix contains.
+        :param MeanVec or array_like mean: Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.
+        :param Precision precision: `Precision` object representing the covariance matrix or its inverse (a.k.a. the precision matrix).
+        :param dict meta: dictionary containing additional metadata.
+        """
+    
         self.tracers=tracers
         self.binning=binning
         assert([type(t)==type(Tracer) for t in self.tracers])
@@ -56,10 +42,17 @@ class SACC(object):
         self.meta=meta
         
     def get_exp_sample_set(self):
+        """
+        Return the set of exp_samples (essentially a label attached to each Tracer) contained in this SACC file.
+
+        :return: set with all the exp_sample labels.
+        """
         return set([t.exp_sample for t in self.tracers])
         
-        
     def printInfo(self):
+        """
+        Prints information about the contents of this SACC file
+        """
         exps=self.get_exp_sample_set()
         print ("--------------------------------")
 
@@ -85,22 +78,44 @@ class SACC(object):
         else:
             print ("No precision matrix.")
 
-
     def size(self):
+        """
+        Returns the size of the mean vector
+
+        :return: vector size.
+        """
         return self.binning.size()
 
     def lrange(self,t1i,t2i):
+        """
+        Returns the scales at which the cross-correlation between t1i and t2i are stored.
+
+        :param int t1i: index of the first tracer.
+        :param int t2i: index of the second tracer.
+        :return: array of scales.
+        """
         ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
                       ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
         return self.binning.binar['ls'][ndx]
 
     def ilrange(self,t1i,t2i):
+        """
+        Returns the indices of the data vector containing the cross-correlation between tracers t1i and t2i.
+
+        :param int t1i: index of the first tracer.
+        :param int t2i: index of the second tracer.
+        :return: array of indices.
+        """
         ndx=np.where( ((self.binning.binar['T1']==t1i) & (self.binning.binar['T2']==t2i)) |
                       ((self.binning.binar['T1']==t2i) & (self.binning.binar['T2']==t1i)) )
         return ndx
 
     def cullLminLmax(self,lmin,lmax):
-        """ lmin and lmax are lists/arrays the lenght of tracers size"""
+        """
+        Implement scale cuts on the data vector and the covariance.
+
+        :param array_like lmin,lmax: lists of minimum/maximum scales for each tracer. Any correlation will be cut to the most stringent scale cuts associated with the two tracers that go into it. CHECK THAT THIS IS TRUE.
+        """
         lmina=np.maximum(
             np.array(lmin)[self.binning.binar['T1']],
             np.array(lmin)[self.binning.binar['T2']])
@@ -115,7 +130,9 @@ class SACC(object):
         self.precision.cullMatrix(ndx)
         
     def cullCross(self):
-        """ culls points that are not auto-correlations."""
+        """ 
+        Cuts out all elements of the data vector (and covariance, etc.) that are not auto-correlations.
+        """
         ndx=np.where(self.binning.binar['T1']==self.binning.binar['T2'])[0]
         self.binning.cullBinning(ndx)
         self.mean.cullVector(ndx)
@@ -123,18 +140,12 @@ class SACC(object):
                     
     
     def sortTracers(self):
-        """Sort the tracers and return information on them in a tuple form.
-        The return format is: (t1i,t2i,type,ells,ndx),
-        where t1i,t2i are indices of first and second tracer,
-        type is the kind of data vector,
-        ells is the list of ells used, and ndx is the list of indices in the
-        data vector corresponding to this.
-
-        TODO: figure out how to make this compatible with 3-pt correlation functions.
-
-        Returns:
-            (tuple): Information about all tracers and how they are combined
         """
+        Return information about all the ingredients that define each element of the data vector.
+
+        :return: list of tuples, with one element per data vector element. Each tuple contains 5 elements: `t1i`, `t2i`, `typ`, `ells`, `ndx`. `t1i` and `t2i` are the indices of the tracers that go into this cross-correlation. `typ` is the type of correlation contained here. `ells` contains the scales at which this cross-correlation is stored. `ndx` contains the indices of the data vector containing this cross-correlation.
+        """
+        #TODO: figure out how to make this compatible with 3-pt correlation functions.
         Nt=len(self.tracers)
         toret=[]
         #Loop over all tracers
@@ -163,12 +174,11 @@ class SACC(object):
     def plot_vector (self, subplot = None, plot_corr='all', weightpow = 2, set_logx=True, set_logy=True,
                     show_axislabels = False, show_legend=True, prediction=None, clr='r', lofsf=1.0, label=None):
         """
-        Plots the mean vector associated to the different tracers
-        in the sacc file. The tracer correlations to plot can be selected by
-        passing a list of pairs of values in plot_corr.  It can also plot
-        the autocorrelation by passing 'auto', the cross-correlation by 
-        passng 'cross', and both by passing 'all'.  The C_ell's will be
-        weighted by a factor of ell^{weightpow}.
+        Plots the mean vector associated to the different tracers in the SACC file. The tracer correlations to plot can be selected by passing a list of pairs of values in plot_corr.  It can also plot the autocorrelation by passing 'auto', the cross-correlation by passng 'cross', and both by passing 'all'.  The correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).
+
+        :param str or array_like plot_corr: select which correlations to plot. This can be done by passing a list of tracer index pairs, 'auto' to plot all auto-correlations, 'cross'  to plot all cross-correlations or 'all' to plot everything.
+        :param float weightpow: the correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).
+        TODO: finish describing all other parameters
         """      
         import matplotlib.pyplot as plt
         
@@ -279,6 +289,13 @@ class SACC(object):
        
     @classmethod
     def loadFromHDF (SACC,filename,mean_filename=None, precision_filename=None):
+        """
+        Create a SACC object from the contents of an HDF5 file.
+
+        :param str filename: path to input file. The file should contain at least tracers and binning.
+        :param str mean_filename: path to file containing the data vector (set to None if `filename` already contains this or if you don't nead the data vector).
+        :param str precision_filename: same as `mean_filename` for the precision/covariance matrix.
+        """
         f=h5py.File(filename,'r')
         fmeta=f['meta'].attrs
         if (fmeta['_format_version']>SACC._format_version):
@@ -323,6 +340,3 @@ class SACC(object):
                     precision=Precision.loadFromHDF(fm,binning)
         f.close()
         return SACC(tracers,binning,mean,precision,meta)
-
-                    
-        

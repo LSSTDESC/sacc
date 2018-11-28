@@ -1,9 +1,12 @@
 """
-This is the top-level file for the SACC python module.
+:mod:`sacc` contains one main class and 4 subclasses:
+- :class:`sacc.sacc.SACC`
+- :class: `sacc.binning.Binning`
+- :class: `sacc.tracer.Tracer`
+- :class: `sacc.meanvec.MeanVec`
+- :class: `sacc.precision.Precision`
 
-SACC contains 5 basic classes as described in the README.md 
-of the github repo. The SACC class is a container object that holds 
-all of them and can export to and from HDF file.
+Blah
 """
 
 # import individual classes into sacc namespace
@@ -14,5 +17,3 @@ from .meanvec import MeanVec
 from .precision import Precision
 from .sacc import SACC
 from .coadd import coadd
-
-
