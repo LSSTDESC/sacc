@@ -19,19 +19,19 @@
 #
 import os
 import sys
+from mock import Mock as MagicMock
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.append(os.path.abspath('../../sacc/'))
 
+autodoc_mock_imports = ['h5py','scipy','numpy']
 
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
 
-
-
-
-
-
-
-
-
+MOCK_MODULES = ['h5py','scipy']
+sys.modules.update((mod_name,Mock()) for mod_name in MOCK_MODULES)
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
