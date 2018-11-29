@@ -1,5 +1,5 @@
 #
-# SACC : Tracer class
+# SACC : Precision class
 #
 from __future__ import print_function, division
 import numpy as np
@@ -7,7 +7,16 @@ import scipy.linalg as la
 import h5py
 
 class Precision(object):
-    def __init__ (self, matrix=None, mode="dense", is_covariance=False, binning=None):
+    """
+    Precision objects contain the covariance (or inverse covariance a.k.a. precision) matrix for the data vector stored in a SACC file.
+    
+    :param array_like matrix: covariance or precision matrix.
+    :param str mode: how is the matrix passed? Options: `dense` (full matrix), `diagonal` (only diagonal passed, assume off-diagonal is zero), `ell_block_diagonal` (matrix is diagonal between different scales).
+    :param boolean is_covariance: set to True (default) if passing the covariance matrix. Otherwise, `matrix` should contain the precision matrix.
+    :param Binning binning: a Binning object describing the data vector of this covariance. Only needed if `mode=='ell_block_diagonal'`.
+    """
+
+    def __init__ (self, matrix=None, mode="dense", is_covariance=True, binning=None):
         ##
         ## mode must be dense, ell_block_diagonal, diagonal
         ##
@@ -29,6 +38,11 @@ class Precision(object):
         
 
     def cullMatrix(self,ndxlist):
+        """
+        Reduce this Precision object to the indices in `ndxlist`.
+
+        :param array_like ndxlist: list of indices to preserve.
+        """
         if self._cmatrix is None:
             self._getCovarianceFromPrecision()
         if self.mode=="diagonal":
@@ -67,16 +81,32 @@ class Precision(object):
             raise NotImplementedError()
 
     def getPrecisionMatrix(self):
+        """
+        Get precision matrix stored in this object.
+
+        :return: precision matrix (inverse covariance).
+        """
         if self._pmatrix is None:
             self._getPrecisionFromCovariance()
         return self._pmatrix
 
     def getCovarianceMatrix(self):
+        """
+        Get covariance matrix stored in this object.
+
+        :return: covariance matrix.
+        """
         if self._cmatrix is None:
             self._getCovarianceFromPrecision()
         return self._cmatrix
             
-    def saveToHDF (self, group): ## might need binning for certain modes of saving
+    def saveToHDF (self, group):
+        """
+        Save the precision object to an HDF file. If the covariance matrix exists then that one is saved, otherwise the precision is saved.
+
+        :param h5py.Group group: HDF5 group.
+        """
+        ## might need binning for certain modes of saving
         ## if we have covariance matrix, save that one, otherwise save precision
         if self._cmatrix is not None:
             matrix=self._cmatrix
@@ -102,12 +132,24 @@ class Precision(object):
 
         
     def saveToHDFFile(self,filename):
+        """
+        Save the precision object to an HDF file.
+
+        :param str filename: path to output file.
+        """
         f=h5py.File(filename,'w')
         self.saveToHDF(f)
         f.close()
         
     @classmethod
     def loadFromHDF (Precision, group, binning=None):
+        """
+        Create a Precision object from an HDF file.
+
+        :param h5py.Group group: HDF5 group where this precision object is saved.
+        :param Binning binning: a Binning object describing the data vector of this covariance. Only needed if `mode=='ell_block_diagonal'`.
+        :return: :class:`Precision` object.
+        """
         D=group['error']
         mode=D.attrs['type'].decode()
         loadingC=D.attrs['is_covariance']
@@ -130,5 +172,3 @@ class Precision(object):
                         matrix[j,i]=vec[k]
                         k+=1
         return Precision(matrix,mode,is_covariance=loadingC,binning=binning)
-        
-        
