@@ -113,7 +113,7 @@ class Sacc:
         else:
             # slow
             self.data = [d for i,d in enumerate(self.data) if not i in mask]
-        print("Mask the covariane too!")
+        print("Mask the covariance too!")
 
     def indices(self, data_type=None, tracers=None, **select):
         """
@@ -176,6 +176,10 @@ class Sacc:
         """
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self.mean[indices]
+
+    def get_data_types(self):
+        s = {d.data_type for d in self.data}
+        return list(s)
     
     def get_tracer_combinations(self, data_type=None):
         """
