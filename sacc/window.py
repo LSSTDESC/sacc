@@ -18,6 +18,9 @@ class Window(object):
         self.ls=ls
         self.w=w
 
+    def get_mean_scale(self) :
+        return np.sum(self.w*self.ls)/np.sum(self.w)
+    
     def saveToHDF (self, group, ndx):
         """
         Save the windowr to an HDF file.
