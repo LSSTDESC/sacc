@@ -6,8 +6,7 @@
 - :class:`sacc.tracer.Tracer`
 - :class:`sacc.meanvec.MeanVec`
 - :class:`sacc.precision.Precision`
-
-Blah
+- :class:`sacc.window.Window`
 """
 
 # import individual classes into sacc namespace

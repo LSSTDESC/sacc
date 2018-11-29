@@ -17,7 +17,7 @@ class SACC(object):
     
     :param Tracer tracers: list of `Tracer` objects used in the measurement and referenced in binning parameter
     :param Binning binning: `Binning` object describing what measurement each index in the mean vector and precision matrix contains.
-    :param MeanVec or array_like mean: Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.
+    :param MeanVec mean: Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.
     :param Precision precision: `Precision` object representing the covariance matrix or its inverse (a.k.a. the precision matrix).
     :param dict meta: dictionary containing additional metadata.
     """
@@ -256,6 +256,15 @@ class SACC(object):
             subplot.legend(loc='best')
         
     def saveToHDF (self, filename, save_mean=True, save_precision=True, mean_filename=None, precision_filename=None):
+        """
+        Write this SACC object into an HDF5 file.
+
+        :param str filename: path to output file.
+        :param boolean save_mean: whether to save the mean vector.
+        :param boolean save_precision: whether to save the covariance matrix.
+        :param str mean_filename: path to additional output file where the mean is to be saved.
+        :param str precision_file: same as `mean_filename` for the precision/covariance matrix.
+        """
         f=h5py.File(filename,'w')
         meta=f.create_dataset("meta",data=[])
         meta.attrs.create("_format_version",self._format_version)
@@ -293,6 +302,7 @@ class SACC(object):
         :param str filename: path to input file. The file should contain at least tracers and binning.
         :param str mean_filename: path to file containing the data vector (set to None if `filename` already contains this or if you don't nead the data vector).
         :param str precision_filename: same as `mean_filename` for the precision/covariance matrix.
+        :return: :class:`SACC` object.
         """
         f=h5py.File(filename,'r')
         fmeta=f['meta'].attrs

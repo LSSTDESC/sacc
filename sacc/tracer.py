@@ -7,31 +7,23 @@ import numpy as np
 
 
 class Tracer(object):
+    """
+    Tracer objects contain information about the maps contributing to any of the 2-point functions stored in a SACC file.
+    
+    :param str name: Name for the tracer.
+    :param str type: The type of tracer, i.e. whether it is a spin0 or spin2 observable. TODO:check this.
+    :param str exp_sample: The experiment this tracer corresponds to. While `name` should be unique for each tracer, many tracers can have the same `exp_name`.
+    :param array_like z,Nz: arrays describing the redshift distribution of this tracer
+    :param float NZ_sigma_logmean: TODO
+    :param float NZ_sigma_logwidth: TODO
+    :param float DNz: TODO
+    :param str Mproxy_name: name of the mass proxy if the tracer is clusters. Defaults to None.
+    :param float Mproxy_min: minimum value of the mass proxy bin if the tracer is clusters. Defaults to None.
+    :param float Mproxy_max: maximum value of the mass proxy bin if the tracer is clusters. Defaults to None.
+    """
+
     def __init__ (self, name, type, z, Nz, exp_sample=None, Nz_sigma_logmean=None,
                   Nz_sigma_logwidth=None, DNz=None, Mproxy_name=None, Mproxy_min=None, Mproxy_max=None):
-        """Default initializer for the Tracer object.
-
-        A tracer is an object for which we have a data vector for. The term derives from
-        tracers of the density field of the Universe. This method will be better documented
-        in the future...
-
-        Args:
-            name (:obj:`str`): Name for the tracer.
-            type (:obj:`str`): The type of tracer, i.e. whether it is a spin0 or spin2 observable.
-            z (float): 
-            Nz ():
-            exp_sample (): 
-            NZ_sigma_logmean ():
-            NZ_sigma_logwidth ():
-            DNz ():
-            Mproxy_name (:obj:`str`, optional): Name of the mass proxy if the tracer is clusters.
-                Defaults to None.
-            Mproxy_min (float): Minimum value of the mass proxy bin if the tracer is clusters. 
-                Defaults to None.
-            Mproxy_max (float): Maximum value of the mass proxy bin if the tracer is clusters. 
-                Defaults to None.
-        
-        """
         self.name=str(name)
         self.type=str(type)
         self.z=z
@@ -58,7 +50,9 @@ class Tracer(object):
         
     def addColumns (self, columns):
         """
-        columns is a dictionary of name, np.array vectors of the same size as Nz.
+        Adds extra columns describing a tracer (e.g. b(z) or some other function).
+
+        :param dict columns: dictionary where each value should be an array with as many elements as Tracer.Nz. These can be later accessed as `Tracer.extra_cols` or through `Tracer.extraColumn(column_name)`. This function can be called as many times as you want, and this dictionary will be updated with new columns.
         """
         self.extra_cols.update(columns)
         for k,c in self.extra_cols.items():
@@ -67,28 +61,45 @@ class Tracer(object):
                 raise RuntimeError
 
     def extraColumn(self, key):
+        """
+        Returns a given extra column from this tracer. Literally the same as `Tracer.extra_cols[key]`.
+
+        :param str key: name of the extra column.
+        :return: array with the column.
+        """
         return self.extra_cols[key]
 
     def meanZ(self):
+        """
+        Returns mean redshift for this tracer.
+
+        :return: mean redshift.
+        """
         if self.z is None :
             return -1
         return (self.z*self.Nz).sum()/self.Nz.sum()
 
     def is_CL(self):
-        """Is the tracer a cluster stack. Returns a boolean."""
+        """
+        Check if this tracer is a cluster stack.
+
+        :return: `True` or `False`.
+        """
         return (self.Mproxy_name is not None) and (self.type == "spin0")
 
     def is_WL(self):
         """Is the tracer a source for a lensing measurement. Returns a boolean.
-        TODO: is the check for the Mproxy_name necessary? All spin2 things could be a WL tracer...
+        TODO: this doesn't make much sense.
         """
         return (self.Mproxy_name is None) and (self.type == "spin2")
     
     def saveToHDF (self, group):
-        """Save the tracer to an HDF file.
-        
-        More docstring here.
+        """
+        Save the tracer to an HDF file.
 
+        TODO: change how cmb is implemented.
+        
+        :param h5py.Group group: HDF5 group.
         """
         ## if CMB, go empty
         if self.type=="cmb":
@@ -149,10 +160,12 @@ class Tracer(object):
             
     @classmethod
     def loadFromHDF(Tracer, group, name):
-        """Create a Tracer object from an HDF file.
+        """
+        Create a Tracer object from an HDF file.
 
-        More docstring here.
-
+        :param h5py.Group group: HDF5 group where this tracer is saved.
+        :param str name: name of the tracer to load.
+        :return: :class:`Tracer` object.
         """
         t=group['tracers'][name]
         d=t.value

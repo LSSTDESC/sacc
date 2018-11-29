@@ -6,7 +6,7 @@
 Welcome to SACC's documentation!
 ================================
 
-Initial blah
+SACC (Save All Correlations and Covariances, an utterly crappy acronym inspired by usually equally bad attempts by David A) is a format and reference library for general storage of 2-dimensional power spectra and correlation functions and their covariance matrices in the HDF5 format. It is very loosely inspired by Joe Zunz's `2point <https://github.com/joezuntz/2point>`_.
 
 .. toctree::
    :maxdepth: 2
