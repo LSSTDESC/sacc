@@ -167,7 +167,7 @@ class Binning(object):
         d['type'] = [typ.decode("utf-8") for typ in d['type']]
         sunit=m.attrs['sunit'] if 'sunit' in m.attrs.keys() else None
         if m.attrs['have_windows']:
-            windows=[Window.loadFromHDF(group['windows'],i) for i in range(len(d))]
+            windows=np.array([Window.loadFromHDF(group['windows'],i) for i in range(len(d))])
         else:
             windows=None
         deltaLS=d['Delta_ls'] if 'Delta_ls' in d.dtype.names else None

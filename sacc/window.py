@@ -16,10 +16,27 @@ class Window(object):
     def __init__ (self, ls=None, w=None):
         assert(len(ls)==len(w))
         self.ls=ls
-        self.w=w
+        self.w=w/np.sum(w)
+        self.nl=len(ls)
 
     def get_mean_scale(self) :
-        return np.sum(self.w*self.ls)/np.sum(self.w)
+        """
+        Return the mean scale for this window
+
+        :return: weighted mean ell.
+        """
+        return np.sum(self.w*self.ls)
+
+    def convolve(self,fl) :
+        """
+        Return the weighed mean of an input array within this window function
+
+        :param array_like fl: input array. Must have the same size as the input ls.
+        :return: weighted mean of `fl`
+        """
+        if len(fl)!=self.nl :
+            raise ValueError("Input array must be of size %d"%(self.nl))
+        return np.sum(self.w*fl)
     
     def saveToHDF (self, group, ndx):
         """
