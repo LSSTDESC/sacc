@@ -60,6 +60,9 @@ class Binning(object):
         :param array_like ndxlist: list of indices to preserve.
         """
         self.binar=self.binar[ndxlist]
+        # Applying binning reduction also to window functions
+        if self.windows is not None:
+            self.windows = self.windows[ndxlist]
         
     def size(self):
         """
