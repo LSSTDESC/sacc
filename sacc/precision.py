@@ -46,14 +46,9 @@ class Precision(object):
         if self._cmatrix is None:
             self._getCovarianceFromPrecision()
         if self.mode=="diagonal":
-            self._cmatrix=self._cmatrix(ndxlist)
+            self._cmatrix=self._cmatrix[ndxlist]
         elif (self.mode in ['dense','ell_block_diagonal']):
-            N=len(ndxlist)
-            cmatrix=np.zeros((N,N))
-            ## there should be a better way of doing this:
-            for i in range(N):
-                cmatrix[i,:]=self._cmatrix[ndxlist[i],ndxlist]
-            self._cmatrix=cmatrix
+            self._cmatrix=self._cmatrix[ndxlist,:][:,ndxlist]
 
         if self._pmatrix is not None:
             self._getPrecisionFromCovariance()
@@ -63,7 +58,7 @@ class Precision(object):
             print ("Consider getting a job in McDonalds.")
             raise AssertionErrror()
         if self.mode=='diagonal':
-            self._cmatrix=1/la.inv(self._pmatrix)
+            self._cmatrix=1/self._pmatrix
         elif (self.mode in ['dense','ell_block_diagonal']):
             self._cmatrix=la.inv(self._pmatrix)
         else:
@@ -74,7 +69,7 @@ class Precision(object):
             print ("Consider getting a job in McDonalds.")
             raise AssertionErrror()
         if self.mode=='diagonal':
-            self._pmatrix=1/la.inv(self._cmatrix)
+            self._pmatrix=1/self._cmatrix
         elif (self.mode in ['dense','ell_block_diagonal']):
             self._pmatrix=la.inv(self._cmatrix)
         else:
