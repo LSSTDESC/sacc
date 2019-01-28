@@ -122,7 +122,7 @@ class Tracer(object):
             dt.append(("DNz_"+str(i),'f4'))
         #TOM: TODO - wtf is going on here?
         for k,c in self.extra_cols.items():
-            #dt.append((k.encode("ascii"),c.dtype))
+            # dt.append((k.encode("ascii"),c.dtype))
             dt.append((k,c.dtype))
             #dt.append(("b",c.dtype))
         

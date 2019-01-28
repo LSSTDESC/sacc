@@ -35,7 +35,7 @@ def coadd(sacclist):
             otr.Nz+=ctr.Nz
         
     newmean=np.dot(la.inv(sw),swd)
-    outsacc.precision=Precision(sw)
+    outsacc.precision=Precision(sw, is_covariance=False)
     outsacc.mean=MeanVec(newmean)
     return outsacc
 
