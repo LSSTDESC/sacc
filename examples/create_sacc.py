@@ -22,7 +22,7 @@ for i,z in enumerate([0.3,0.5,0.7,0.9]):
     T.addColumns({'b':bias})
     tracers.append(T)
 
-## Next LSS galaxies with 4 different tomographic bins.
+## Next LSST galaxies with 4 different tomographic bins.
 ## Here the PZ modelling got more advanced so we have some PZ shapes to marginalise over
 
 for i,z in enumerate([0.5,0.7,0.9,1.1]):
@@ -41,7 +41,7 @@ for i,z in enumerate([0.5,0.7,0.9,1.1]):
     tracers.append(T)
 
 # and also add CMB
-tracers.append (sacc.Tracer("Planck","spin0", None, None))
+tracers.append(sacc.Tracer("Planck","spin0", None, None))
 
 # Now, let's have cross-correlation of everything with everything
 # at 100 ell bins for density correlations

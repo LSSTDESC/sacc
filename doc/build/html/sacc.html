@@ -1,0 +1,986 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Python API documentation &mdash; SACC 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="SACC 0.1 documentation" href="index.html"/>
+        <link rel="prev" title="Welcome to SACC’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SACC
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python API documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SACC</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Python API documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/sacc.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sacc">
+<span id="python-api-documentation"></span><h1>Python API documentation<a class="headerlink" href="#module-sacc" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#module-sacc" title="sacc"><code class="xref py py-mod docutils literal"><span class="pre">sacc</span></code></a> contains one main class and 4 subclasses:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#sacc.sacc.SACC" title="sacc.sacc.SACC"><code class="xref py py-class docutils literal"><span class="pre">sacc.sacc.SACC</span></code></a></li>
+<li><a class="reference internal" href="#sacc.binning.Binning" title="sacc.binning.Binning"><code class="xref py py-class docutils literal"><span class="pre">sacc.binning.Binning</span></code></a></li>
+<li><a class="reference internal" href="#sacc.tracer.Tracer" title="sacc.tracer.Tracer"><code class="xref py py-class docutils literal"><span class="pre">sacc.tracer.Tracer</span></code></a></li>
+<li><a class="reference internal" href="#sacc.meanvec.MeanVec" title="sacc.meanvec.MeanVec"><code class="xref py py-class docutils literal"><span class="pre">sacc.meanvec.MeanVec</span></code></a></li>
+<li><a class="reference internal" href="#sacc.precision.Precision" title="sacc.precision.Precision"><code class="xref py py-class docutils literal"><span class="pre">sacc.precision.Precision</span></code></a></li>
+<li><a class="reference internal" href="#sacc.window.Window" title="sacc.window.Window"><code class="xref py py-class docutils literal"><span class="pre">sacc.window.Window</span></code></a></li>
+</ul>
+<span class="target" id="module-sacc.sacc"></span><dl class="class">
+<dt id="sacc.sacc.SACC">
+<em class="property">class </em><code class="descclassname">sacc.sacc.</code><code class="descname">SACC</code><span class="sig-paren">(</span><em>tracers</em>, <em>binning</em>, <em>mean=None</em>, <em>precision=None</em>, <em>meta={}</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC" title="Permalink to this definition">¶</a></dt>
+<dd><p>SACC creator from its individual components.</p>
+<p>SACC objects are the main container class for 2-point measurements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tracers</strong> (<a class="reference internal" href="#sacc.tracer.Tracer" title="sacc.tracer.Tracer"><em>Tracer</em></a>) – list of <cite>Tracer</cite> objects used in the measurement and referenced in binning parameter</li>
+<li><strong>binning</strong> (<a class="reference internal" href="#sacc.binning.Binning" title="sacc.binning.Binning"><em>Binning</em></a>) – <cite>Binning</cite> object describing what measurement each index in the mean vector and precision matrix contains.</li>
+<li><strong>mean</strong> (<a class="reference internal" href="#sacc.meanvec.MeanVec" title="sacc.meanvec.MeanVec"><em>MeanVec</em></a>) – Vector representing the actual two-point measurement. If not a MeanVec object, will try to cast it into one.</li>
+<li><strong>precision</strong> (<a class="reference internal" href="#sacc.precision.Precision" title="sacc.precision.Precision"><em>Precision</em></a>) – <cite>Precision</cite> object representing the covariance matrix or its inverse (a.k.a. the precision matrix).</li>
+<li><strong>meta</strong> (<em>dict</em>) – dictionary containing additional metadata.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sacc.sacc.SACC.cullCross">
+<code class="descname">cullCross</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.cullCross" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cuts out all elements of the data vector (and covariance, etc.) that are not auto-correlations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.cullLminLmax">
+<code class="descname">cullLminLmax</code><span class="sig-paren">(</span><em>lmin</em>, <em>lmax</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.cullLminLmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement scale cuts on the data vector and the covariance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lmin</strong><strong>,</strong><strong>lmax</strong> (<em>array_like</em>) – lists of minimum/maximum scales for each tracer. Any correlation will be cut to the most stringent scale cuts associated with the two tracers that go into it. CHECK THAT THIS IS TRUE.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.get_exp_sample_set">
+<code class="descname">get_exp_sample_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.get_exp_sample_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the set of exp_samples (essentially a label attached to each Tracer) contained in this SACC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">set with all the exp_sample labels.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.ilrange">
+<code class="descname">ilrange</code><span class="sig-paren">(</span><em>t1i</em>, <em>t2i</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.ilrange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the indices of the data vector containing the cross-correlation between tracers t1i and t2i.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t1i</strong> (<em>int</em>) – index of the first tracer.</li>
+<li><strong>t2i</strong> (<em>int</em>) – index of the second tracer.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array of indices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sacc.sacc.SACC.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>SACC</em>, <em>filename</em>, <em>mean_filename=None</em>, <em>precision_filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SACC object from the contents of an HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – path to input file. The file should contain at least tracers and binning.</li>
+<li><strong>mean_filename</strong> (<em>str</em>) – path to file containing the data vector (set to None if <cite>filename</cite> already contains this or if you don’t nead the data vector).</li>
+<li><strong>precision_filename</strong> (<em>str</em>) – same as <cite>mean_filename</cite> for the precision/covariance matrix.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#sacc.sacc.SACC" title="sacc.sacc.SACC"><code class="xref py py-class docutils literal"><span class="pre">SACC</span></code></a> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.lrange">
+<code class="descname">lrange</code><span class="sig-paren">(</span><em>t1i</em>, <em>t2i</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.lrange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the scales at which the cross-correlation between t1i and t2i are stored.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t1i</strong> (<em>int</em>) – index of the first tracer.</li>
+<li><strong>t2i</strong> (<em>int</em>) – index of the second tracer.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array of scales.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.plot_vector">
+<code class="descname">plot_vector</code><span class="sig-paren">(</span><em>subplot=None</em>, <em>plot_corr='all'</em>, <em>weightpow=2</em>, <em>set_logx=True</em>, <em>set_logy=True</em>, <em>show_axislabels=False</em>, <em>show_legend=True</em>, <em>prediction=None</em>, <em>clr='r'</em>, <em>lofsf=1.0</em>, <em>label=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.plot_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the mean vector associated to the different tracers in the SACC file. The tracer correlations to plot can be selected by passing a list of pairs of values in plot_corr.  It can also plot the autocorrelation by passing ‘auto’, the cross-correlation by passng ‘cross’, and both by passing ‘all’.  The correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).</p>
+<p>TODO: finish describing all other parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>plot_corr</strong> (<em>str/array_like</em>) – select which correlations to plot. This can be done by passing a list of tracer index pairs, ‘auto’ to plot all auto-correlations, ‘cross’  to plot all cross-correlations or ‘all’ to plot everything.</li>
+<li><strong>weightpow</strong> (<em>float</em>) – the correlations will be weighted by a factor of ell^{weightpow} (where ell is the nominal scale for each cross-correlation element).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.printInfo">
+<code class="descname">printInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.printInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints information about the contents of this SACC file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>filename</em>, <em>save_mean=True</em>, <em>save_precision=True</em>, <em>mean_filename=None</em>, <em>precision_filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write this SACC object into an HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> (<em>str</em>) – path to output file.</li>
+<li><strong>save_mean</strong> (<em>boolean</em>) – whether to save the mean vector.</li>
+<li><strong>save_precision</strong> (<em>boolean</em>) – whether to save the covariance matrix.</li>
+<li><strong>mean_filename</strong> (<em>str</em>) – path to additional output file where the mean is to be saved.</li>
+<li><strong>precision_file</strong> (<em>str</em>) – same as <cite>mean_filename</cite> for the precision/covariance matrix.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the size of the mean vector</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">vector size.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.sacc.SACC.sortTracers">
+<code class="descname">sortTracers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.sacc.SACC.sortTracers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return information about all the ingredients that define each element of the data vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of tuples, with one element per data vector element. Each tuple contains 5 elements: <cite>t1i</cite>, <cite>t2i</cite>, <cite>typ</cite>, <cite>ells</cite>, <cite>ndx</cite>. <cite>t1i</cite> and <cite>t2i</cite> are the indices of the tracers that go into this cross-correlation. <cite>typ</cite> is the type of correlation contained here. <cite>ells</cite> contains the scales at which this cross-correlation is stored. <cite>ndx</cite> contains the indices of the data vector containing this cross-correlation.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-sacc.tracer"></span><dl class="class">
+<dt id="sacc.tracer.Tracer">
+<em class="property">class </em><code class="descclassname">sacc.tracer.</code><code class="descname">Tracer</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>z</em>, <em>Nz</em>, <em>exp_sample=None</em>, <em>Nz_sigma_logmean=None</em>, <em>Nz_sigma_logwidth=None</em>, <em>DNz=None</em>, <em>Mproxy_name=None</em>, <em>Mproxy_min=None</em>, <em>Mproxy_max=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tracer objects contain information about the maps contributing to any of the 2-point functions stored in a SACC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – Name for the tracer.</li>
+<li><strong>type</strong> (<em>str</em>) – The type of tracer, i.e. whether it is a spin0 or spin2 observable. TODO:check this.</li>
+<li><strong>exp_sample</strong> (<em>str</em>) – The experiment this tracer corresponds to. While <cite>name</cite> should be unique for each tracer, many tracers can have the same <cite>exp_name</cite>.</li>
+<li><strong>z</strong><strong>,</strong><strong>Nz</strong> (<em>array_like</em>) – arrays describing the redshift distribution of this tracer</li>
+<li><strong>NZ_sigma_logmean</strong> (<em>float</em>) – TODO</li>
+<li><strong>NZ_sigma_logwidth</strong> (<em>float</em>) – TODO</li>
+<li><strong>DNz</strong> (<em>float</em>) – TODO</li>
+<li><strong>Mproxy_name</strong> (<em>str</em>) – name of the mass proxy if the tracer is clusters. Defaults to None.</li>
+<li><strong>Mproxy_min</strong> (<em>float</em>) – minimum value of the mass proxy bin if the tracer is clusters. Defaults to None.</li>
+<li><strong>Mproxy_max</strong> (<em>float</em>) – maximum value of the mass proxy bin if the tracer is clusters. Defaults to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sacc.tracer.Tracer.addColumns">
+<code class="descname">addColumns</code><span class="sig-paren">(</span><em>columns</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.addColumns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds extra columns describing a tracer (e.g. b(z) or some other function).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>columns</strong> (<em>dict</em>) – dictionary where each value should be an array with as many elements as Tracer.Nz. These can be later accessed as <cite>Tracer.extra_cols</cite> or through <cite>Tracer.extraColumn(column_name)</cite>. This function can be called as many times as you want, and this dictionary will be updated with new columns.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.tracer.Tracer.extraColumn">
+<code class="descname">extraColumn</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.extraColumn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a given extra column from this tracer. Literally the same as <cite>Tracer.extra_cols[key]</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<em>str</em>) – name of the extra column.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array with the column.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.tracer.Tracer.is_CL">
+<code class="descname">is_CL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.is_CL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this tracer is a cluster stack.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><cite>True</cite> or <cite>False</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.tracer.Tracer.is_WL">
+<code class="descname">is_WL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.is_WL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is the tracer a source for a lensing measurement. Returns a boolean.
+TODO: this doesn’t make much sense.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sacc.tracer.Tracer.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>Tracer</em>, <em>group</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Tracer object from an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group where this tracer is saved.</li>
+<li><strong>name</strong> (<em>str</em>) – name of the tracer to load.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#sacc.tracer.Tracer" title="sacc.tracer.Tracer"><code class="xref py py-class docutils literal"><span class="pre">Tracer</span></code></a> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.tracer.Tracer.meanZ">
+<code class="descname">meanZ</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.meanZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns mean redshift for this tracer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">mean redshift.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.tracer.Tracer.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.tracer.Tracer.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the tracer to an HDF file.</p>
+<p>TODO: change how cmb is implemented.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-sacc.binning"></span><dl class="class">
+<dt id="sacc.binning.Binning">
+<em class="property">class </em><code class="descclassname">sacc.binning.</code><code class="descname">Binning</code><span class="sig-paren">(</span><em>typ</em>, <em>ls</em>, <em>T1</em>, <em>Q1</em>, <em>T2</em>, <em>Q2</em>, <em>windows=None</em>, <em>deltaLS=None</em>, <em>sunit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binning objects contain information about the make up of each element of the data vector stored in a SACC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>typ</strong> (<em>array_like</em>) – array of strings, with each string describing the type of correlation stored in the corresponding element of the data vector. TODO: check this.</li>
+<li><strong>ls</strong> (<em>array_like</em>) – array of floats, with each value describing the token scale of the corresponding data vector element.</li>
+<li><strong>T1</strong> (<em>array_like</em>) – array of ints, corresponding to the index of the first <cite>Tracer</cite> contributing to this data vector element.</li>
+<li><strong>Q1</strong> (<em>array_like</em>) – TODO not sure what this is.</li>
+<li><strong>T2</strong> (<em>array_like</em>) – array of ints, corresponding to the index of the second <cite>Tracer</cite> contributing to this data vector element.</li>
+<li><strong>Q2</strong> (<em>array_like</em>) – TODO not sure what this is.</li>
+<li><strong>windows</strong> (<em>array_like</em>) – array of <a class="reference internal" href="#sacc.window.Window" title="sacc.window.Window"><code class="xref py py-class docutils literal"><span class="pre">sacc.window.Window</span></code></a> objects, describing the contribution of different scales to this element of the data vector. If <cite>None</cite>, delta windows are assumed at the token scales.</li>
+<li><strong>deltaLS</strong> (<em>array_like</em>) – TODO not sure what this is.</li>
+<li><strong>sunit</strong> (<em>array_like</em>) – array of string, with each string describing the units of the corresponding data vector element.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sacc.binning.Binning.cullBinning">
+<code class="descname">cullBinning</code><span class="sig-paren">(</span><em>ndxlist</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.cullBinning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce this Binning object to the indices in <cite>ndxlist</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ndxlist</strong> (<em>array_like</em>) – list of indices to preserve.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.get_angle">
+<code class="descname">get_angle</code><span class="sig-paren">(</span><em>Q1</em>, <em>Q2</em>, <em>T1</em>, <em>T2</em>, <em>typ=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.get_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array with the scale values for a given cross-correlation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Q1</strong> (<em>str</em>) – First quantity in pair, e.g. ‘S’ for shear, ‘P’ for position</li>
+<li><strong>Q2</strong> (<em>str</em>) – Second quantity in pair.</li>
+<li><strong>T1</strong> (<em>str</em>) – Index of the first tracer.</li>
+<li><strong>T2</strong> (<em>str</em>) – Index of the second tracer.</li>
+<li><strong>typ</strong> (<em>str</em>) – The type of pair to restrict to. If None use all pairs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array of scale values (length zero if no matches found).</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.get_bin_pairs">
+<code class="descname">get_bin_pairs</code><span class="sig-paren">(</span><em>Q1</em>, <em>Q2</em>, <em>typ=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.get_bin_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array of the pairs of bin indices included in this data corresponding to the cross-correlation of quantities <cite>Q1</cite> and <cite>Q2</cite> (and additionally of type <cite>typ</cite>).</p>
+<p>TODO: not sure at all why this is a useful function. Also, should rename to <cite>get_tracer_pairs</cite> to keep naming consistent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Q1</strong> (<em>str</em>) – First quantity in pair, e.g. ‘S’ for shear, ‘P’ for position</li>
+<li><strong>Q2</strong> (<em>str</em>) – Second quantity in pair.</li>
+<li><strong>typ</strong> (<em>str</em>) – The type of pair to restrict to. If None use all pairs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">nx2 array of tracer index pairs.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.get_quantity_pairs">
+<code class="descname">get_quantity_pairs</code><span class="sig-paren">(</span><em>typ=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.get_quantity_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array of the pairs of quantities included in this data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>typ</strong> (<em>str</em>) – the correlation type to restrict to. If <cite>None</cite> use all pairs.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array of unique pairs of quantities.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sacc.binning.Binning.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>Binning</em>, <em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Binning object from an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group where this binning is saved.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="#sacc.binning.Binning" title="sacc.binning.Binning"><code class="xref py py-class docutils literal"><span class="pre">Binning</span></code></a> object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the binning to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.saveToHDFFile">
+<code class="descname">saveToHDFFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.saveToHDFFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the binning to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – path to output file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.binning.Binning.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.Binning.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the size of this Binning object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">size of the binning object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sacc.binning.enc">
+<code class="descclassname">sacc.binning.</code><code class="descname">enc</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.binning.enc" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an object is a bytes instance or None, return it as-is
+Otherwise if it is a string object, return it as ascii bytes</p>
+<p>Under python 2 bytes and string are the same, so this will
+always return the object as-is.</p>
+</dd></dl>
+
+<span class="target" id="module-sacc.meanvec"></span><dl class="class">
+<dt id="sacc.meanvec.MeanVec">
+<em class="property">class </em><code class="descclassname">sacc.meanvec.</code><code class="descname">MeanVec</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec" title="Permalink to this definition">¶</a></dt>
+<dd><p>MeanVec objects contain the data vector stored in a SACC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>values</strong> (<em>array_like</em>) – data vector.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sacc.meanvec.MeanVec.cullVector">
+<code class="descname">cullVector</code><span class="sig-paren">(</span><em>ndxlist</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec.cullVector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce this MeanVec object to the indices in <cite>ndxlist</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ndxlist</strong> (<em>array_like</em>) – list of indices to preserve.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sacc.meanvec.MeanVec.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>MeanVec</em>, <em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a MeanVec object from an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group where this data vector is saved.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="#sacc.meanvec.MeanVec" title="sacc.meanvec.MeanVec"><code class="xref py py-class docutils literal"><span class="pre">MeanVec</span></code></a> object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.meanvec.MeanVec.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the data vector to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.meanvec.MeanVec.saveToHDFFile">
+<code class="descname">saveToHDFFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec.saveToHDFFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the data vector to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – path to output file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.meanvec.MeanVec.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.meanvec.MeanVec.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the size of the data vector</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">data vector size.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-sacc.precision"></span><dl class="class">
+<dt id="sacc.precision.Precision">
+<em class="property">class </em><code class="descclassname">sacc.precision.</code><code class="descname">Precision</code><span class="sig-paren">(</span><em>matrix=None</em>, <em>mode='dense'</em>, <em>is_covariance=True</em>, <em>binning=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precision objects contain the covariance (or inverse covariance a.k.a. precision) matrix for the data vector stored in a SACC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>matrix</strong> (<em>array_like</em>) – covariance or precision matrix.</li>
+<li><strong>mode</strong> (<em>str</em>) – how is the matrix passed? Options: <cite>dense</cite> (full matrix), <cite>diagonal</cite> (only diagonal passed, assume off-diagonal is zero), <cite>ell_block_diagonal</cite> (matrix is diagonal between different scales).</li>
+<li><strong>is_covariance</strong> (<em>boolean</em>) – set to True (default) if passing the covariance matrix. Otherwise, <cite>matrix</cite> should contain the precision matrix.</li>
+<li><strong>binning</strong> (<a class="reference internal" href="#sacc.binning.Binning" title="sacc.binning.Binning"><em>Binning</em></a>) – a Binning object describing the data vector of this covariance. Only needed if <cite>mode==’ell_block_diagonal’</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sacc.precision.Precision.cullMatrix">
+<code class="descname">cullMatrix</code><span class="sig-paren">(</span><em>ndxlist</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.cullMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce this Precision object to the indices in <cite>ndxlist</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ndxlist</strong> (<em>array_like</em>) – list of indices to preserve.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.precision.Precision.getCovarianceMatrix">
+<code class="descname">getCovarianceMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.getCovarianceMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get covariance matrix stored in this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">covariance matrix.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.precision.Precision.getPrecisionMatrix">
+<code class="descname">getPrecisionMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.getPrecisionMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get precision matrix stored in this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">precision matrix (inverse covariance).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="sacc.precision.Precision.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>Precision</em>, <em>group</em>, <em>binning=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Precision object from an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group where this precision object is saved.</li>
+<li><strong>binning</strong> (<a class="reference internal" href="#sacc.binning.Binning" title="sacc.binning.Binning"><em>Binning</em></a>) – a Binning object describing the data vector of this covariance. Only needed if <cite>mode==’ell_block_diagonal’</cite>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#sacc.precision.Precision" title="sacc.precision.Precision"><code class="xref py py-class docutils literal"><span class="pre">Precision</span></code></a> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.precision.Precision.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the precision object to an HDF file. If the covariance matrix exists then that one is saved, otherwise the precision is saved.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.precision.Precision.saveToHDFFile">
+<code class="descname">saveToHDFFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.precision.Precision.saveToHDFFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the precision object to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – path to output file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-sacc.window"></span><dl class="class">
+<dt id="sacc.window.Window">
+<em class="property">class </em><code class="descclassname">sacc.window.</code><code class="descname">Window</code><span class="sig-paren">(</span><em>ls=None</em>, <em>w=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.window.Window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Window objects contain information about the scales that contribute to a given data vector element.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ls</strong> (<em>array_like</em>) – array of scales.</li>
+<li><strong>w</strong> (<em>array_like</em>) – array of weights for each scale.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="classmethod">
+<dt id="sacc.window.Window.loadFromHDF">
+<em class="property">classmethod </em><code class="descname">loadFromHDF</code><span class="sig-paren">(</span><em>Window</em>, <em>group</em>, <em>ndx</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.window.Window.loadFromHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Window object from an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group where this data vector is saved.</li>
+<li><strong>ndx</strong> (<em>int</em>) – index of the data vector element that you want the window function of.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#sacc.window.Window" title="sacc.window.Window"><code class="xref py py-class docutils literal"><span class="pre">Window</span></code></a> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sacc.window.Window.saveToHDF">
+<code class="descname">saveToHDF</code><span class="sig-paren">(</span><em>group</em>, <em>ndx</em><span class="sig-paren">)</span><a class="headerlink" href="#sacc.window.Window.saveToHDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the windowr to an HDF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>group</strong> (<em>h5py.Group</em>) – HDF5 group.</li>
+<li><strong>ndx</strong> (<em>int</em>) – index of the data vector element that this window corresponds to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to SACC’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, A. Slosar.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
