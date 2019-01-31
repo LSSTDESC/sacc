@@ -75,6 +75,9 @@ class Sacc:
     def __len__(self):
         return len(self.data)
 
+    #
+    # Builder methods for building up Sacc data from scratch in memory
+    #
     def add_tracer(self, tracer_type, name, *args, **kwargs):
         """
         Add a new tracer
@@ -93,11 +96,24 @@ class Sacc:
         self.data.append(d)
 
 
+    def add_covariance(self, covariance):
+        # first deal with 1-dimensional data
+        covariance = np.atleast_2d(covariance)
+        # check that the covariance is the same size as the data
+        n = len(self)
+        if not covariance.shape == (n,n):
+            raise ValueError(f"Covariance has wrong size or shape "
+                f"{covariance.shape} for number of data points {n}")
+        
+        # everything is fine so just set the result
+        self.covariance = covariance
+
+
     def cut(self, mask):
         """
         Remove data points and corresponding covariance elements following mask.
 
-        Mask must be either a boolean array or a list of indices to remove.
+        Mask must be either a boolean array or a list/array of integer indices to remove.
         
         True = cut data point
         False = keep data point
@@ -122,11 +138,17 @@ class Sacc:
         indices = []
         if tracers is not None:
             tracers = tuple(tracers)
+
+        # Look through all data points we have
         for i,d in enumerate(self.data):
+            # Skip things with the wrong type or tracer
             if not ((tracers is None) or (d.tracers == tracers)):
                 continue
             if not ((data_type is None or d.data_type == data_type)):
                 continue
+            # Remove any objects that don't match the required tags,
+            # including the fact that we can specify tag__lt and tag__gt
+            # in order to remove/accept ranges
             ok = True
             for name,val in select.items():
                 if name.endswith("__lt"):
@@ -143,14 +165,14 @@ class Sacc:
                     if not d.get_tag(name) == val:
                         ok=False
                         break
-                        
+            # Record this index
             if ok:
                 indices.append(i)
         return np.array(indices)
 
     def get_tags(self, tags, data_type=None, tracers=None, **select):
         """
-        Get the value of a one or more named tags for a subset of the data
+        Get the value of a one or more named tags for (a subset of) the data
         """
         indices = set(self.indices(data_type=data_type, tracers=tracers, **select))
         tags = [[d.get_tag(tag) for i,d in enumerate(self.data) if i in indices]
@@ -159,25 +181,28 @@ class Sacc:
     
     def get_tag(self, tag, data_type=None, tracers=None, **select):
         """
-        Get the value of a named tag for a subset of the data
+        Get the value of a named tag for (a subset of) the data
         """
         return self.get_tags([tag], data_type=data_type, tracers=tracers, **select)[0]
     
     def get_data_points(self, data_type=None, tracers=None, **select):
         """
-        Get data point objects for a subset of the data
+        Get data point objects for (a subset of) the data
         """
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return [self.data[i] for i in indices]
 
     def get_mean(self, data_type=None, tracers=None, **select):
         """
-        Get the vector of mean values for a selected subset of the data
+        Get the vector of mean values for (a subset of) the data
         """
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self.mean[indices]
 
     def get_data_types(self):
+        """
+        Get a list of the different data types stored in the Sacc
+        """
         s = {d.data_type for d in self.data}
         return list(s)
     
@@ -215,7 +240,4 @@ class Sacc:
         pass
 
     def save(self, filename):
-        pass
-
-    def add_covariance(self, covariance):
         pass
