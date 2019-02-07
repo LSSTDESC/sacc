@@ -134,8 +134,17 @@ class SACC(object):
         self.binning.cullBinning(ndx)
         self.mean.cullVector(ndx)
         self.precision.cullMatrix(ndx)
-                    
-    
+
+    def selectTracer(self, tracerno):
+        """
+        Select all elements of the data vector (and covariance, etc.) that belong to tracer tracerno.
+        """
+
+        ndx=np.where((self.binning.binar['T1']==tracerno)&(self.binning.binar['T2']==tracerno))[0]
+        self.binning.cullBinning(ndx)
+        self.mean.cullVector(ndx)
+        self.precision.cullMatrix(ndx)
+
     def sortTracers(self):
         """
         Return information about all the ingredients that define each element of the data vector.
