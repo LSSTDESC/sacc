@@ -145,6 +145,15 @@ class SACC(object):
         self.mean.cullVector(ndx)
         self.precision.cullMatrix(ndx)
 
+    def cullType(self,typ) :
+        """
+        Select all elements of the data vector (and covariance, etc.) with the same `type = typ`.
+        """
+        ndx=np.where(self.binning.binar['type']==typ)[0]
+        self.binning.cullBinning(ndx)
+        self.binning.cullVector(ndx)
+        self.binning.cullMatrix(ndx)
+        
     def sortTracers(self):
         """
         Return information about all the ingredients that define each element of the data vector.
