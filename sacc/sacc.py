@@ -151,8 +151,8 @@ class SACC(object):
         """
         ndx=np.where(self.binning.binar['type']==typ)[0]
         self.binning.cullBinning(ndx)
-        self.binning.cullVector(ndx)
-        self.binning.cullMatrix(ndx)
+        self.mean.cullVector(ndx)
+        self.precision.cullMatrix(ndx)
         
     def sortTracers(self):
         """
