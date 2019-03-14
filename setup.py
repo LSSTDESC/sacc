@@ -10,3 +10,11 @@ setup(name="sacc",
       url="https://github.com/LSSTDESC/sacc",
       author="LSST DESC",
       packages=['sacc'])
+
+
+setup(name="sacc2", 
+      version="0.1.0",
+      description=description,
+      url="https://github.com/LSSTDESC/sacc",
+      author="LSST DESC",
+      packages=['sacc2'])
