@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import copy
 
 from .tracers import Tracer
 
@@ -56,6 +57,9 @@ class Sacc:
         Return the number of data points in the data set.
         """
         return len(self.data)
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     #
     # Builder methods for building up Sacc data from scratch in memory
