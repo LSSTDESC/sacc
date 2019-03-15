@@ -1,9 +1,5 @@
-
-
 class BaseWindow:
     pass
-
-
 
 class TopHatWindow(BaseWindow):
     def __init__(self, range_min, range_max):
