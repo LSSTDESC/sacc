@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import copy
+import os
 
 from .tracers import Tracer
 
@@ -59,6 +60,9 @@ class Sacc:
         return len(self.data)
 
     def copy(self):
+        """
+        Create a copy of the data set with no data shared with the original
+        """
         return copy.deepcopy(self)
 
     #
@@ -249,8 +253,33 @@ class Sacc:
             # Record this index
             if ok:
                 indices.append(i)
-        return np.array(indices)
+        return np.array(indices, dtype=int)
 
+    def _get_tags_by_index(self, tags, indices):
+        """
+        Get the value of a one or more named tags for (a subset of) the data.
+
+        Parameters
+        ----------
+
+        tags: list of str
+            Tags to look up on the selected data
+
+        indices: list or array
+            Indices of data points
+
+        Returns
+        -------
+        values: list of lists
+            For each input tag, a corresponding list of the value of that tag for given
+            selection, in the order the matching data points were added.
+
+
+        """
+        values = [[d.get_tag(tag) for i,d in enumerate(self.data) if i in indices]
+                for tag in tags]
+        return values
+    
     def get_tags(self, tags, data_type=None, tracers=None, **select):
         """
         Get the value of a one or more named tags for (a subset of) the data.
@@ -285,10 +314,9 @@ class Sacc:
 
         """
         indices = set(self.indices(data_type=data_type, tracers=tracers, **select))
-        values = [[d.get_tag(tag) for i,d in enumerate(self.data) if i in indices]
-                for tag in tags]
-        return values
-    
+        return self._get_tags_by_index(tags, indices)
+
+
     def get_tag(self, tag, data_type=None, tracers=None, **select):
         """
         Get the value of a one tag for (a subset of) the data.
@@ -481,7 +509,7 @@ class Sacc:
 
         """
         if os.path.exists(filename) and not overwrite:
-            raise OSError(f"File {filenane} already exists. Set overwrite=True to replace it.")
+            raise OSError(f"File {filename} already exists. Set overwrite=True to replace it.")
         with open(filename, "wb") as f:
             pickle.dump(self, f)
 
@@ -499,3 +527,191 @@ class Sacc:
         with open(filename, "rb") as f:
             S = pickle.load(f)
         return S
+
+    #
+    # Methods below here are helper functions for specific types of data.
+    # We can add more of them as it becomes clear what people need.
+    # 
+    #
+
+    def _get_2pt(self, data_type, bin1, bin2, return_cov, angle_name):
+        # Internal helper method for get_ell_cl and get_theta_xi
+        ind = self.indices(data_type, (bin1,bin2))
+
+        mu = np.array(self.mean[ind])
+        angle = np.array(self._get_tags_by_index([angle_name], ind)[0])
+
+        if return_cov:
+            if self.covariance is None:
+                raise ValueError("This sacc data does not have a covariance attached")
+            cov_block = self.covariance[ind][:,ind]
+            angle, mu, cov_block
+        else:
+            return angle, mu
+
+    def get_ell_cl(self, data_type, bin1, bin2, return_cov=False):
+        """
+        Helper method to extract the ell and C_ell values for a specific
+        data type (e.g. 'shear_ee' and pair of tomographic bins)
+
+        Parameters
+        ----------
+
+        data_type: str
+            Which C_ell to extract
+        bin1: str
+            The name of the first tomographic bin
+        bin2: str
+            The name of the second tomographic bin
+        return_cov: bool
+            If True, also return the block of the covariance
+            corresponding to these points.  Default=False
+
+        Returns:
+        ell: array
+            Ell values for this bin pair
+        mu: array
+            Mean values for this bin pair
+        cov_block: 2x2 array
+            (Only if return_cov=True) The block of the covariance for
+            these points
+        """
+        return self._get_2pt(data_type, bin1, bin2, return_cov, 'ell')
+
+    def get_theta_xi(self, data_type, bin1, bin2, return_cov=False):
+        """
+        Helper method to extract the theta and correlation function values for a specific
+        data type (e.g. 'shear_xi' and pair of tomographic bins)
+
+        Parameters
+        ----------
+
+        data_type: str
+            Which C_ell to extract
+        bin1: str
+            The name of the first tomographic bin
+        bin2: str
+            The name of the second tomographic bin
+        return_cov: bool
+            If True, also return the block of the covariance
+            corresponding to these points.  Default=False
+
+        Returns:
+        ell: array
+            Ell values for this bin pair
+        mu: array
+            Mean values for this bin pair
+        cov_block: 2x2 array
+            (Only if return_cov=True) The block of the covariance for
+            these points
+        """
+        return self._get_2pt(data_type, bin1, bin2, return_cov, 'theta')
+
+    def _add_2pt(self, data_type, bin1, bin2, x, tag_val, tag_name, window):
+        """
+        Internal method for adding 2pt data points.
+        Copes with multiple values for the parameters
+        """
+        # single data point case
+        if np.isscalar(tag_val):
+            t = {tag_name:tag_val}
+            if window is not None:
+                t['window'] = window
+            self.add_data_point(data_type, (bin1,bin2), x, **t)
+            return
+        # multiple ell/theta values but same bin
+        elif np.isscalar(bin1):
+            n1 = len(x)
+            n2 = len(tag_val)
+            if not n1==n2:
+                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1},{n2})")
+            if window is None:
+                for tag_i, x_i in zip(tag_val, x):
+                    self._add_2pt(data_type, bin1, bin2, x_i, tag_i, tag_name, window)
+            else:
+                for tag_i, x_i, w_i in zip(tag_val, x, window):
+                    self._add_2pt(data_type, bin1, bin2, x_i, tag_i, tag_name, w_i)
+        # multiple bin values
+        elif np.isscalar(data_type):
+            n1 = len(x)
+            n2 = len(tag_val)
+            n3 = len(bin1)
+            n4 = len(bin2)
+            if not (n1 == n2 == n3 == n4):
+                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4})")
+            if window is None:
+                for b1, b2, tag_i, x_i in zip(bin1, bin2, tag, x):
+                    self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name, window)
+            else:
+                for b1, b2, tag_i, x_i, w_i in zip(bin1, bin2, tag, x, window):
+                    self._add_2pt(data_type, b1, x_i, tag_i, tag_name, w_i)
+        # multiple data point values
+        else:
+            n1 = len(x)
+            n2 = len(tag_val)
+            n3 = len(bin1)
+            n4 = len(bin2)
+            n5 = len(data_type)
+            if not (n1 == n2 == n3 == n4 == n5):
+                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4}, {n5})")
+            if window is None:
+                for d, b1, b2, tag_i, x_i in zip(data_type, bin1, bin2, tag, x):
+                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, window)
+            else:
+                for d, b1, b2, tag_i, x_i, w_i in zip(data_type, bin1, bin2, tag, x, window):
+                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, w_i)
+
+
+    def add_ell_cl(self, data_type, bin1, bin2, ell, x, window=None):
+        """
+        Add a series of 2pt Fourier space data points, either
+        individually or as a group.
+
+        data_type: str or array/list of str
+            Which C_ell to extract
+        bin1: str or array/list of str
+            The name(s) of the first tomographic bin
+        bin2: str or array/list of str
+            The name(s) of the second tomographic bin
+        ell: int or array/list of int/float
+            The ell values for these data points
+        x: float or array/list of float
+            The C_ell values for these data points
+        window: Window instance
+            Optional window object describing the window function
+            of the data point.
+
+
+        Returns
+        -------
+        None
+
+        """
+        self._add_2pt(data_type, bin1, bin2, x, ell, 'ell', window)
+
+    def add_theta_xi(self, data_type, bin1, bin2, theta, x, window=None):
+        """
+        Add a series of 2pt real space data points, either
+        individually or as a group.
+
+        data_type: str or array/list of str
+            Which C_ell to extract
+        bin1: str or array/list of str
+            The name(s) of the first tomographic bin
+        bin2: str or array/list of str
+            The name(s) of the second tomographic bin
+        theta: float or array/list of int
+            The ell values for these data points
+        x: float or array/list of float
+            The C_ell values for these data points
+        window: Window instance
+            Optional window object describing the window function
+            of the data point.
+
+        Returns
+        -------
+        None
+
+        """
+        self._add_2pt(data_type, bin1, bin2, x, theta, 'theta', window)
+        
