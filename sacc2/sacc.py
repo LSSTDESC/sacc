@@ -1,9 +1,11 @@
 import numpy as np
-import pickle
 import copy
 import os
+import yaml
 
 from .tracers import Tracer
+from .windows import BaseWindow
+from .utils import unique_list
 
 # add more as we develop them
 allowed_types = [
@@ -27,6 +29,8 @@ class DataPoint:
         self.tracers = tracers
         self.value = value
         self.tags = tags
+        if data_type not in allowed_types:
+            warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type.")
     
     def __repr__(self):
         return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
@@ -56,14 +60,77 @@ class Sacc:
     def __len__(self):
         """
         Return the number of data points in the data set.
+
+        Returns
+        -------
+        n: int
+            The number of data points
         """
         return len(self.data)
 
     def copy(self):
         """
-        Create a copy of the data set with no data shared with the original
+        Create a copy of the data set with no data shared with the original.
+        You can safely modify the copy without it affecting the original.
+
+        Returns
+        -------
+        S: Sacc instance
+            A new instance of the data set.
+
         """
         return copy.deepcopy(self)
+
+    def to_canonical_order(self):
+        """
+        Re-order the data set in-place to a standard ordering.
+        """
+
+        # Define the ordering to be used
+        # We need a key function that will return the 
+        # object that python's default sorted function will use.
+        def order_key(row):
+            # Put data types in the order in allowed_types.
+            # If not present then just use the name of the data type.
+            if row.data_type in allowed_types:
+                dt = allowed_types.index(row.data_type)
+            else:
+                dt = row.data_type
+            # If known, order by ell or theta.
+            # Otherwise just use whatever we have.
+            if 'ell' in row.tags:
+                return (dt, row.tracers, row.tags['ell'])
+            elif 'theta' in row.tags:
+                return (dt, row.tracers, row.tags['theta'])
+            else:
+                return (dt, row.tracers, row.tags.values())
+
+        # This from 
+        # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
+        indices = [i[0] for i in sorted(enumerate(self.data), key=lambda x:order_key(x[1]))]        
+
+        # Assign the new order.
+        self.reorder(indices)
+
+    def reorder(self, indices):
+        """
+        Re-order the data set in-place according to the indices passed in.
+
+        If not all indices are included in the input then the data set will
+        be cut down.
+
+        Parameters
+        ----------
+        indices: integer list or array
+            Indices for the re-ordered data
+        """
+        self.data = [self.data[i] for i in indices]
+
+        if self.covariance is not None:
+            self.covariance = self.covariance[indices][:,indices]
+
+
+
 
     #
     # Builder methods for building up Sacc data from scratch in memory
@@ -99,8 +166,22 @@ class Sacc:
 
         """
 
-        T = Tracer.make(tracer_type, name, *args, *kwargs)
-        self.tracers[name] = T
+        tracer = Tracer.make(tracer_type, name, *args, *kwargs)
+        self.add_tracer_object(tracer)
+
+    def add_tracer_object(self, tracer):
+        """
+        Add a pre-constructed Tracer instance to this data set.
+        If you just have, for example the z and n(z) data then 
+        use the add_tracer method instead.
+
+        Parameters
+        ----------
+
+        tracer: Tracer instance
+            The tracer object to add to the data set
+        """
+        self.tracers[tracer.name] = tracer
 
     def add_data_point(self, data_type, tracers, value, tracers_later=False, **tags):
         """
@@ -313,7 +394,7 @@ class Sacc:
 
 
         """
-        indices = set(self.indices(data_type=data_type, tracers=tracers, **select))
+        indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self._get_tags_by_index(tags, indices)
 
 
@@ -461,7 +542,9 @@ class Sacc:
             in any data point.  No specific ordering.
         """
         indices = self.indices(data_type=data_type)
-        return list(set([self.data[i].tracers for i in indices]))
+        return unique_list(self.data[i].tracers for i in indices)
+
+
         
 
     @property
@@ -496,7 +579,10 @@ class Sacc:
 
     def save(self, filename, overwrite=False):
         """
-        Save the data set to a file using the pickle format
+        Save the data set to a file using a yaml format.
+
+        It is very unwise to attempt to manually edit such files.
+        Instead, read the data in and modify it using the tools here.
 
         Parameters
         ----------
@@ -505,27 +591,140 @@ class Sacc:
 
         overwrite: bool
             If True, overwrite the file if it exists already.
+            Default is False.
             Otherwise, raises OSError.
 
         """
         if os.path.exists(filename) and not overwrite:
             raise OSError(f"File {filename} already exists. Set overwrite=True to replace it.")
-        with open(filename, "wb") as f:
-            pickle.dump(self, f)
+        with open(filename, "w") as f:
+            f.write(self.save_string())
 
+    def save_string(self):
+        """
+        Make a YAML string representation of this data set.
+        The data in the file can be recovered identically from this form.
+
+        To save the file directly to disk, you can just use the save method.
+
+
+        Returns
+        -------
+        s: str
+            String representation of the complete data set.
+
+        """
+        import io
+
+        # Get all the different windows we use
+        windows = unique_list(d.get_tag('window') for d in self.data)
+
+        # Data points may or may not have windows.
+        # Remove the "None" window from the list
+        if None in windows:
+            windows.remove(None)
+
+        # Get the serializable form of each window object.
+        windows_dicts = [w.to_dict() for w in windows]
+
+        # Now loop through putting the actual data points
+        # into a serializable form
+        data = []
+        for d in self.data:
+            # The 'window' tag refers to a class instance
+            # It is a bit more stable to save these ourselves manually.
+            # So remove this tag and replace it with one that refers
+            # to the list above.
+            tags = d.tags.copy()
+            if 'window' in tags:
+                tags['window'] = windows.index(tags['window'])
+
+            # Each data point is saved as a list
+            r = [d.data_type, float(d.value), list(d.tracers), tags]
+            data.append(r)
+
+        # Save the tracers in the file.
+        # Like the windows, we manually save these.
+        # Unlike windows they aren't optional, so we can just simply loop through the list
+        tracers = []
+        for t in self.tracers.values():
+            tracers.append(t.to_dict())
+
+        # Finally, dump everything to string.
+        # pyyaml wants to be given a stream-like object, so we have to
+        # use StringIO and then rewind and read from it.
+        s = io.StringIO()
+        # Save auxiliary data
+        yaml.dump({'tracers': tracers, 'windows':windows_dicts}, s)
+        # Add this little comment of explanation
+        s.write("# If present, the window indices in the data below\n")
+        s.write("# correspond to the list of windows above.\n")
+        # Save main data
+        yaml.dump({'data':data}, s)
+        # If present, save covariance.
+        if self.covariance is not None:
+            yaml.dump({'covariance': covariance.tolist()}, s)
+
+        # Return the string
+        s.seek(0)
+        return s.read()
 
     @classmethod
     def load(cls, filename):
         """
-        Load a dataset from the pickle format.
+        Load a SACC data set from a YAML data format file.
+
+        Don't make these files yourself!  If you need to convert
+        from another format then use the tools in this class to
+        build up the file bit by bit.
 
         Parameters
         ----------
         filename: str
-            The file to load from
+            Filename to read
         """
-        with open(filename, "rb") as f:
-            S = pickle.load(f)
+        s = open(filename).read()
+        return cls.load_string(s)
+
+    @classmethod
+    def load_string(cls, s):
+        """
+        Load a SACC data set from a YAML data format string.
+
+        Don't make these strings yourself!  If you need to convert
+        from another format then use the tools in this class to
+        build up the file bit by bit..
+
+        Parameters
+        ----------
+        s: str
+            String to read from.
+        """
+        import yaml
+        d = yaml.load(s)
+        
+        # Make window objects
+        windows = [BaseWindow.from_dict(w) for w in d['windows']]
+
+        S = cls()
+
+        # add tracer objects
+        for t in d['tracers']:
+            S.add_tracer_object(Tracer.from_dict(t))
+
+        # Add data points
+        for row in d['data']:
+            dt, val, tracers, tags = row
+
+            # Deal with window tags separately.
+            if 'window' in tags:
+                tags['window'] = windows[tags['window']]
+            S.add_data_point(dt, tracers, val, **tags)
+
+        # covariance is optional
+        if 'covariance' in d:
+            S.add_covariance(np.array(d['covariance']))
+
         return S
 
     #
@@ -614,7 +813,7 @@ class Sacc:
         """
         # single data point case
         if np.isscalar(tag_val):
-            t = {tag_name:tag_val}
+            t = {tag_name:float(tag_val)}
             if window is not None:
                 t['window'] = window
             self.add_data_point(data_type, (bin1,bin2), x, **t)

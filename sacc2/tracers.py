@@ -1,3 +1,4 @@
+import numpy as np
 
 class Tracer:
     """
@@ -8,18 +9,19 @@ class Tracer:
     point, indicating the n(z) for the corresponding tomographic bin.
 
     All Tracer objects have at least a name attribute.  Different
-    subclasses have other requirements.  For example, n(z) tracers
+    subclassses have other requirements.  For example, n(z) tracers
     require z and n(z) arrays.
 
     In general you don't need to create tracer objects yourself - 
     the Sacc2.add_tracer method will construct them for you.
     """
-    subclasses = {}
+    _tracer_classes = {}
     def __init__(self, name):
         self.name = name
 
     def __init_subclass__(cls, tracer_type):
-        cls.subclasses[tracer_type] = cls
+        cls._tracer_classes[    tracer_type] = cls
+        cls.tracer_type = tracer_type
 
     @classmethod
     def make(cls, tracer_type, name, *args, **kwargs):
@@ -41,8 +43,22 @@ class Tracer:
         instance: Tracer object
             An instance of a Tracer subclass
         """
-        subclass = cls.subclasses[tracer_type]
+        subclass = cls._tracer_classes[tracer_type]
         return subclass(name, *args, **kwargs)
+
+    def to_dict(self):
+        return {
+            "type": self.tracer_type,
+            "name": self.name,
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        # subclasses must not call the parent implementation of this method!
+        subclass_name = d['type']
+        subclass = cls._tracer_classes[subclass_name]
+        return subclass.from_dict(d)
+
         
 class MiscTracer(Tracer, tracer_type='misc'):
     """
@@ -50,6 +66,10 @@ class MiscTracer(Tracer, tracer_type='misc'):
     """
     def __init__(self, name):
         super().__init__(name)
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['name'])
 
         
 class NZTracer(Tracer, tracer_type='NZ'):
@@ -87,5 +107,16 @@ class NZTracer(Tracer, tracer_type='NZ'):
             An instance of this class
         """
         super().__init__(name)
-        self.z = z
-        self.nz = nz
+        self.z = np.array(z)
+        self.nz = np.array(nz)
+
+    def to_dict(self):
+        d = super().to_dict()
+        d['z'] = self.z.tolist()
+        d['nz'] = self.nz.tolist()
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['name'], d['z'], d['nz'])
+
