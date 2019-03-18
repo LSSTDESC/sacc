@@ -56,6 +56,7 @@ class Sacc:
         self.data = []
         self.tracers = {}
         self.covariance = None
+        self.metadata = {}
 
     def __len__(self):
         """
@@ -655,6 +656,7 @@ class Sacc:
         # use StringIO and then rewind and read from it.
         s = io.StringIO()
         # Save auxiliary data
+        yaml.dump({'metadata': self.metadata}, s)
         yaml.dump({'tracers': tracers, 'windows':windows_dicts}, s)
         # Add this little comment of explanation
         s.write("# If present, the window indices in the data below\n")
@@ -707,6 +709,8 @@ class Sacc:
         windows = [BaseWindow.from_dict(w) for w in d['windows']]
 
         S = cls()
+
+        S.metadata = d['metadata']
 
         # add tracer objects
         for t in d['tracers']:
