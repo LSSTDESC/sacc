@@ -3,6 +3,8 @@ import copy
 import os
 import yaml
 import warnings
+import pickle
+
 from collections import OrderedDict
 from astropy.io import fits
 from astropy.table import Table
@@ -51,7 +53,9 @@ class DataPoint:
         tags = self.tags.copy()
         if lookups is not None:
             for k,v in tags.items():
-                tags[k] = lookups.get(v, v)
+                dk = lookups.get(k)
+                if dk:
+                    tags[k] = dk.get(v, v)
 
         d = {
             'data_type': self.data_type,
@@ -60,6 +64,19 @@ class DataPoint:
             'tags': tags,
         }
         return d
+
+    @classmethod
+    def from_dict(cls, d, lookups=None):
+        x = cls(d['data_type'], d['tracers'], d['value'], **d['tags'])
+        if lookups:
+            for k,v in x.tags.items():
+                dk = lookups.get(k)
+                if dk:
+                    x.tags[k] = dk.get(v, v)
+        return x
+ 
+
+
 
 
         
@@ -258,7 +275,10 @@ class Sacc:
         -------
         None
         """
-        self.covariance = BaseCovariance.make(covariance, len(self))
+        if isinstance(covariance, BaseCovariance):
+            self.covariance = covariance
+        else:
+            self.covariance = BaseCovariance.make(covariance, len(self))
 
 
     def cut(self, mask):
@@ -598,11 +618,12 @@ class Sacc:
         windows = [d.get_tag('window') for d in self.data]
         windows = [w for w in windows if w is not None]
         windows_index = {w:i for i,w in enumerate(windows)}
+        lookups={'window':windows_index}
 
         d = {
             'tracers': [t.to_dict() for t in self.tracers.values()],
             'windows': [w.to_dict() for w in windows],
-            'data': [d.to_dict(lookups=windows_index) for d in self.data],
+            'data': [d.to_dict(lookups) for d in self.data],
         }
         if self.covariance is None:
             d['covariance'] = None
@@ -610,8 +631,31 @@ class Sacc:
             d['covariance'] = self.covariance.to_dict()
         return d
 
+    @classmethod
+    def from_dict(cls, d):
+        S = cls()
+        for t in d['tracers']:
+            T = Tracer.from_dict(t)
+            S.add_tracer_object(T)
 
-    def save(self, filename, overwrite=False):
+        windows = [BaseWindow.from_dict(w) for w in d['windows']]
+        windows_index = {i:w for i,w in enumerate(windows)}
+        lookups = {'window':windows_index}
+        data = [DataPoint.from_dict(x, lookups) for x in d['data']]
+
+        for dp in data:
+            S.data.append(dp)
+
+        if d.get('covariance'):
+            cov = BaseCovariance.from_dict(d['covariance'])
+            S.add_covariance(cov)
+
+        return S
+
+
+
+
+    def to_fits(self, filename, overwrite=False):
         """
         Save this data set to a FITS format Sacc file.
 
@@ -692,7 +736,7 @@ class Sacc:
 
 
     @classmethod
-    def load(cls, filename):
+    def from_fits(cls, filename):
         """
         Load a Sacc data set from a FITS file.
 
@@ -755,6 +799,19 @@ class Sacc:
 
         return S
 
+    def to_pickle(self, filename, overwrite=False):
+
+        if os.path.exists(filename) and not overwrite:
+            raise ValueError(f"Filename {filename} already exists. Set overwrite=True to replace it.")
+        D = self.to_dict()
+        pickle.dump(D, open('tmp.dat', 'wb'))
+
+
+    @classmethod
+    def from_pickle(cls, filename):
+        D = pickle.load(open(filename,'rb'))
+        return cls.from_dict(D)
+
 
 
     #
@@ -773,8 +830,8 @@ class Sacc:
         if return_cov:
             if self.covariance is None:
                 raise ValueError("This sacc data does not have a covariance attached")
-            cov_block = self.get_block(ind)
-            angle, mu, cov_block
+            cov_block = self.covariance.get_block(ind)
+            return angle, mu, cov_block
         else:
             return angle, mu
 

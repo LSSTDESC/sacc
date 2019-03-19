@@ -13,8 +13,16 @@ class BaseCovariance:
     @classmethod
     def from_fits(cls, hdu):
         subclass_name = hdu.header['saccclss']
-        subclass = self._covariance_classes[subcls]
+        subclass = cls._covariance_classes[subclass_name]
         return subclass.from_fits(hdu)
+
+    @classmethod
+    def from_dict(cls, d):
+        subclass_name = d['type']
+        subclass = cls._covariance_classes[subclass_name]
+        return subclass.from_dict(d)
+
+
 
     @classmethod
     def make(cls, cov, n):
@@ -168,11 +176,11 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         return cls(D)
 
     def get_block(self, indices):
-        return np.diagonal(self.diag[indices])
+        return np.diag(self.diag[indices])
 
 
     def to_dict(self):
-        return {"type":self.cov_type, "blocks":self.diag}
+        return {"type":self.cov_type, "diag":self.diag}
 
     @classmethod
     def from_dict(cls, d):
