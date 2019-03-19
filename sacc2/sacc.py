@@ -615,6 +615,20 @@ class Sacc:
             d.value = m
 
     def to_dict(self):
+        """
+        Generate a dictionary representation of the contents of the
+        data set.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        D: dict
+            Data in dict form
+
+        """
         windows = [d.get_tag('window') for d in self.data]
         windows = [w for w in windows if w is not None]
         windows_index = {w:i for i,w in enumerate(windows)}
@@ -633,6 +647,24 @@ class Sacc:
 
     @classmethod
     def from_dict(cls, d):
+        """
+        Build a data set from the contents of a dict.
+
+        We advise against trying to make these dictionaries
+        yourself manually.  Instead, make a new Sacc object
+        and add data to it using the methods on the class.
+
+        Parameters
+        ----------
+        D: dict
+            Data in dict form
+
+
+        Returns
+        -------
+        S: Sacc object
+            Dataset reconstituted from dict
+        """
         S = cls()
         for t in d['tracers']:
             T = Tracer.from_dict(t)
@@ -800,6 +832,20 @@ class Sacc:
         return S
 
     def to_pickle(self, filename, overwrite=False):
+        """
+        Save this data set to a pickle format Sacc file.
+
+        Parameters
+        ----------
+
+        filename: str
+            Destination FITS file name
+
+        overwrite: bool
+            If False (the default), raise an error if the file already exists
+            If True, overwrite the file silently.
+
+        """
 
         if os.path.exists(filename) and not overwrite:
             raise ValueError(f"Filename {filename} already exists. Set overwrite=True to replace it.")
@@ -809,6 +855,16 @@ class Sacc:
 
     @classmethod
     def from_pickle(cls, filename):
+        """
+        Load a Sacc data set from a pickle format file.
+
+        Parameters
+        ----------
+
+        filename: str
+            A pickle format sacc file
+
+        """
         D = pickle.load(open(filename,'rb'))
         return cls.from_dict(D)
 
