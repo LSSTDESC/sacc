@@ -1,4 +1,6 @@
 import numpy as np
+from astropy.table import Table
+from astropy.io import fits
 
 class Tracer:
     """
@@ -20,7 +22,7 @@ class Tracer:
         self.name = name
 
     def __init_subclass__(cls, tracer_type):
-        cls._tracer_classes[    tracer_type] = cls
+        cls._tracer_classes[tracer_type] = cls
         cls.tracer_type = tracer_type
 
     @classmethod
@@ -59,6 +61,18 @@ class Tracer:
         subclass = cls._tracer_classes[subclass_name]
         return subclass.from_dict(d)
 
+    def _add_fits_info(self, hdu):
+        hdu.name = self.name
+        hdu.header['sacctype'] = 'tracer'
+        hdu.header['saccname'] = self.name
+        hdu.header['saccclss'] = self.tracer_type
+        return hdu
+
+    @classmethod
+    def from_fits(cls, hdu):
+        subclass_name = hdu.header['saccclss']
+        subclass = cls._tracer_classes[subclass_name]
+        return subclass.from_fits(hdu)
         
 class MiscTracer(Tracer, tracer_type='misc'):
     """
@@ -70,6 +84,18 @@ class MiscTracer(Tracer, tracer_type='misc'):
     @classmethod
     def from_dict(cls, d):
         return cls(d['name'])
+
+    @classmethod
+    def from_fits(cls, hdu):
+        name = hdu.header['saccname']
+        return cls(name)
+
+    def to_fits(self):
+        hdu = fits.BinTableHDU()
+        self._add_fits_info(hdu)
+        return hdu
+
+
 
         
 class NZTracer(Tracer, tracer_type='NZ'):
@@ -119,4 +145,17 @@ class NZTracer(Tracer, tracer_type='NZ'):
     @classmethod
     def from_dict(cls, d):
         return cls(d['name'], d['z'], d['nz'])
+
+    def to_fits(self):
+        tab = Table(data={'z':self.z, 'nz':self.nz})
+        hdu = fits.table_to_hdu(tab)
+        self._add_fits_info(hdu)
+        return hdu
+
+    @classmethod
+    def from_fits(cls, hdu):
+        name = hdu.header['saccname']
+        z = hdu.data['z']
+        nz = hdu.data['nz']
+        return cls(name, z, nz)
 

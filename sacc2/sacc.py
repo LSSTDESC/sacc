@@ -2,10 +2,16 @@ import numpy as np
 import copy
 import os
 import yaml
+import warnings
+
+from astropy.io import fits
+from astropy.table import Table
 
 from .tracers import Tracer
 from .windows import BaseWindow
 from .utils import unique_list
+from .covariance import BaseCovariance
+
 
 # add more as we develop them
 allowed_types = [
@@ -92,11 +98,11 @@ class Sacc:
         # object that python's default sorted function will use.
         def order_key(row):
             # Put data types in the order in allowed_types.
-            # If not present then just use the name of the data type.
+            # If not present then just use the hash of the data type.
             if row.data_type in allowed_types:
                 dt = allowed_types.index(row.data_type)
             else:
-                dt = row.data_type
+                dt = hash(row.data_type)
             # If known, order by ell or theta.
             # Otherwise just use whatever we have.
             if 'ell' in row.tags:
@@ -104,8 +110,7 @@ class Sacc:
             elif 'theta' in row.tags:
                 return (dt, row.tracers, row.tags['theta'])
             else:
-                return (dt, row.tracers, row.tags.values())
-
+                return (dt, row.tracers, 0.0)
         # This from 
         # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
         indices = [i[0] for i in sorted(enumerate(self.data), key=lambda x:order_key(x[1]))]        
@@ -128,7 +133,7 @@ class Sacc:
         self.data = [self.data[i] for i in indices]
 
         if self.covariance is not None:
-            self.covariance = self.covariance[indices][:,indices]
+            self.covariance = self.covariance.masked(indices)
 
 
 
@@ -224,7 +229,6 @@ class Sacc:
         d = DataPoint(data_type, tracers, value, **tags)
         self.data.append(d)
 
-
     def add_covariance(self, covariance):
         """
         Once you have finished adding data points, add a covariance
@@ -232,23 +236,15 @@ class Sacc:
 
         Parameters
         ----------
-        covariance: array
+        covariance: array or list
             2x2 numpy array containing the covariance of the added data points
+            OR a list of blocks
 
         Returns
         -------
         None
         """
-        # first deal with 1-dimensional data
-        covariance = np.atleast_2d(covariance)
-        # check that the covariance is the same size as the data
-        n = len(self)
-        if not covariance.shape == (n,n):
-            raise ValueError(f"Covariance has wrong size or shape "
-                f"{covariance.shape} for number of data points {n}")
-        
-        # everything is fine so just set the result
-        self.covariance = covariance
+        self.covariance = BaseCovariance.make(covariance)
 
 
     def cut(self, mask):
@@ -265,16 +261,23 @@ class Sacc:
             if indices then values indicate data points to cut out
         """
         mask = np.array(mask)
+
+        # Convert integer masks to booleans
+        if mask.dtype != np.bool:
+            if not mask.dtype in [np.int8, np.int16, np.int32, np.int64]:
+                raise ValueError("Wrong mask type")
+            m = np.zeros(len(self), dtype=bool)
+            for i in mask:
+                m[i] = True
+            mask = m
             
-        if mask.dtype == np.bool:
-            if not len(mask)==len(self):
-                raise ValueError("Mask passed in is wrong size")
-            self.data = [d for i,d in enumerate(self.data) if not mask[i]]
-        else:
-            # slow
-            self.data = [d for i,d in enumerate(self.data) if not i in mask]
-        
-        self.covariance = self.covariance[mask][:,mask]
+        if not len(mask)==len(self):
+            raise ValueError("Mask passed in is wrong size")
+
+        self.data = [d for i,d in enumerate(self.data) if not mask[i]]
+        if self.covariance is not None:
+            self.covariance = self.covariance.masked(~mask)
+
 
     def indices(self, data_type=None, tracers=None, **select):
         """
@@ -580,156 +583,149 @@ class Sacc:
 
     def save(self, filename, overwrite=False):
         """
-        Save the data set to a file using a yaml format.
-
-        It is very unwise to attempt to manually edit such files.
-        Instead, read the data in and modify it using the tools here.
+        Save this data set to a FITS format Sacc file.
 
         Parameters
         ----------
+
         filename: str
-            The file to save to
+            Destination FITS file name
 
         overwrite: bool
-            If True, overwrite the file if it exists already.
-            Default is False.
-            Otherwise, raises OSError.
+            If False (the default), raise an error if the file already exists
+            If True, overwrite the file silently.
 
         """
-        if os.path.exists(filename) and not overwrite:
-            raise OSError(f"File {filename} already exists. Set overwrite=True to replace it.")
-        with open(filename, "w") as f:
-            f.write(self.save_string())
 
-    def save_string(self):
-        """
-        Make a YAML string representation of this data set.
-        The data in the file can be recovered identically from this form.
-
-        To save the file directly to disk, you can just use the save method.
+        # We need to be in a standard order for this to reliably work
+        self.to_canonical_order()
+        
+        # Metadata goes in the primary header
+        hdr = fits.Header()
+        for k, v in self.metadata.items():
+            hdr[k] = v
+        hdus = [fits.PrimaryHDU(header=hdr)]
 
 
-        Returns
-        -------
-        s: str
-            String representation of the complete data set.
+        # Window objects are referenced using their Python ID
+        # number, and stored with a separate extension for each
+        # type of window
+        all_windows = unique_list(d.get_tag('window') for d in self.data)
+        hdus += BaseWindow.to_fits(all_windows)
+            
+        # Tracers
+        for tracer in self.tracers.values():
+            hdu = tracer.to_fits()
+            hdus.append(hdu)
+            
+            
+        # Data points.
+        # These are assumed to have the same number of tracers and 
+        # tags within a single data type
+        for dt in self.get_data_types():
+            # Construct the rows of the table for this HDU
+            data = self.get_data_points(dt)
+            # These are the tags and tracers that we get from each row
+            n_tracer = len(data[0].tracers)
+            tag_fields = list(data[0].tags.keys())
+            names = [f'tracer_{i}' for i in range(n_tracer)] + ['value'] + list(tag_fields)
+            rows = []
+            # Convert window tags to ID numbers, but leave everything else the same
+            for d in data:
+                row = list(d.tracers)
+                row.append(d.value)
+                for t in tag_fields:
+                    if t=='window':
+                        row.append(id(d[t]))
+                    else:
+                        row.append(d[t])
+                rows.append(row)
 
-        """
-        import io
+            # Make an astropy table and save it with metadata
+            # to the HDU
+            tab = Table(names=names, rows=rows)
+            hdu = fits.table_to_hdu(tab)
+            hdu.name = dt
+            hdu.header['sacctype'] = 'data'
+            hdu.header['saccname'] = dt
+            hdu.header['ntracer'] = n_tracer
+            hdus.append(hdu)
 
-        # Get all the different windows we use
-        windows = unique_list(d.get_tag('window') for d in self.data)
-
-        # Data points may or may not have windows.
-        # Remove the "None" window from the list
-        if None in windows:
-            windows.remove(None)
-
-        # Get the serializable form of each window object.
-        windows_dicts = [w.to_dict() for w in windows]
-
-        # Now loop through putting the actual data points
-        # into a serializable form
-        data = []
-        for d in self.data:
-            # The 'window' tag refers to a class instance
-            # It is a bit more stable to save these ourselves manually.
-            # So remove this tag and replace it with one that refers
-            # to the list above.
-            tags = d.tags.copy()
-            if 'window' in tags:
-                tags['window'] = windows.index(tags['window'])
-
-            # Each data point is saved as a list
-            r = [d.data_type, float(d.value), list(d.tracers), tags]
-            data.append(r)
-
-        # Save the tracers in the file.
-        # Like the windows, we manually save these.
-        # Unlike windows they aren't optional, so we can just simply loop through the list
-        tracers = []
-        for t in self.tracers.values():
-            tracers.append(t.to_dict())
-
-        # Finally, dump everything to string.
-        # pyyaml wants to be given a stream-like object, so we have to
-        # use StringIO and then rewind and read from it.
-        s = io.StringIO()
-        # Save auxiliary data
-        yaml.dump({'metadata': self.metadata}, s)
-        yaml.dump({'tracers': tracers, 'windows':windows_dicts}, s)
-        # Add this little comment of explanation
-        s.write("# If present, the window indices in the data below\n")
-        s.write("# correspond to the list of windows above.\n")
-        # Save main data
-        yaml.dump({'data':data}, s)
-        # If present, save covariance.
+        # The covariance becomes another HDU
         if self.covariance is not None:
-            yaml.dump({'covariance': covariance.tolist()}, s)
+            hdu = self.covariance.to_fits()
+            hdus.append(hdu)
 
-        # Return the string
-        s.seek(0)
-        return s.read()
+        # Finally write everything out
+        hdu_list = fits.HDUList(hdus)
+        hdu_list.writeto(filename, overwrite=overwrite)
+
 
     @classmethod
     def load(cls, filename):
         """
-        Load a SACC data set from a YAML data format file.
+        Load a Sacc data set from a FITS file.
 
-        Don't make these files yourself!  If you need to convert
-        from another format then use the tools in this class to
-        build up the file bit by bit.
+        Don't try to make these FITS files yourself - use the tools
+        provided in this package to make and save them.
 
         Parameters
         ----------
+
         filename: str
-            Filename to read
+            A FITS format sacc file
+
         """
-        s = open(filename).read()
-        return cls.load_string(s)
+        hdu_list = fits.open(filename)
 
-    @classmethod
-    def load_string(cls, s):
-        """
-        Load a SACC data set from a YAML data format string.
+        # First we will go through and accumlate the pieces of the file
+        # that we will need.
+        cov = None
+        windows = []
+        data_points = []
+        tracers = []
+        windows = {}
 
-        Don't make these strings yourself!  If you need to convert
-        from another format then use the tools in this class to
-        build up the file bit by bit..
+        # Each HDU has a sacctype header element that describes what kind of data it is.
+        for hdu in hdu_list:
+            sacc_type = hdu.header.get('sacctype')
+            # For data points
+            if sacc_type == 'data':
+                data_type = hdu.header['saccname']
+                ntracer = hdu.header['ntracer']
+                for row in hdu.data:
+                    trc = [row[f'tracer_{i}'] for i in range(ntracer)]
+                    value = row['value']
+                    tags = {col.name:row[col.name] for col in hdu.columns[ntracer+1:]}
+                    data_points.append([data_type, trc, value, tags])
+            # For window function objects of various types
+            elif sacc_type == 'window':
+                windows.update(BaseWindow.from_fits(hdu))
+            # For covariance objects
+            elif sacc_type == 'cov':
+                cov = BaseCovariance.from_fits(hdu)
+            # For tracer objects
+            elif sacc_type == 'tracer':
+                tracer = Tracer.from_fits(hdu)
+                tracers.append(tracer)
 
-        Parameters
-        ----------
-        s: str
-            String to read from.
-        """
-        import yaml
-        d = yaml.load(s)
-        
-        # Make window objects
-        windows = [BaseWindow.from_dict(w) for w in d['windows']]
-
+        # Finally, take all the pieces that we have collected
+        # and add them all into this data set.
         S = cls()
+        for tracer in tracers:
+            S.add_tracer_object(tracer)
 
-        S.metadata = d['metadata']
-
-        # add tracer objects
-        for t in d['tracers']:
-            S.add_tracer_object(Tracer.from_dict(t))
-
-        # Add data points
-        for row in d['data']:
-            dt, val, tracers, tags = row
-
-            # Deal with window tags separately.
+        for (data_type, trc, value, tags) in data_points:
             if 'window' in tags:
                 tags['window'] = windows[tags['window']]
-            S.add_data_point(dt, tracers, val, **tags)
+            S.add_data_point(data_type, trc, value, **tags)
 
-        # covariance is optional
-        if 'covariance' in d:
-            S.add_covariance(np.array(d['covariance']))
+        if cov is not None:
+            S.add_covariance(cov)
 
         return S
+
+
 
     #
     # Methods below here are helper functions for specific types of data.
@@ -747,7 +743,7 @@ class Sacc:
         if return_cov:
             if self.covariance is None:
                 raise ValueError("This sacc data does not have a covariance attached")
-            cov_block = self.covariance[ind][:,ind]
+            cov_block = self.get_block(ind)
             angle, mu, cov_block
         else:
             return angle, mu
