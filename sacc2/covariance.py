@@ -59,6 +59,12 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     def get_block(self, indices):
         return self.covmat[indices][:,indices]
 
+    def to_dict(self):
+        return {"type":self.cov_type, "cov":self.covmat}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['covmat'])
 
 class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     def __init__(self, blocks):
@@ -126,6 +132,14 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             return FullCovariance(C)
 
 
+    def to_dict(self):
+        return {"type":self.cov_type, "blocks":self.blocks}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['blocks'])
+
+
 class DiagonalCovariance(BaseCovariance, cov_type='diagonal')
     def __init__(self, diag):
         self.diag = np.atleast_1d(diag)
@@ -150,3 +164,11 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal')
 
     def get_block(self, indices):
         return np.diagonal(self.diag[indices])
+
+
+    def to_dict(self):
+        return {"type":self.cov_type, "blocks":self.diag}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['diag'])
