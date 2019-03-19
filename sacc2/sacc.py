@@ -3,7 +3,7 @@ import copy
 import os
 import yaml
 import warnings
-
+from collections import OrderedDict
 from astropy.io import fits
 from astropy.table import Table
 
@@ -46,6 +46,20 @@ class DataPoint:
 
     def __getitem__(self, item):
         return self.tags[item]
+
+    def to_dict(self, lookups=None):
+        tags = self.tags.copy()
+        if lookups is not None:
+            for k,v in tags.items():
+                tags[k] = lookups.get(v, v)
+
+        d = {
+            'data_type': self.data_type,
+            'tracers': self.tracers,
+            'value': self.value,
+            'tags': tags,
+        }
+        return d
 
 
         
@@ -244,7 +258,7 @@ class Sacc:
         -------
         None
         """
-        self.covariance = BaseCovariance.make(covariance)
+        self.covariance = BaseCovariance.make(covariance, len(self))
 
 
     def cut(self, mask):
@@ -579,6 +593,22 @@ class Sacc:
                 " but data is length {}".format(len(mu),len(self.data)))
         for m, d in zip(mu, self.data):
             d.value = m
+
+    def to_dict(self):
+        windows = [d.get_tag('window') for d in self.data]
+        windows = [w for w in windows if w is not None]
+        windows_index = {w:i for i,w in enumerate(windows)}
+
+        d = {
+            'tracers': [t.to_dict() for t in self.tracers.values()],
+            'windows': [w.to_dict() for w in windows],
+            'data': [d.to_dict(lookups=windows_index) for d in self.data],
+        }
+        if self.covariance is None:
+            d['covariance'] = None
+        else:
+            d['covariance'] = self.covariance.to_dict()
+        return d
 
 
     def save(self, filename, overwrite=False):

@@ -1,7 +1,7 @@
 from astropy.io import fits
 from astropy.table import Table
 import scipy.linalg
-
+import numpy as np
 
 class BaseCovariance:
     _covariance_classes = {}
@@ -29,7 +29,12 @@ class BaseCovariance:
                 raise ValueError(f"Covariance blocks do not have the right overall size ({s}x{s}, expected {n}x{n})")
             return BlockDiagonalCovariance(cov)
         else:
-            cov = np.atleast_2d(cov)
+            cov = np.array(cov).squeeze()
+            if cov.ndim==1:
+                if len(cov) != n:
+                    c = len(cov)
+                    raise ValueError(f"1D diagonal covariance is wrong length ({c}, expected {n})")
+                return DiagonalCovariance(cov)
             if (cov.ndim!=2) or (cov.shape[0]!=cov.shape[1]) or (cov.shape[0]!=n):
                 raise ValueError(f"Covariance has wrong size or shape {cov.shape}, expected ({n}x{n})")
             return FullCovariance(cov)
@@ -140,7 +145,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         return cls(d['blocks'])
 
 
-class DiagonalCovariance(BaseCovariance, cov_type='diagonal')
+class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
     def __init__(self, diag):
         self.diag = np.atleast_1d(diag)
         self.size = len(diag)

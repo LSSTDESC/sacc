@@ -52,6 +52,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         d['min'] = self.min
         d['max'] = self.max
         d['id'] = id(self)
+        d['type'] = self.window_type
         return d
 
     @classmethod
@@ -70,6 +71,7 @@ class Window(BaseWindow, window_type='Standard'):
         d['values'] = self.values.tolist()
         d['weight'] = self.weight.tolist()
         d['id'] = id(self)
+        d['type'] = self.window_type
         return d
 
     @classmethod
