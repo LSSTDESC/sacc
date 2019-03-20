@@ -7,12 +7,12 @@ import pickle
 
 from collections import OrderedDict
 from astropy.io import fits
-from astropy.table import Table
+from astropy.table import Table, Column
 
-from .tracers import Tracer
+from .tracers import BaseTracer
 from .windows import BaseWindow
-from .utils import unique_list
 from .covariance import BaseCovariance
+from .utils import unique_list
 
 
 # add more as we develop them
@@ -28,6 +28,24 @@ allowed_types = [
     "ggl_E",
     "ggl_B",
 ]
+
+
+# These null values are used in place
+# of missing values.
+null_values = {
+    'i': -1437530437530211245,
+    'f': -1.4375304375e30,
+    'U': '',
+}
+
+def hide_null_values(table):
+    for name, col in list(table.columns.items()):
+        if col.dtype.kind=='O':
+            good_values = [x for x in col if x is not None]
+            good_kind = np.array(good_values).dtype.kind
+            null = null_values[good_kind]
+            good_col = np.array([null if x is None else x for x in col])
+            table[name] = Column(good_col)
 
 
 
@@ -49,32 +67,120 @@ class DataPoint:
     def __getitem__(self, item):
         return self.tags[item]
 
-    def to_dict(self, lookups=None):
-        tags = self.tags.copy()
-        if lookups is not None:
-            for k,v in tags.items():
-                dk = lookups.get(k)
-                if dk:
-                    tags[k] = dk.get(v, v)
-
-        d = {
-            'data_type': self.data_type,
-            'tracers': self.tracers,
-            'value': self.value,
-            'tags': tags,
-        }
-        return d
+    @staticmethod
+    def _choose_fields(data):
+        tags = set()
+        ntracer = 0
+        for d in data:
+            ntracer = max(ntracer, len(d.tracers))
+            tags.update(d.tags.keys())
+        tags = list(tags)
+        tracers = [f'tracer_{i}' for i in range(ntracer)]
+        return tracers, tags
 
     @classmethod
-    def from_dict(cls, d, lookups=None):
-        x = cls(d['data_type'], d['tracers'], d['value'], **d['tags'])
-        if lookups:
-            for k,v in x.tags.items():
-                dk = lookups.get(k)
-                if dk:
-                    x.tags[k] = dk.get(v, v)
-        return x
- 
+    def to_table(cls, data, lookups={}):
+        """
+        Convert a list of data points to a single homogenous table
+
+        Since data points can have varying tags, this method uses
+        null values to represent non-present tags.
+
+        Parameters
+        ----------
+
+        data: list
+            A list of DataPoint objects
+
+        lookups: dict
+            A dictionary of tags->dict showing replacements to make
+            in the tags. Default is empty.
+
+        Returns
+
+        table: astropy.table.Table
+            table object containing data points
+        """
+        # Get the names of the columns to generate
+        tracers, tags = cls._choose_fields(data)
+        names = tracers + ['value'] + tags 
+        ntracer = len(tracers)
+        # Convert each data point to a row
+        rows = [d._make_row(tracers, tags, lookups) for d in data]
+
+        # Convert to a table and fiddle slightly.
+        table = Table(rows=rows, names=names)
+        table.meta['NTRACER'] = ntracer
+        hide_null_values(table)
+        return table
+
+    @classmethod
+    def from_table(cls, table, lookups={}):
+        """
+        Convert a table back into a list of data points.
+        
+        This method removes null values from the tags.
+
+        Parameters
+        ----------
+
+        table: astropy.table.Table
+            A table of data containing the tracers, values, and tags
+
+        lookups: dict
+            A dictionary of tags->dict showing replacements to make
+            in the tags. Default is empty.
+
+        Returns
+        -------
+
+        data: list
+            list of DataPoint objects
+        """
+        # Get out required table metadata
+        nt = table.meta['NTRACER']
+        data_type = table.meta['SACCNAME']
+
+        # Tag names - we will remove missing tags below
+        tag_names = table.colnames[nt+1:]
+        data = []
+        for row in table:
+            # Get basic data elements
+            tracers = tuple([row[f'tracer_{i}'] for i in range(nt)])
+            value = row['value']
+
+            # Deal with tags.  First just pull out all remaining columns
+            tags = {name:row[name] for name in tag_names}
+            for k,v in list(tags.items()):
+                # Deal with any tags that we should replace.
+                # This is mainly used for Window instances.
+                if k in lookups:
+                    tags[k] = lookups[k].get(v,v)
+                # Now delete and null values, as indicated by the sentinel above.
+                if hasattr(tags[k], 'dtype') and v == null_values[tags[k].dtype.kind]:
+                    del tags[k]
+            # Finally convert back to a data point and record
+            data_point = cls(data_type, tracers, value, **tags)
+            data.append(data_point)
+        return data
+
+    def _make_row(self, tracers, tags, lookups):
+        # Turn this data point into a list with specified tracers and tags.
+        # If some tracers or tags are missing (homogenous data set) then
+        # use blank values or Nones for them.
+        nt = len(tracers)
+        missing = nt - len(self.tracers)
+        row = list(self.tracers) + ["" for i in range(missing)]
+        row.append(self.value)
+        for t in tags:
+            v = self.tags.get(t)
+            lookup = lookups.get(t)
+            if lookup is not None:
+                v = lookup.get(v, v)
+            row.append(v)
+        return row
+    
+        
 
 
 
@@ -203,12 +309,12 @@ class Sacc:
 
         """
 
-        tracer = Tracer.make(tracer_type, name, *args, *kwargs)
+        tracer = BaseTracer.make(tracer_type, name, *args, *kwargs)
         self.add_tracer_object(tracer)
 
     def add_tracer_object(self, tracer):
         """
-        Add a pre-constructed Tracer instance to this data set.
+        Add a pre-constructed BaseTracer instance to this data set.
         If you just have, for example the z and n(z) data then 
         use the add_tracer method instead.
 
@@ -557,7 +663,7 @@ class Sacc:
 
         Returns
         -------
-        tracer: Tracer object
+        tracer: BaseTracer object
             The object corresponding to the name.
         """
         return self.tracers[name]
@@ -614,80 +720,19 @@ class Sacc:
         for m, d in zip(mu, self.data):
             d.value = m
 
-    def to_dict(self):
-        """
-        Generate a dictionary representation of the contents of the
-        data set.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        D: dict
-            Data in dict form
-
-        """
-        windows = [d.get_tag('window') for d in self.data]
-        windows = [w for w in windows if w is not None]
-        windows_index = {w:i for i,w in enumerate(windows)}
-        lookups={'window':windows_index}
-
-        d = {
-            'tracers': [t.to_dict() for t in self.tracers.values()],
-            'windows': [w.to_dict() for w in windows],
-            'data': [d.to_dict(lookups) for d in self.data],
-        }
-        if self.covariance is None:
-            d['covariance'] = None
-        else:
-            d['covariance'] = self.covariance.to_dict()
-        return d
-
-    @classmethod
-    def from_dict(cls, d):
-        """
-        Build a data set from the contents of a dict.
-
-        We advise against trying to make these dictionaries
-        yourself manually.  Instead, make a new Sacc object
-        and add data to it using the methods on the class.
-
-        Parameters
-        ----------
-        D: dict
-            Data in dict form
-
-
-        Returns
-        -------
-        S: Sacc object
-            Dataset reconstituted from dict
-        """
-        S = cls()
-        for t in d['tracers']:
-            T = Tracer.from_dict(t)
-            S.add_tracer_object(T)
-
-        windows = [BaseWindow.from_dict(w) for w in d['windows']]
-        windows_index = {i:w for i,w in enumerate(windows)}
-        lookups = {'window':windows_index}
-        data = [DataPoint.from_dict(x, lookups) for x in d['data']]
-
-        for dp in data:
-            S.data.append(dp)
-
-        if d.get('covariance'):
-            cov = BaseCovariance.from_dict(d['covariance'])
-            S.add_covariance(cov)
-
-        return S
+    def _make_window_tables(self):
+        # Convert any window objects in the data set to tables,
+        # and record a mapping from those objects to table references
+        # This could easily be extended to other types
+        all_windows = unique_list(d.get_tag('window') for d in self.data)
+        window_ids = {w:id(w) for w in all_windows}
+        tables = BaseWindow.to_tables(all_windows)
+        return tables, window_ids
 
 
 
-
-    def to_fits(self, filename, overwrite=False):
+    def save_fits(self, filename, overwrite=False):
         """
         Save this data set to a FITS format Sacc file.
 
@@ -703,72 +748,44 @@ class Sacc:
 
         """
 
-        # We need to be in a standard order for this to reliably work
-        self.to_canonical_order()
-        
-        # Metadata goes in the primary header
+        # Tables for the windows
+        tables, window_ids = self._make_window_tables()
+        lookup = {'window':window_ids}
+
+        # Tables for the tracers
+        tables += BaseTracer.to_tables(self.tracers.values())
+
+        # Tables for the data sets
+        for dt in self.get_data_types():
+            data = self.get_data_points(dt)
+            table = DataPoint.to_table(data, lookup)
+            # Could move this inside to_table?
+            table.meta['SACCTYPE'] = 'data'
+            table.meta['SACCNAME'] = dt
+            table.meta['EXTNAME'] = f'data:{dt}'
+            tables.append(table)
+
+
+        # Create the actual fits object
         hdr = fits.Header()
         for k, v in self.metadata.items():
             hdr[k] = v
-        hdus = [fits.PrimaryHDU(header=hdr)]
+        hdus = [fits.PrimaryHDU(header=hdr)] + [fits.table_to_hdu(table) for table in tables]
 
-
-        # Window objects are referenced using their Python ID
-        # number, and stored with a separate extension for each
-        # type of window
-        all_windows = unique_list(d.get_tag('window') for d in self.data)
-        hdus += BaseWindow.to_fits(all_windows)
-            
-        # Tracers
-        for tracer in self.tracers.values():
-            hdu = tracer.to_fits()
-            hdus.append(hdu)
-            
-            
-        # Data points.
-        # These are assumed to have the same number of tracers and 
-        # tags within a single data type
-        for dt in self.get_data_types():
-            # Construct the rows of the table for this HDU
-            data = self.get_data_points(dt)
-            # These are the tags and tracers that we get from each row
-            n_tracer = len(data[0].tracers)
-            tag_fields = list(data[0].tags.keys())
-            names = [f'tracer_{i}' for i in range(n_tracer)] + ['value'] + list(tag_fields)
-            rows = []
-            # Convert window tags to ID numbers, but leave everything else the same
-            for d in data:
-                row = list(d.tracers)
-                row.append(d.value)
-                for t in tag_fields:
-                    if t=='window':
-                        row.append(id(d[t]))
-                    else:
-                        row.append(d[t])
-                rows.append(row)
-
-            # Make an astropy table and save it with metadata
-            # to the HDU
-            tab = Table(names=names, rows=rows)
-            hdu = fits.table_to_hdu(tab)
-            hdu.name = dt
-            hdu.header['sacctype'] = 'data'
-            hdu.header['saccname'] = dt
-            hdu.header['ntracer'] = n_tracer
-            hdus.append(hdu)
-
-        # The covariance becomes another HDU
+        # Covariance, if needed.
+        # All the other data elements become astropy tables first,
+        # But covariances are a bit more complicated and dense, so we
+        # allow them to convert straight to 
         if self.covariance is not None:
-            hdu = self.covariance.to_fits()
-            hdus.append(hdu)
+            hdus.append(self.covariance.to_hdu())
 
-        # Finally write everything out
+        # Make and save the final FITS data
         hdu_list = fits.HDUList(hdus)
         hdu_list.writeto(filename, overwrite=overwrite)
 
 
     @classmethod
-    def from_fits(cls, filename):
+    def load_fits(cls, filename):
         """
         Load a Sacc data set from a FITS file.
 
@@ -784,91 +801,41 @@ class Sacc:
         """
         hdu_list = fits.open(filename)
 
-        # First we will go through and accumlate the pieces of the file
-        # that we will need.
-        cov = None
-        windows = []
-        data_points = []
-        tracers = []
-        windows = {}
+        # Split the HDU's into the different sacc types
+        tracer_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='tracer']
+        window_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='window']
+        data_tables   = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='data']
+        cov   = [hdu for hdu in hdu_list if hdu.header.get('SACCTYPE')=='cov']
 
-        # Each HDU has a sacctype header element that describes what kind of data it is.
-        for hdu in hdu_list:
-            sacc_type = hdu.header.get('sacctype')
-            # For data points
-            if sacc_type == 'data':
-                data_type = hdu.header['saccname']
-                ntracer = hdu.header['ntracer']
-                for row in hdu.data:
-                    trc = [row[f'tracer_{i}'] for i in range(ntracer)]
-                    value = row['value']
-                    tags = {col.name:row[col.name] for col in hdu.columns[ntracer+1:]}
-                    data_points.append([data_type, trc, value, tags])
-            # For window function objects of various types
-            elif sacc_type == 'window':
-                windows.update(BaseWindow.from_fits(hdu))
-            # For covariance objects
-            elif sacc_type == 'cov':
-                cov = BaseCovariance.from_fits(hdu)
-            # For tracer objects
-            elif sacc_type == 'tracer':
-                tracer = Tracer.from_fits(hdu)
-                tracers.append(tracer)
+        # Pull out the classes for these components.
+        tracers = BaseTracer.from_tables(tracer_tables)
+        windows = BaseWindow.from_tables(window_tables)
+
+        # The lookup table is used to convert from ID numbers to
+        # Window objects.
+        lookup = {'window':windows}
+
+        # Collect together all the data points from the different sections
+        data = sum([DataPoint.from_table(table, lookup) for table in data_tables], [])
+
 
         # Finally, take all the pieces that we have collected
         # and add them all into this data set.
         S = cls()
-        for tracer in tracers:
+        for tracer in tracers.values():
             S.add_tracer_object(tracer)
 
-        for (data_type, trc, value, tags) in data_points:
-            if 'window' in tags:
-                tags['window'] = windows[tags['window']]
-            S.add_data_point(data_type, trc, value, **tags)
+        # Add the data points manually instead of using the API, since we
+        # have already constructed them.
+        for d in data:
+            S.data.append(d)
 
-        if cov is not None:
-            S.add_covariance(cov)
+        # Assume there is only a single covariance extension, 
+        # if there are any
+        if cov:
+            S.add_covariance(BaseCovariance.from_hdu(cov[0]))
 
         return S
-
-    def to_pickle(self, filename, overwrite=False):
-        """
-        Save this data set to a pickle format Sacc file.
-
-        Parameters
-        ----------
-
-        filename: str
-            Destination FITS file name
-
-        overwrite: bool
-            If False (the default), raise an error if the file already exists
-            If True, overwrite the file silently.
-
-        """
-
-        if os.path.exists(filename) and not overwrite:
-            raise ValueError(f"Filename {filename} already exists. Set overwrite=True to replace it.")
-        D = self.to_dict()
-        pickle.dump(D, open('tmp.dat', 'wb'))
-
-
-    @classmethod
-    def from_pickle(cls, filename):
-        """
-        Load a Sacc data set from a pickle format file.
-
-        Parameters
-        ----------
-
-        filename: str
-            A pickle format sacc file
-
-        """
-        D = pickle.load(open(filename,'rb'))
-        return cls.from_dict(D)
-
-
 
     #
     # Methods below here are helper functions for specific types of data.

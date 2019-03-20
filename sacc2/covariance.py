@@ -11,16 +11,10 @@ class BaseCovariance:
         cls.cov_type = cov_type
 
     @classmethod
-    def from_fits(cls, hdu):
+    def from_hdu(cls, hdu):
         subclass_name = hdu.header['saccclss']
         subclass = cls._covariance_classes[subclass_name]
-        return subclass.from_fits(hdu)
-
-    @classmethod
-    def from_dict(cls, d):
-        subclass_name = d['type']
-        subclass = cls._covariance_classes[subclass_name]
-        return subclass.from_dict(d)
+        return subclass.from_hdu(hdu)
 
 
 
@@ -52,12 +46,12 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     def __init__(self, covmat):
         self.covmat = np.atleast_2d(covmat)
 
-    def to_fits(self):
+    def to_hdu(self):
         hdu=fits.ImageHDU(self.covmat)
-        hdu.name = 'covariance'
-        hdu.header['sacctype'] = 'cov'
-        hdu.header['saccclss'] = self.cov_type
-        hdu.header['size'] = self.covmat.shape[0]
+        hdu.header['EXTNAME'] = 'covariance'
+        hdu.header['SACCTYPE'] = 'cov'
+        hdu.header['SACCCLSS'] = self.cov_type
+        hdu.header['SIZE'] = self.covmat.shape[0]
         return hdu
 
     def masked(self, mask):
@@ -65,19 +59,12 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         return self.__class__(C)
 
     @classmethod
-    def from_fits(cls, hdu):
+    def from_hdu(cls, hdu):
         C = hdu.data
         return cls(C)
 
     def get_block(self, indices):
         return self.covmat[indices][:,indices]
-
-    def to_dict(self):
-        return {"type":self.cov_type, "cov":self.covmat}
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(d['covmat'])
 
 class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     def __init__(self, blocks):
@@ -85,7 +72,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         self.block_sizes = [len(B) for B in self.blocks]
         self.total_size = sum(self.block_sizes)
 
-    def to_fits(self):
+    def to_hdu(self):
         hdu=fits.ImageHDU(np.concatenate([b.flatten() for b in self.blocks]))
         hdu.name = 'covariance'
         hdu.header['sacctype'] = 'cov'
@@ -97,7 +84,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         return hdu
 
     @classmethod
-    def from_fits(cls, hdu):
+    def from_hdu(cls, hdu):
         n = hdu.header['blocks']
         block_sizes = [hdu.header[f'size_{i}'] for i in range(n)]
         data_sizes = np.array(block_sizes)**2
@@ -145,21 +132,14 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             return FullCovariance(C)
 
 
-    def to_dict(self):
-        return {"type":self.cov_type, "blocks":self.blocks}
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(d['blocks'])
-
 
 class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
     def __init__(self, diag):
         self.diag = np.atleast_1d(diag)
         self.size = len(diag)
 
-    def to_fits(self):
-        table = Table(names=['variance'], data=self.diag)
+    def to_hdu(self):
+        table = Table(names=['variance'], data=[self.diag])
         hdu=fits.table_to_hdu(table)
         hdu.name = 'covariance'
         hdu.header['sacctype'] = 'cov'
@@ -171,17 +151,10 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         return self.__class__(D)
 
     @classmethod
-    def from_fits(cls, hdu):
+    def from_hdu(cls, hdu):
         D = hdu.data['variance']
         return cls(D)
 
     def get_block(self, indices):
         return np.diag(self.diag[indices])
 
-
-    def to_dict(self):
-        return {"type":self.cov_type, "diag":self.diag}
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(d['diag'])

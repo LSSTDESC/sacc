@@ -2,7 +2,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.io import fits
 
-class Tracer:
+class BaseTracer:
     """
     A class representing some kind of tracer of astronomical objects.
 
@@ -48,33 +48,29 @@ class Tracer:
         subclass = cls._tracer_classes[tracer_type]
         return subclass(name, *args, **kwargs)
 
-    def to_dict(self):
-        return {
-            "type": self.tracer_type,
-            "name": self.name,
-        }
 
     @classmethod
-    def from_dict(cls, d):
-        # subclasses must not call the parent implementation of this method!
-        subclass_name = d['type']
-        subclass = cls._tracer_classes[subclass_name]
-        return subclass.from_dict(d)
+    def to_tables(cls, instance_list):
+        tables = []
+        for name, subcls in cls._tracer_classes.items():
+            tracers = [t for t in instance_list if type(t)==subcls]
+            tables += subcls.to_tables(tracers)
+        return tables
 
-    def _add_fits_info(self, hdu):
-        hdu.name = self.name
-        hdu.header['sacctype'] = 'tracer'
-        hdu.header['saccname'] = self.name
-        hdu.header['saccclss'] = self.tracer_type
-        return hdu
 
     @classmethod
-    def from_fits(cls, hdu):
-        subclass_name = hdu.header['saccclss']
-        subclass = cls._tracer_classes[subclass_name]
-        return subclass.from_fits(hdu)
+    def from_tables(cls, table_list):
+        tracers = {}
+        for table in table_list:
+            subclass_name = table.meta['SACCCLSS']
+            subclass = cls._tracer_classes[subclass_name]
+            tracers.update(subclass.from_table(table))
+        return tracers
+
+
+
         
-class MiscTracer(Tracer, tracer_type='misc'):
+class MiscTracer(BaseTracer, tracer_type='misc'):
     """
     A Tracer type for miscellaneous other data points
     """
@@ -87,18 +83,28 @@ class MiscTracer(Tracer, tracer_type='misc'):
 
     @classmethod
     def from_fits(cls, hdu):
-        name = hdu.header['saccname']
+        name = hdu.header['SACCNAME']
         return cls(name)
 
-    def to_fits(self):
-        hdu = fits.BinTableHDU()
-        self._add_fits_info(hdu)
-        return hdu
+    @classmethod
+    def to_tables(cls, instance_list):
+        cols = [[obj.name for obj in instance_list]]
+        table = Table(data=cols, names=['name'])
+        table.meta['SACCTYPE'] = 'tracer'
+        table.meta['SACCCLSS'] = cls.tracer_type
+        table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}'
+        return [table]
+
+    @classmethod
+    def from_table(cls, table):
+        return {name: cls(name) for name in table['name']}
+
+
 
 
 
         
-class NZTracer(Tracer, tracer_type='NZ'):
+class NZTracer(BaseTracer, tracer_type='NZ'):
     """
     A Tracer type for tomographic n(z) data.
 
@@ -136,26 +142,25 @@ class NZTracer(Tracer, tracer_type='NZ'):
         self.z = np.array(z)
         self.nz = np.array(nz)
 
-    def to_dict(self):
-        d = super().to_dict()
-        d['z'] = self.z.tolist()
-        d['nz'] = self.nz.tolist()
-        return d
+    @classmethod
+    def to_tables(cls, instance_list):
+        tables = []
+        for tracer in instance_list:
+            names = ['z', 'nz']
+            cols = [tracer.z, tracer.nz]
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
+            tables.append(table)
+        return tables
+
 
     @classmethod
-    def from_dict(cls, d):
-        return cls(d['name'], d['z'], d['nz'])
-
-    def to_fits(self):
-        tab = Table(data={'z':self.z, 'nz':self.nz})
-        hdu = fits.table_to_hdu(tab)
-        self._add_fits_info(hdu)
-        return hdu
-
-    @classmethod
-    def from_fits(cls, hdu):
-        name = hdu.header['saccname']
-        z = hdu.data['z']
-        nz = hdu.data['nz']
-        return cls(name, z, nz)
+    def from_table(cls, table):
+        name = table.meta['SACCNAME']
+        z = table['z']
+        nz = table['nz']
+        return {name: cls(name, z, nz)}
 
