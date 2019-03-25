@@ -88,21 +88,20 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     def from_hdu(cls, hdu):
         n = hdu.header['blocks']
         block_sizes = [hdu.header[f'size_{i}'] for i in range(n)]
-        data_sizes = np.array(block_sizes)**2
         s = 0
+
         blocks = []
         for b in block_sizes:
-            B = hdu.data[s:s+b**2].reshape((b, b))
+            B = hdu.data[s:s + b**2].reshape((b, b))
             s += b**2
             blocks.append(B)
         return cls(blocks)
 
     def get_block(self, indices):
         n = len(indices)
-        C = np.zeros((n, n))
         s = 0
         sub_blocks = []
-        for b, sz in zip(self.blocks, self.block_sizes):
+        for block, sz in zip(self.blocks, self.block_sizes):
             e = s + sz
             m = indices[(indices >= s) & (indices < e)]
             sub_blocks.append(block[m][:, m])
@@ -118,7 +117,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         elif (np.diff(mask) > 0).all():
             s = 0
             sub_blocks = []
-            for b, sz in zip(self.blocks, self.block_sizes):
+            for block, sz in zip(self.blocks, self.block_sizes):
                 e = s + sz
                 m = mask[(mask >= s) & (mask < e)]
                 sub_blocks.append(block[m][:, m])

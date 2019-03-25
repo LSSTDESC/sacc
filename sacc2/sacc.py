@@ -1,11 +1,7 @@
 import numpy as np
 import copy
-import os
-import yaml
 import warnings
-import pickle
 
-from collections import OrderedDict
 from astropy.io import fits
 from astropy.table import Table, Column
 
@@ -118,7 +114,7 @@ class DataPoint:
     def from_table(cls, table, lookups={}):
         """
         Convert a table back into a list of data points.
-        
+
         This method removes null values from the tags.
 
         Parameters
@@ -142,7 +138,7 @@ class DataPoint:
         data_type = table.meta['SACCNAME']
 
         # Tag names - we will remove missing tags below
-        tag_names = table.colnames[nt+1:]
+        tag_names = table.colnames[nt + 1:]
         data = []
         for row in table:
             # Get basic data elements
@@ -309,7 +305,7 @@ class Sacc:
     def add_tracer_object(self, tracer):
         """
         Add a pre-constructed BaseTracer instance to this data set.
-        If you just have, for example the z and n(z) data then 
+        If you just have, for example the z and n(z) data then
         use the add_tracer method instead.
 
         Parameters
@@ -967,10 +963,10 @@ class Sacc:
             if not (n1 == n2 == n3 == n4):
                 raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4})")
             if window is None:
-                for b1, b2, tag_i, x_i in zip(bin1, bin2, tag, x):
+                for b1, b2, tag_i, x_i in zip(bin1, bin2, tag_val, x):
                     self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name, window)
             else:
-                for b1, b2, tag_i, x_i, w_i in zip(bin1, bin2, tag, x, window):
+                for b1, b2, tag_i, x_i, w_i in zip(bin1, bin2, tag_val, x, window):
                     self._add_2pt(data_type, b1, x_i, tag_i, tag_name, w_i)
         # multiple data point values
         else:
@@ -982,10 +978,10 @@ class Sacc:
             if not (n1 == n2 == n3 == n4 == n5):
                 raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4}, {n5})")
             if window is None:
-                for d, b1, b2, tag_i, x_i in zip(data_type, bin1, bin2, tag, x):
+                for d, b1, b2, tag_i, x_i in zip(data_type, bin1, bin2, tag_val, x):
                     self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, window)
             else:
-                for d, b1, b2, tag_i, x_i, w_i in zip(data_type, bin1, bin2, tag, x, window):
+                for d, b1, b2, tag_i, x_i, w_i in zip(data_type, bin1, bin2, tag_val, x, window):
                     self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, w_i)
 
     def add_ell_cl(self, data_type, bin1, bin2, ell, x, window=None):

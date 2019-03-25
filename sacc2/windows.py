@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.io import fits
 from astropy.table import Table
 
 
@@ -77,7 +76,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
         t.meta['SACCTYPE'] = 'window'
         t.meta['SACCCLSS'] = cls.window_type
-        t.meta['EXTNAME'] = 'window:'+cls.window_type
+        t.meta['EXTNAME'] = 'window:' + cls.window_type
         return [t]
 
     @classmethod
@@ -100,7 +99,7 @@ class Window(BaseWindow, window_type='Standard'):
             t.meta['SACCTYPE'] = 'window'
             t.meta['SACCCLSS'] = cls.window_type
             t.meta['SACCNAME'] = id(w)
-            t.meta['EXTNAME'] = 'window:'+cls.window_type
+            t.meta['EXTNAME'] = 'window:' + cls.window_type
             tables.append(t)
         return tables
 

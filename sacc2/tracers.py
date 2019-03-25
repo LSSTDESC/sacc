@@ -1,6 +1,5 @@
 import numpy as np
 from astropy.table import Table
-from astropy.io import fits
 
 
 class BaseTracer:
@@ -15,7 +14,7 @@ class BaseTracer:
     subclassses have other requirements.  For example, n(z) tracers
     require z and n(z) arrays.
 
-    In general you don't need to create tracer objects yourself - 
+    In general you don't need to create tracer objects yourself -
     the Sacc2.add_tracer method will construct them for you.
     """
     _tracer_classes = {}
