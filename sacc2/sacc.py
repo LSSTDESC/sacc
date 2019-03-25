@@ -649,8 +649,7 @@ class Sacc:
         data_types: list of strings
             A list of the string data types in the data set
         """
-        s = {d.data_type for d in self.data}
-        return list(s)
+        return unique_list(d.data_type for d in self.data)
 
     def get_tracer(self, name):
         """
@@ -748,16 +747,23 @@ class Sacc:
 
         """
 
+
+
+        # Since we don't want to re-order the file as a side effect
+        # we first make a copy of ourself and re-order that.
+        S = self.copy()
+        S.to_canonical_order()
+
         # Tables for the windows
-        tables, window_ids = self._make_window_tables()
+        tables, window_ids = S._make_window_tables()
         lookup = {'window':window_ids}
 
         # Tables for the tracers
-        tables += BaseTracer.to_tables(self.tracers.values())
+        tables += BaseTracer.to_tables(S.tracers.values())
 
         # Tables for the data sets
-        for dt in self.get_data_types():
-            data = self.get_data_points(dt)
+        for dt in S.get_data_types():
+            data = S.get_data_points(dt)
             table = DataPoint.to_table(data, lookup)
             # Could move this inside to_table?
             table.meta['SACCTYPE'] = 'data'
@@ -768,7 +774,7 @@ class Sacc:
 
         # Create the actual fits object
         hdr = fits.Header()
-        for k, v in self.metadata.items():
+        for k, v in S.metadata.items():
             hdr[k] = v
         hdus = [fits.PrimaryHDU(header=hdr)] + [fits.table_to_hdu(table) for table in tables]
 
@@ -776,8 +782,8 @@ class Sacc:
         # All the other data elements become astropy tables first,
         # But covariances are a bit more complicated and dense, so we
         # allow them to convert straight to 
-        if self.covariance is not None:
-            hdus.append(self.covariance.to_hdu())
+        if S.covariance is not None:
+            hdus.append(S.covariance.to_hdu())
 
         # Make and save the final FITS data
         hdu_list = fits.HDUList(hdus)
@@ -816,7 +822,9 @@ class Sacc:
         lookup = {'window':windows}
 
         # Collect together all the data points from the different sections
-        data = sum([DataPoint.from_table(table, lookup) for table in data_tables], [])
+        data = []
+        for table in data_tables:
+            data += DataPoint.from_table(table, lookup)
 
 
         # Finally, take all the pieces that we have collected
