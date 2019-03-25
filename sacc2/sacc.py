@@ -387,37 +387,67 @@ class Sacc:
             self.covariance = BaseCovariance.make(covariance, len(self))
 
 
-    def cut(self, mask):
-        """
-        Remove data points and corresponding covariance elements following a mask, in-place.
+    def _indices_to_bool(self, mask):
+        # Convert an array of indices into a boolean True mask
+        if not mask.dtype in [np.int8, np.int16, np.int32, np.int64]:
+            raise ValueError(f"Wrong mask type ({mask.  dtype}) - expected integers or boolean")
+        m = np.zeros(len(self), dtype=bool)
+        for i in mask:
+            m[i] = True
+        return m
 
-        You can find indices (e.g. matching some tag) to remove using the indices method.
+    def mask(self, mask):
+        """
+        Select data points, keeping only values where the mask is True or an index is
+        included in it.
+
+        You can use Sacc.cut to do the opposite operation, keeping points where the mask
+        is False.
+
+        You can find indices (e.g. matching some tag) to keep using the Sacc.indices method.
 
         Parameters
         ----------
         mask: array or list
             Mask must be either a boolean array or a list/array of integer indices to remove.
-            if boolean then True means to cut data point and False means to keep it
-            if indices then values indicate data points to cut out
+            if boolean then True means to keep a data point and False means to cut it
+            if integers then values indicate data points to keep
         """
         mask = np.array(mask)
 
         # Convert integer masks to booleans
         if mask.dtype != np.bool:
-            if not mask.dtype in [np.int8, np.int16, np.int32, np.int64]:
-                raise ValueError("Wrong mask type")
-            m = np.zeros(len(self), dtype=bool)
-            for i in mask:
-                m[i] = True
-            mask = m
-            
-        if not len(mask)==len(self):
-            raise ValueError("Mask passed in is wrong size")
+            mask = self._indices_to_bool(mask)
 
-        self.data = [d for i,d in enumerate(self.data) if not mask[i]]
+        self.data = [d for i,d in enumerate(self.data) if mask[i]]
         if self.covariance is not None:
-            self.covariance = self.covariance.masked(~mask)
+            self.covariance = self.covariance.masked(mask)
 
+    def cut(self, cut):
+        """
+        Remove data points, getting rid of points where the mask is True or an index is
+        included in it.
+
+        You can use Sacc.mask to do the opposite operation, keeping points where the mask
+        is True.
+
+        You can find indices (e.g. matching some tag) to keep using the Sacc.indices method.
+
+        Parameters
+        ----------
+        cut: array or list
+            Mask must be either a boolean array or a list/array of integer indices to remove.
+            if boolean then True means to cut data point and False means to keep it
+            if integers then values indicate data points to cut out
+        """
+        cut = np.array(cut)
+
+        # Convert integer masks to booleans
+        if cut.dtype != np.bool:
+            cut = self._indices_to_bool(cut)
+
+        # Get the mask method to do the actual work
+        self.mask(~cut)
 
     def indices(self, data_type=None, tracers=None, **select):
         """
