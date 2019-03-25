@@ -109,7 +109,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             sub_blocks.append(block[m][:,m])
             s += sz
         return scipy.linalg.block_diag(sub_blocks)
-        
+
 
 
     def masked(self, mask):
@@ -158,4 +158,3 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
     def get_block(self, indices):
         return np.diag(self.diag[indices])
-

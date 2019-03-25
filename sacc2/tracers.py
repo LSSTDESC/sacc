@@ -69,7 +69,7 @@ class BaseTracer:
 
 
 
-        
+
 class MiscTracer(BaseTracer, tracer_type='misc'):
     """
     A Tracer type for miscellaneous other data points
@@ -103,7 +103,7 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
 
 
-        
+
 class NZTracer(BaseTracer, tracer_type='NZ'):
     """
     A Tracer type for tomographic n(z) data.
@@ -163,4 +163,3 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         z = table['z']
         nz = table['nz']
         return {name: cls(name, z, nz)}
-

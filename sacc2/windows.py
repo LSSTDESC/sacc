@@ -6,8 +6,8 @@ class BaseWindow:
     _window_classes = {}
     def __init_subclass__(cls, window_type):
         # This gets called whenever a subclass is defined.
-        # The window_type argument is specified next to the 
-        # base class in the subclass definition, e.g. 
+        # The window_type argument is specified next to the
+        # base class in the subclass definition, e.g.
         # window_typ='TopHat', as shown below
         cls._window_classes[window_type] = cls
         cls.window_type = window_type

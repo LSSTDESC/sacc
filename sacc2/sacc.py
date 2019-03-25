@@ -57,10 +57,10 @@ class DataPoint:
         self.tags = tags
         if data_type not in allowed_types:
             warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type.")
-    
+
     def __repr__(self):
         return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
-    
+
     def get_tag(self, tag):
         return self.tags.get(tag)
 
@@ -103,7 +103,7 @@ class DataPoint:
         """
         # Get the names of the columns to generate
         tracers, tags = cls._choose_fields(data)
-        names = tracers + ['value'] + tags 
+        names = tracers + ['value'] + tags
         ntracer = len(tracers)
         # Convert each data point to a row
         rows = [d._make_row(tracers, tags, lookups) for d in data]
@@ -179,13 +179,13 @@ class DataPoint:
                 v = lookup.get(v, v)
             row.append(v)
         return row
-    
-        
 
 
 
 
-        
+
+
+
 class Sacc:
     """
     A class containing a selection of LSST summary statistic measurements,
@@ -231,7 +231,7 @@ class Sacc:
         """
 
         # Define the ordering to be used
-        # We need a key function that will return the 
+        # We need a key function that will return the
         # object that python's default sorted function will use.
         def order_key(row):
             # Put data types in the order in allowed_types.
@@ -248,9 +248,9 @@ class Sacc:
                 return (dt, row.tracers, row.tags['theta'])
             else:
                 return (dt, row.tracers, 0.0)
-        # This from 
+        # This from
         # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
-        indices = [i[0] for i in sorted(enumerate(self.data), key=lambda x:order_key(x[1]))]        
+        indices = [i[0] for i in sorted(enumerate(self.data), key=lambda x:order_key(x[1]))]
 
         # Assign the new order.
         self.reorder(indices)
@@ -534,7 +534,7 @@ class Sacc:
         values = [[d.get_tag(tag) for i,d in enumerate(self.data) if i in indices]
                 for tag in tags]
         return values
-    
+
     def get_tags(self, tags, data_type=None, tracers=None, **select):
         """
         Get the value of a one or more named tags for (a subset of) the data.
@@ -606,7 +606,7 @@ class Sacc:
 
         """
         return self.get_tags([tag], data_type=data_type, tracers=tracers, **select)[0]
-    
+
     def get_data_points(self, data_type=None, tracers=None, **select):
         """
         Get data point objects for a subset of the data
@@ -697,7 +697,7 @@ class Sacc:
         """
         return self.tracers[name]
 
-    
+
     def get_tracer_combinations(self, data_type=None):
         """
         Find all the tracer combinations (e.g. tomographic bin pairs)
@@ -718,7 +718,7 @@ class Sacc:
         return unique_list(self.data[i].tracers for i in indices)
 
 
-        
+
 
     @property
     def mean(self):
@@ -811,7 +811,7 @@ class Sacc:
         # Covariance, if needed.
         # All the other data elements become astropy tables first,
         # But covariances are a bit more complicated and dense, so we
-        # allow them to convert straight to 
+        # allow them to convert straight to
         if S.covariance is not None:
             hdus.append(S.covariance.to_hdu())
 
@@ -868,7 +868,7 @@ class Sacc:
         for d in data:
             S.data.append(d)
 
-        # Assume there is only a single covariance extension, 
+        # Assume there is only a single covariance extension,
         # if there are any
         if cov:
             S.add_covariance(BaseCovariance.from_hdu(cov[0]))
@@ -878,7 +878,7 @@ class Sacc:
     #
     # Methods below here are helper functions for specific types of data.
     # We can add more of them as it becomes clear what people need.
-    # 
+    #
     #
 
     def _get_2pt(self, data_type, bin1, bin2, return_cov, angle_name):
@@ -1061,4 +1061,3 @@ class Sacc:
 
         """
         self._add_2pt(data_type, bin1, bin2, x, theta, 'theta', window)
-        
