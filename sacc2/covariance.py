@@ -45,6 +45,7 @@ class BaseCovariance:
 class FullCovariance(BaseCovariance, cov_type='full'):
     def __init__(self, covmat):
         self.covmat = np.atleast_2d(covmat)
+        self.size = self.covmat.shape[0]
 
     def to_hdu(self):
         hdu=fits.ImageHDU(self.covmat)
@@ -70,7 +71,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     def __init__(self, blocks):
         self.blocks = [np.atleast_2d(B) for B in blocks]
         self.block_sizes = [len(B) for B in self.blocks]
-        self.total_size = sum(self.block_sizes)
+        self.size = sum(self.block_sizes)
 
     def to_hdu(self):
         hdu=fits.ImageHDU(np.concatenate([b.flatten() for b in self.blocks]))
