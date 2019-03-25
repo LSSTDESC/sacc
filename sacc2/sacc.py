@@ -38,15 +38,15 @@ null_values = {
     'U': '',
 }
 
+
 def hide_null_values(table):
     for name, col in list(table.columns.items()):
-        if col.dtype.kind=='O':
+        if col.dtype.kind == 'O':
             good_values = [x for x in col if x is not None]
             good_kind = np.array(good_values).dtype.kind
             null = null_values[good_kind]
             good_col = np.array([null if x is None else x for x in col])
             table[name] = Column(good_col)
-
 
 
 class DataPoint:
@@ -150,12 +150,12 @@ class DataPoint:
             value = row['value']
 
             # Deal with tags.  First just pull out all remaining columns
-            tags = {name:row[name] for name in tag_names}
-            for k,v in list(tags.items()):
+            tags = {name: row[name] for name in tag_names}
+            for k, v in list(tags.items()):
                 # Deal with any tags that we should replace.
                 # This is mainly used for Window instances.
                 if k in lookups:
-                    tags[k] = lookups[k].get(v,v)
+                    tags[k] = lookups[k].get(v, v)
                 # Now delete and null values, as indicated by the sentinel above.
                 if hasattr(tags[k], 'dtype') and v == null_values[tags[k].dtype.kind]:
                     del tags[k]
@@ -181,17 +181,13 @@ class DataPoint:
         return row
 
 
-
-
-
-
-
 class Sacc:
     """
     A class containing a selection of LSST summary statistic measurements,
     their covariance, and the metadata necessary to compute theoretical
     predictions for them.
     """
+
     def __init__(self):
         """
         Create an empty data  set ready to be built up
@@ -272,12 +268,10 @@ class Sacc:
         if self.covariance is not None:
             self.covariance = self.covariance.masked(indices)
 
-
-
-
     #
     # Builder methods for building up Sacc data from scratch in memory
     #
+
     def add_tracer(self, tracer_type, name, *args, **kwargs):
         """
         Add a new tracer
@@ -362,7 +356,7 @@ class Sacc:
         for tracer in tracers:
             if (tracer not in self.tracers) and (not tracers_later):
                 raise ValueError(f"Tracer named '{tracer}' is not in the known list of tracers."
-                    "Either put it in before adding data points or set tracers_later=True")
+                                 "Either put it in before adding data points or set tracers_later=True")
         d = DataPoint(data_type, tracers, value, **tags)
         self.data.append(d)
 
@@ -386,10 +380,9 @@ class Sacc:
         else:
             self.covariance = BaseCovariance.make(covariance, len(self))
 
-
     def _indices_to_bool(self, mask):
         # Convert an array of indices into a boolean True mask
-        if not mask.dtype in [np.int8, np.int16, np.int32, np.int64]:
+        if mask.dtype not in [np.int8, np.int16, np.int32, np.int64]:
             raise ValueError(f"Wrong mask type ({mask.  dtype}) - expected integers or boolean")
         m = np.zeros(len(self), dtype=bool)
         for i in mask:
@@ -419,7 +412,7 @@ class Sacc:
         if mask.dtype != np.bool:
             mask = self._indices_to_bool(mask)
 
-        self.data = [d for i,d in enumerate(self.data) if mask[i]]
+        self.data = [d for i, d in enumerate(self.data) if mask[i]]
         if self.covariance is not None:
             self.covariance = self.covariance.masked(mask)
 
@@ -480,7 +473,7 @@ class Sacc:
             tracers = tuple(tracers)
 
         # Look through all data points we have
-        for i,d in enumerate(self.data):
+        for i, d in enumerate(self.data):
             # Skip things with the wrong type or tracer
             if not ((tracers is None) or (d.tracers == tracers)):
                 continue
@@ -490,20 +483,20 @@ class Sacc:
             # including the fact that we can specify tag__lt and tag__gt
             # in order to remove/accept ranges
             ok = True
-            for name,val in select.items():
+            for name, val in select.items():
                 if name.endswith("__lt"):
                     name = name[:-4]
                     if not d.get_tag(name) < val:
-                        ok=False
+                        ok = False
                         break
                 elif name.endswith("__gt"):
                     name = name[:-4]
                     if not d.get_tag(name) > val:
-                        ok=False
+                        ok = False
                         break
                 else:
                     if not d.get_tag(name) == val:
-                        ok=False
+                        ok = False
                         break
             # Record this index
             if ok:
@@ -531,8 +524,8 @@ class Sacc:
 
 
         """
-        values = [[d.get_tag(tag) for i,d in enumerate(self.data) if i in indices]
-                for tag in tags]
+        values = [[d.get_tag(tag) for i, d in enumerate(self.data) if i in indices]
+                  for tag in tags]
         return values
 
     def get_tags(self, tags, data_type=None, tracers=None, **select):
@@ -570,7 +563,6 @@ class Sacc:
         """
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self._get_tags_by_index(tags, indices)
-
 
     def get_tag(self, tag, data_type=None, tracers=None, **select):
         """
@@ -697,7 +689,6 @@ class Sacc:
         """
         return self.tracers[name]
 
-
     def get_tracer_combinations(self, data_type=None):
         """
         Find all the tracer combinations (e.g. tomographic bin pairs)
@@ -716,9 +707,6 @@ class Sacc:
         """
         indices = self.indices(data_type=data_type)
         return unique_list(self.data[i].tracers for i in indices)
-
-
-
 
     @property
     def mean(self):
@@ -745,21 +733,18 @@ class Sacc:
         """
         if not len(mu) == len(self.data):
             raise ValueError("Tried to set mean with thing of length {}"
-                " but data is length {}".format(len(mu),len(self.data)))
+                             " but data is length {}".format(len(mu), len(self.data)))
         for m, d in zip(mu, self.data):
             d.value = m
-
 
     def _make_window_tables(self):
         # Convert any window objects in the data set to tables,
         # and record a mapping from those objects to table references
         # This could easily be extended to other types
         all_windows = unique_list(d.get_tag('window') for d in self.data)
-        window_ids = {w:id(w) for w in all_windows}
+        window_ids = {w: id(w) for w in all_windows}
         tables = BaseWindow.to_tables(all_windows)
         return tables, window_ids
-
-
 
     def save_fits(self, filename, overwrite=False):
         """
@@ -777,8 +762,6 @@ class Sacc:
 
         """
 
-
-
         # Since we don't want to re-order the file as a side effect
         # we first make a copy of ourself and re-order that.
         S = self.copy()
@@ -786,7 +769,7 @@ class Sacc:
 
         # Tables for the windows
         tables, window_ids = S._make_window_tables()
-        lookup = {'window':window_ids}
+        lookup = {'window': window_ids}
 
         # Tables for the tracers
         tables += BaseTracer.to_tables(S.tracers.values())
@@ -800,7 +783,6 @@ class Sacc:
             table.meta['SACCNAME'] = dt
             table.meta['EXTNAME'] = f'data:{dt}'
             tables.append(table)
-
 
         # Create the actual fits object
         hdr = fits.Header()
@@ -818,7 +800,6 @@ class Sacc:
         # Make and save the final FITS data
         hdu_list = fits.HDUList(hdus)
         hdu_list.writeto(filename, overwrite=overwrite)
-
 
     @classmethod
     def load_fits(cls, filename):
@@ -838,10 +819,10 @@ class Sacc:
         hdu_list = fits.open(filename)
 
         # Split the HDU's into the different sacc types
-        tracer_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='tracer']
-        window_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='window']
-        data_tables   = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE')=='data']
-        cov   = [hdu for hdu in hdu_list if hdu.header.get('SACCTYPE')=='cov']
+        tracer_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'tracer']
+        window_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'window']
+        data_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'data']
+        cov = [hdu for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'cov']
 
         # Pull out the classes for these components.
         tracers = BaseTracer.from_tables(tracer_tables)
@@ -849,13 +830,12 @@ class Sacc:
 
         # The lookup table is used to convert from ID numbers to
         # Window objects.
-        lookup = {'window':windows}
+        lookup = {'window': windows}
 
         # Collect together all the data points from the different sections
         data = []
         for table in data_tables:
             data += DataPoint.from_table(table, lookup)
-
 
         # Finally, take all the pieces that we have collected
         # and add them all into this data set.
@@ -883,7 +863,7 @@ class Sacc:
 
     def _get_2pt(self, data_type, bin1, bin2, return_cov, angle_name):
         # Internal helper method for get_ell_cl and get_theta_xi
-        ind = self.indices(data_type, (bin1,bin2))
+        ind = self.indices(data_type, (bin1, bin2))
 
         mu = np.array(self.mean[ind])
         angle = np.array(self._get_tags_by_index([angle_name], ind)[0])
@@ -961,16 +941,16 @@ class Sacc:
         """
         # single data point case
         if np.isscalar(tag_val):
-            t = {tag_name:float(tag_val)}
+            t = {tag_name: float(tag_val)}
             if window is not None:
                 t['window'] = window
-            self.add_data_point(data_type, (bin1,bin2), x, **t)
+            self.add_data_point(data_type, (bin1, bin2), x, **t)
             return
         # multiple ell/theta values but same bin
         elif np.isscalar(bin1):
             n1 = len(x)
             n2 = len(tag_val)
-            if not n1==n2:
+            if not n1 == n2:
                 raise ValueError(f"Length of inputs do not match in added 2pt data ({n1},{n2})")
             if window is None:
                 for tag_i, x_i in zip(tag_val, x):
@@ -1007,7 +987,6 @@ class Sacc:
             else:
                 for d, b1, b2, tag_i, x_i, w_i in zip(data_type, bin1, bin2, tag, x, window):
                     self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, w_i)
-
 
     def add_ell_cl(self, data_type, bin1, bin2, ell, x, window=None):
         """

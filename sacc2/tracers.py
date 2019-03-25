@@ -2,6 +2,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.io import fits
 
+
 class BaseTracer:
     """
     A class representing some kind of tracer of astronomical objects.
@@ -18,6 +19,7 @@ class BaseTracer:
     the Sacc2.add_tracer method will construct them for you.
     """
     _tracer_classes = {}
+
     def __init__(self, name):
         self.name = name
 
@@ -48,15 +50,13 @@ class BaseTracer:
         subclass = cls._tracer_classes[tracer_type]
         return subclass(name, *args, **kwargs)
 
-
     @classmethod
     def to_tables(cls, instance_list):
         tables = []
         for name, subcls in cls._tracer_classes.items():
-            tracers = [t for t in instance_list if type(t)==subcls]
+            tracers = [t for t in instance_list if type(t) == subcls]
             tables += subcls.to_tables(tracers)
         return tables
-
 
     @classmethod
     def from_tables(cls, table_list):
@@ -68,12 +68,11 @@ class BaseTracer:
         return tracers
 
 
-
-
 class MiscTracer(BaseTracer, tracer_type='misc'):
     """
     A Tracer type for miscellaneous other data points
     """
+
     def __init__(self, name):
         super().__init__(name)
 
@@ -100,10 +99,6 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         return {name: cls(name) for name in table['name']}
 
 
-
-
-
-
 class NZTracer(BaseTracer, tracer_type='NZ'):
     """
     A Tracer type for tomographic n(z) data.
@@ -118,6 +113,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
     nz: array
         Number density n(z) at redshift sample points.
     """
+
     def __init__(self, name, z, nz):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
@@ -155,7 +151,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
             tables.append(table)
         return tables
-
 
     @classmethod
     def from_table(cls, table):

@@ -2,8 +2,10 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
+
 class BaseWindow:
     _window_classes = {}
+
     def __init_subclass__(cls, window_type):
         # This gets called whenever a subclass is defined.
         # The window_type argument is specified next to the
@@ -33,10 +35,9 @@ class BaseWindow:
         for name, subcls in cls._window_classes.items():
             # Pull out the relevant objects for this subclass.
             # Note that we can't use isinstance here.
-            windows = [w for w in instance_list if type(w)==subcls]
+            windows = [w for w in instance_list if type(w) == subcls]
             tables += subcls.to_tables(windows)
         return tables
-
 
     @classmethod
     def from_tables(cls, table_list):
@@ -72,8 +73,8 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     def to_tables(cls, window_list):
         mins = [w.min for w in window_list]
         maxs = [w.max for w in window_list]
-        ids  = [id(w) for w in window_list]
-        t = Table(data=[ids,mins,maxs], names=['id', 'min', 'max'])
+        ids = [id(w) for w in window_list]
+        t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
         t.meta['SACCTYPE'] = 'window'
         t.meta['SACCCLSS'] = cls.window_type
         t.meta['EXTNAME'] = 'window:'+cls.window_type
@@ -82,7 +83,6 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     @classmethod
     def from_table(cls, table):
         return {row['id']: cls(row['min'], row['max']) for row in table}
-
 
 
 class Window(BaseWindow, window_type='Standard'):
