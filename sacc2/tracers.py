@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.table import Table
-
+from .utils import Namespace
 
 class BaseTracer:
     """
@@ -157,3 +157,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         z = table['z']
         nz = table['nz']
         return {name: cls(name, z, nz)}
+
+
+
+tracer_types = Namespace(BaseTracer._tracer_classes.keys())

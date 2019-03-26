@@ -9,25 +9,7 @@ from .tracers import BaseTracer
 from .windows import BaseWindow
 from .covariance import BaseCovariance
 from .utils import unique_list
-
-
-# add more as we develop them
-allowed_types = [
-    "shear_xi_plus",
-    "shear_xi_minus",
-    "shear_xi_plus_imaginary",
-    "shear_xi_minus_imaginary",
-    "shear_ee",
-    "shear_bb",
-    "shear_eb",
-    "galaxy_density_cl",
-    "galaxy_density_w",
-    "ggl_gamma_t",
-    "ggl_gamma_x",
-    "ggl_E",
-    "ggl_B",
-]
-
+from .data_types import known_types, known_types_list
 
 # These null values are used in place
 # of missing values.
@@ -54,8 +36,8 @@ class DataPoint:
         self.tracers = tracers
         self.value = value
         self.tags = tags
-        if data_type not in allowed_types:
-            warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type.")
+        if data_type not in known_types:
+            warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
 
     def __repr__(self):
         return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
@@ -231,8 +213,8 @@ class Sacc:
         def order_key(row):
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
-            if row.data_type in allowed_types:
-                dt = allowed_types.index(row.data_type)
+            if row.data_type in known_types_list:
+                dt = known_types_list.index(row.data_type)
             else:
                 dt = hash(row.data_type)
             # If known, order by ell or theta.
