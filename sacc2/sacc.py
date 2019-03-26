@@ -523,6 +523,7 @@ class Sacc:
 
 
         """
+        indices = set(indices)
         values = [[d.get_tag(tag) for i, d in enumerate(self.data) if i in indices]
                   for tag in tags]
         return values
