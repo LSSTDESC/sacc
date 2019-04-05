@@ -3,13 +3,13 @@ from .utils import Namespace
 # All names the objects in known_types_list below are also defined as strings
 # in the known_types namespace/dict below
 known_types_list = [
-    "shear_xi_plus",
-    "shear_xi_minus",
-    "shear_xi_plus_imaginary",
-    "shear_xi_minus_imaginary",
-    "shear_ee",
-    "shear_bb",
-    "shear_eb",
+    "galaxy_shear_xi_plus",
+    "galaxy_shear_xi_minus",
+    "galaxy_shear_xi_plus_imaginary",
+    "galaxy_shear_xi_minus_imaginary",
+    "galaxy_shear_ee",
+    "galaxy_shear_bb",
+    "galaxy_shear_eb",
     "galaxy_density_cl",
     "galaxy_density_w",
     "ggl_gamma_t",
