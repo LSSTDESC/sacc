@@ -2,7 +2,7 @@ import numpy as np
 import copy
 
 from astropy.io import fits
-from astropy.table import Table, Column
+from astropy.table import Table
 
 from .tracers import BaseTracer
 from .windows import BaseWindow

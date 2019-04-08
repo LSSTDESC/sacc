@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from astropy.table import Column
+import numpy as np
 
 # These null values are used in place
 # of missing values.

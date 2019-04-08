@@ -1,6 +1,8 @@
 import warnings
 
-from .utils import Namespace, hide_null_values
+from astropy.table import Table
+
+from .utils import Namespace, hide_null_values, null_values
 
 # This makes a namespace object, so you can do:
 # known_types.ggl_E == "ggl_E"

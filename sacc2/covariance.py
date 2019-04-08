@@ -358,7 +358,7 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
             2D array of variances of the data points.
         """
         self.diag = np.atleast_1d(variances)
-        self.size = len(diag)
+        self.size = len(self.diag)
 
     def to_hdu(self):
         """
