@@ -160,4 +160,4 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
 
 
-tracer_types = Namespace(BaseTracer._tracer_classes.keys())
+tracer_types = Namespace(*BaseTracer._tracer_classes.keys())
