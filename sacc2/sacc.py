@@ -1,6 +1,5 @@
 import numpy as np
 import copy
-import warnings
 
 from astropy.io import fits
 from astropy.table import Table, Column
@@ -9,158 +8,7 @@ from .tracers import BaseTracer
 from .windows import BaseWindow
 from .covariance import BaseCovariance
 from .utils import unique_list
-from .data_types import known_types, known_types_list
-
-# These null values are used in place
-# of missing values.
-null_values = {
-    'i': -1437530437530211245,
-    'f': -1.4375304375e30,
-    'U': '',
-}
-
-
-def hide_null_values(table):
-    for name, col in list(table.columns.items()):
-        if col.dtype.kind == 'O':
-            good_values = [x for x in col if x is not None]
-            good_kind = np.array(good_values).dtype.kind
-            null = null_values[good_kind]
-            good_col = np.array([null if x is None else x for x in col])
-            table[name] = Column(good_col)
-
-
-class DataPoint:
-    def __init__(self, data_type, tracers, value, **tags):
-        self.data_type = data_type
-        self.tracers = tracers
-        self.value = value
-        self.tags = tags
-        if data_type not in known_types:
-            warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
-
-    def __repr__(self):
-        return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
-
-    def get_tag(self, tag):
-        return self.tags.get(tag)
-
-    def __getitem__(self, item):
-        return self.tags[item]
-
-    @staticmethod
-    def _choose_fields(data):
-        tags = set()
-        ntracer = 0
-        for d in data:
-            ntracer = max(ntracer, len(d.tracers))
-            tags.update(d.tags.keys())
-        tags = list(tags)
-        tracers = [f'tracer_{i}' for i in range(ntracer)]
-        return tracers, tags
-
-    @classmethod
-    def to_table(cls, data, lookups={}):
-        """
-        Convert a list of data points to a single homogenous table
-
-        Since data points can have varying tags, this method uses
-        null values to represent non-present tags.
-
-        Parameters
-        ----------
-
-        data: list
-            A list of DataPoint objects
-
-        lookups: dict
-            A dictionary of tags->dict showing replacements to make
-            in the tags. Default is empty.
-
-        Returns
-
-        table: astropy.table.Table
-            table object containing data points
-        """
-        # Get the names of the columns to generate
-        tracers, tags = cls._choose_fields(data)
-        names = tracers + ['value'] + tags
-        ntracer = len(tracers)
-        # Convert each data point to a row
-        rows = [d._make_row(tracers, tags, lookups) for d in data]
-
-        # Convert to a table and fiddle slightly.
-        table = Table(rows=rows, names=names)
-        table.meta['NTRACER'] = ntracer
-        hide_null_values(table)
-        return table
-
-    @classmethod
-    def from_table(cls, table, lookups={}):
-        """
-        Convert a table back into a list of data points.
-
-        This method removes null values from the tags.
-
-        Parameters
-        ----------
-
-        table: astropy.table.Table
-            A table of data containing the tracers, values, and tags
-
-        lookups: dict
-            A dictionary of tags->dict showing replacements to make
-            in the tags. Default is empty.
-
-        Returns
-        -------
-
-        data: list
-            list of DataPoint objects
-        """
-        # Get out required table metadata
-        nt = table.meta['NTRACER']
-        data_type = table.meta['SACCNAME']
-
-        # Tag names - we will remove missing tags below
-        tag_names = table.colnames[nt + 1:]
-        data = []
-        for row in table:
-            # Get basic data elements
-            tracers = tuple([row[f'tracer_{i}'] for i in range(nt)])
-            value = row['value']
-
-            # Deal with tags.  First just pull out all remaining columns
-            tags = {name: row[name] for name in tag_names}
-            for k, v in list(tags.items()):
-                # Deal with any tags that we should replace.
-                # This is mainly used for Window instances.
-                if k in lookups:
-                    tags[k] = lookups[k].get(v, v)
-                # Now delete and null values, as indicated by the sentinel above.
-                if hasattr(tags[k], 'dtype') and v == null_values[tags[k].dtype.kind]:
-                    del tags[k]
-            # Finally convert back to a data point and record
-            data_point = cls(data_type, tracers, value, **tags)
-            data.append(data_point)
-        return data
-
-    def _make_row(self, tracers, tags, lookups):
-        # Turn this data point into a list with specified tracers and tags.
-        # If some tracers or tags are missing (homogenous data set) then
-        # use blank values or Nones for them.
-        nt = len(tracers)
-        missing = nt - len(self.tracers)
-        row = list(self.tracers) + ["" for i in range(missing)]
-        row.append(self.value)
-        for t in tags:
-            v = self.tags.get(t)
-            lookup = lookups.get(t)
-            if lookup is not None:
-                v = lookup.get(v, v)
-            row.append(v)
-        return row
-
+from .data_types import known_types, DataPoint
 
 class Sacc:
     """
@@ -213,8 +61,8 @@ class Sacc:
         def order_key(row):
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
-            if row.data_type in known_types_list:
-                dt = known_types_list.index(row.data_type)
+            if row.data_type in known_types:
+                dt = known_types.index(row.data_type)
             else:
                 dt = hash(row.data_type)
             # If known, order by ell or theta.
