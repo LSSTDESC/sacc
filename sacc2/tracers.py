@@ -117,8 +117,8 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
     MiscTracers do not have any attributes except for their
     name, so can be used for tagging external data, for example.
 
-    Atributes
-    ---------
+    Attributes
+    ----------
 
     name: str
         The name of the tracer

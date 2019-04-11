@@ -43,8 +43,8 @@ def unique_list(seq):
     Method from:
     https://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-whilst-preserving-order
 
-    Params
-    ------
+    Parameters
+    ----------
 
     seq: list or sequence
         Any input object that can be iterated
@@ -67,8 +67,11 @@ class Namespace:
     as a kind of simple string enum.
 
     N = Namespace(['a', 'b', 'c'])
+
     assert N.a=='a'
+    
     assert N['a']=='a'
+    
     assert N.index('b')==1
     """
     def __init__(self, *strings):
