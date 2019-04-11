@@ -4,25 +4,6 @@ from astropy.table import Table
 
 from .utils import Namespace, hide_null_values, null_values
 
-# This makes a namespace object, so you can do:
-# known_types.ggl_E == "ggl_E"
-# also, for convenience, you can do known_types.index('ggl_E') 
-# and 'ggl_E' in known_types
-known_types = Namespace(
-    "galaxy_shear_xi_plus",
-    "galaxy_shear_xi_minus",
-    "galaxy_shear_xi_plus_imaginary",
-    "galaxy_shear_xi_minus_imaginary",
-    "galaxy_shear_ee",
-    "galaxy_shear_bb",
-    "galaxy_shear_eb",
-    "galaxy_density_cl",
-    "galaxy_density_w",
-    "ggl_gamma_t",
-    "ggl_gamma_x",
-    "ggl_E",
-    "ggl_B",
-)
 
 required_tags = {
     "galaxy_shear_xi_plus": ["theta"],
@@ -41,6 +22,14 @@ required_tags = {
     
 
 }
+
+# This makes a namespace object, so you can do:
+# known_types.ggl_E == "ggl_E"
+# also, for convenience, you can do known_types.index('ggl_E') 
+# and 'ggl_E' in known_types
+
+known_types = Namespace(*required_tags.keys())
+
 
 class DataPoint:
     def __init__(self, data_type, tracers, value, ignore_missing_tags=False, **tags):
@@ -152,8 +141,7 @@ class DataPoint:
 
     @classmethod
     def from_table(cls, table, lookups={}):
-        """
-        Convert a table back into a list of data points.
+        """Convert a table back into a list of data points.
 
         This method removes null values from the tags.
 
