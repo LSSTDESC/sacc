@@ -104,7 +104,6 @@ class Sacc:
     def add_tracer(self, tracer_type, name, *args, **kwargs):
         """
         Add a new tracer
-        Find the indices of all points matching the given selection
 
         Parameters
         ----------
@@ -715,7 +714,7 @@ class Sacc:
         ----------
 
         data_type: str
-            Which C_ell to extract
+            Which C_ell type to extract
         bin1: str
             The name of the first tomographic bin
         bin2: str
@@ -744,7 +743,7 @@ class Sacc:
         ----------
 
         data_type: str
-            Which C_ell to extract
+            Which type of xi to extract
         bin1: str
             The name of the first tomographic bin
         bin2: str
@@ -824,7 +823,7 @@ class Sacc:
         individually or as a group.
 
         data_type: str or array/list of str
-            Which C_ell to extract
+            Which type C_ell to add
         bin1: str or array/list of str
             The name(s) of the first tomographic bin
         bin2: str or array/list of str
@@ -851,7 +850,7 @@ class Sacc:
         individually or as a group.
 
         data_type: str or array/list of str
-            Which C_ell to extract
+            Which xi type to extract
         bin1: str or array/list of str
             The name(s) of the first tomographic bin
         bin2: str or array/list of str

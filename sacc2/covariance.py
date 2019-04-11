@@ -9,11 +9,19 @@ class BaseCovariance:
     The abstract base class for covariances in different forms.
 
     The three concrete subclasses that are created are:
-    FullCovariamce - for dense matrices
+
+    FullCovariance - for dense matrices
+    
     BlockDiagonalCovariance - for block diagonal matrices 
         (those in which some sub-blocks are dense but without correlation
         between the blocks
+    
     DiagonalCovariance - a covariance where the elements are uncorrelated
+
+    Attributes
+    ----------
+    cov_type: string
+        The type of the covariance (class variable)
     """
     _covariance_classes = {}
 

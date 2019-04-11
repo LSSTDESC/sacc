@@ -51,6 +51,29 @@ class BaseTracer:
 
     @classmethod
     def to_tables(cls, instance_list):
+        """Convert a list of tracers to a list of astropy tables
+
+        This is used when saving data to a file.
+
+        This class method converts a list of tracers, each of which
+        can instances of any subclass of BaseTracer, and turns them
+        into a list of astropy tables, ready to be saved to disk.
+
+        Some tracers generate a single table for all of the
+        different instances, and others generate one table per
+        instance.
+    
+        Parameters
+        ----------
+        instance_list: list
+            List of tracer instances
+
+        Returns
+        -------
+
+        tables: list
+            List of astropy tables
+        """
         tables = []
         for name, subcls in cls._tracer_classes.items():
             tracers = [t for t in instance_list if type(t) == subcls]
@@ -59,6 +82,27 @@ class BaseTracer:
 
     @classmethod
     def from_tables(cls, table_list):
+        """Convert a list of astropy tables into a dictionary of tracers
+
+        This is used when loading data from a file.
+
+        This class method takes a list of tracers, such as those
+        read from a file, and converts them into a list of instances.
+
+        It is not quite the inverse of the to_tables method, since it
+        returns a dict instead of a list.
+
+        Parameters
+        ----------
+        table_list: list
+            List of astropy tables
+
+        Returns
+        -------
+        tracers: dict
+            Dict mapping string names to tracer objects.
+
+        """
         tracers = {}
         for table in table_list:
             subclass_name = table.meta['SACCCLSS']
@@ -68,24 +112,49 @@ class BaseTracer:
 
 
 class MiscTracer(BaseTracer, tracer_type='misc'):
-    """
-    A Tracer type for miscellaneous other data points
+    """A Tracer type for miscellaneous other data points.
+
+    MiscTracers do not have any attributes except for their
+    name, so can be used for tagging external data, for example.
+
+    Atributes
+    ---------
+
+    name: str
+        The name of the tracer
+
     """
 
     def __init__(self, name):
         super().__init__(name)
 
     @classmethod
-    def from_dict(cls, d):
-        return cls(d['name'])
-
-    @classmethod
-    def from_fits(cls, hdu):
-        name = hdu.header['SACCNAME']
-        return cls(name)
-
-    @classmethod
     def to_tables(cls, instance_list):
+        """Convert a list of MiscTracer instances to a astropy tables.
+
+        This is used when saving data to file.
+
+        All the instances are converted to a single table, which is
+        returned in a list with one element so that it can be used
+        in combination with the parent.
+
+        You can use the parent class to_tables class method to convert
+        a mixed list of different tracer types.
+
+        You shouldn't generally need to call this method directly.
+
+        Parameters
+        ----------
+
+        instance_list: list
+            list of MiscTracer objects
+
+        Returns
+        -------
+
+        tables: list
+            List containing one astropy table
+        """
         cols = [[obj.name for obj in instance_list]]
         table = Table(data=cols, names=['name'])
         table.meta['SACCTYPE'] = 'tracer'
@@ -95,6 +164,10 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
     @classmethod
     def from_table(cls, table):
+        """Convert an astropy table into a dictionary of instances
+
+
+        """
         return {name: cls(name) for name in table['name']}
 
 
@@ -139,6 +212,23 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     @classmethod
     def to_tables(cls, instance_list):
+        """Convert a list of NZTracers to a list of astropy tables
+
+        This is used when saving data to a file.
+
+        One table is generated per tracer.
+
+        Parameters
+        ----------
+        instance_list: list
+            List of tracer instances
+
+        Returns
+        -------
+
+        tables: list
+            List of astropy tables
+        """
         tables = []
         for tracer in instance_list:
             names = ['z', 'nz']
@@ -153,11 +243,26 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     @classmethod
     def from_table(cls, table):
+        """Convert an astropy table into a dictionary of tracers
+
+        This is used when loading data from a file.
+
+        A single tracer object is read from the table.
+
+        Parameters
+        ----------
+        table: astropy.table.Table
+            Must contain the appropriate data, for example as saved
+            by to_table.
+
+        Returns
+        -------
+        tracers: dict
+            Dict mapping string names to tracer objects.
+            Only contains one key/value pair for the one tracer.
+
+        """
         name = table.meta['SACCNAME']
         z = table['z']
         nz = table['nz']
         return {name: cls(name, z, nz)}
-
-
-
-tracer_types = Namespace(*BaseTracer._tracer_classes.keys())
