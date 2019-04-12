@@ -149,7 +149,12 @@ class SACC(object):
         """
         Select all elements of the data vector (and covariance, etc.) with the same `type = typ`.
         """
-        ndx=np.where(self.binning.binar['type']==typ)[0]
+        if np.isscalar(typ):
+            typ=[typ]
+        mask=np.zeros(len(self.binning.binar['type']),dtype=bool)
+        for t in typ:
+            mask|=self.binning.binar['type']==t
+        ndx=np.where(mask)[0]
         self.binning.cullBinning(ndx)
         self.mean.cullVector(ndx)
         self.precision.cullMatrix(ndx)
