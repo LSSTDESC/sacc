@@ -217,58 +217,60 @@ class Sacc:
             m[i] = True
         return m
 
-    def mask(self, mask):
+    def mask_indices(self, indices):
         """
         Select data points, keeping only values where the mask is True or an index is
         included in it.
 
-        You can use Sacc.cut to do the opposite operation, keeping points where the mask
+        You can use Sacc.cut_indices to do the opposite operation, keeping points where the mask
         is False.
 
-        You can find indices (e.g. matching some tag) to keep using the Sacc.indices method.
+        You use the Sacc.mask method to find indices and apply this method automatically,
+        or the Sacc.indices method to manually select indices.
 
         Parameters
         ----------
-        mask: array or list
+        indices: array or list
             Mask must be either a boolean array or a list/array of integer indices to remove.
             if boolean then True means to keep a data point and False means to cut it
             if integers then values indicate data points to keep
         """
-        mask = np.array(mask)
+        indices = np.array(indices)
 
         # Convert integer masks to booleans
-        if mask.dtype != np.bool:
-            mask = self._indices_to_bool(mask)
+        if indices.dtype != np.bool:
+            indices = self._indices_to_bool(indices)
 
-        self.data = [d for i, d in enumerate(self.data) if mask[i]]
+        self.data = [d for i, d in enumerate(self.data) if indices[i]]
         if self.covariance is not None:
-            self.covariance = self.covariance.masked(mask)
+            self.covariance = self.covariance.masked(indices)
 
-    def cut(self, cut):
+    def cut_indices(self, indices):
         """
         Remove data points, getting rid of points where the mask is True or an index is
         included in it.
 
-        You can use Sacc.mask to do the opposite operation, keeping points where the mask
+        You can use Sacc.mask_indices to do the opposite operation, keeping points where the mask
         is True.
 
-        You can find indices (e.g. matching some tag) to keep using the Sacc.indices method.
+        You use the Sacc.cut method to find indices and apply this method automatically,
+        or the Sacc.indices method to manually select indices.
 
         Parameters
         ----------
-        cut: array or list
+        indices: array or list
             Mask must be either a boolean array or a list/array of integer indices to remove.
             if boolean then True means to cut data point and False means to keep it
             if integers then values indicate data points to cut out
         """
-        cut = np.array(cut)
+        indices = np.array(indices)
 
         # Convert integer masks to booleans
-        if cut.dtype != np.bool:
-            cut = self._indices_to_bool(cut)
+        if indices.dtype != np.bool:
+            indices = self._indices_to_bool(indices)
 
         # Get the mask method to do the actual work
-        self.mask(~cut)
+        self.mask_indices(~indices)
 
     def indices(self, data_type=None, tracers=None, **select):
         """
@@ -330,6 +332,66 @@ class Sacc:
             if ok:
                 indices.append(i)
         return np.array(indices, dtype=int)
+
+    def cut(self, data_type=None, tracers=None, **select):
+        """
+        Remove data points, getting rid of points matching the given criteria.
+
+        You can use Sacc.mask to do the opposite operation, keeping points where the
+        criteria are matched.
+
+        You can manually remove points using the Sacc.indices and Sacc.cut_indices methods.
+
+        Parameters
+        ----------
+        data_type: str
+            Select only data points which are of this data type.
+            If None (the default) then match any data types
+
+        tracers: tuple
+            Select only data points which match this tracer combination.
+            If None (the default) then match any tracer combinations.
+
+        **select:
+            Select only data points with tag names and values matching
+            all values provided in this kwargs option.
+            You can also use the syntax name__lt=value or
+            name__gt=value in the selection to select points
+            less or greater than a threshold
+        """
+
+        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        self.cut_indices(indices)
+
+    def mask(self, data_type=None, tracers=None, **select):
+        """
+        Remove data points, keeping only points matching the given criteria.
+
+        You can use Sacc.cut to do the opposite operation, keeping points where the
+        criteria are not matched.
+
+        You can manually remove points using the Sacc.indices and Sacc.mask_indices methods.
+
+        Parameters
+        ----------
+        data_type: str
+            Select only data points which are of this data type.
+            If None (the default) then match any data types
+
+        tracers: tuple
+            Select only data points which match this tracer combination.
+            If None (the default) then match any tracer combinations.
+
+        **select:
+            Select only data points with tag names and values matching
+            all values provided in this kwargs option.
+            You can also use the syntax name__lt=value or
+            name__gt=value in the selection to select points
+            less or greater than a threshold
+        """
+        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        self.mask_indices(indices)
+
 
     def _get_tags_by_index(self, tags, indices):
         """
