@@ -32,6 +32,28 @@ def hide_null_values(table):
             good_col = np.array([null if x is None else x for x in col])
             table[name] = Column(good_col)
 
+def remove_dict_null_values(dictionary):
+    """Remove values in a dictionary that
+    correspond to the null values above.
+
+    Parameters
+    ----------
+    dictionary: dict
+        Dict (or subclass instance or other mapping) to modify in-place
+
+    """
+    # will figure out the list of keys to remove
+    deletes = []
+    for k, v in dictionary.items():
+        try:
+            dt = np.dtype(type(v)).kind
+            if v == null_values[dt]:
+                deletes.append(k)
+        except (TypeError, KeyError):
+            continue
+    for d in deletes:
+        del dictionary[d]
+
 
 
 def unique_list(seq):

@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.table import Table
-from .utils import Namespace
+from .utils import Namespace, hide_null_values, remove_dict_null_values
 
 class BaseTracer:
     """
@@ -19,8 +19,9 @@ class BaseTracer:
     """
     _tracer_classes = {}
 
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.name = name
+        self.metadata = kwargs.pop('metadata', {})
 
     def __init_subclass__(cls, tracer_type):
         cls._tracer_classes[tracer_type] = cls
@@ -37,6 +38,7 @@ class BaseTracer:
         ----------
         tracer_type: str
             Must correspond to the tracer_type of a subclass
+
         name: str
             The name for this specific tracer, e.g. a
             tomographic bin identifier.
@@ -47,7 +49,8 @@ class BaseTracer:
             An instance of a Tracer subclass
         """
         subclass = cls._tracer_classes[tracer_type]
-        return subclass(name, *args, **kwargs)
+        obj = subclass(name, *args, **kwargs)
+        return obj
 
     @classmethod
     def to_tables(cls, instance_list):
@@ -125,8 +128,8 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
     """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
 
     @classmethod
     def to_tables(cls, instance_list):
@@ -155,11 +158,20 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         tables: list
             List containing one astropy table
         """
+        metadata_cols = set()
+        for obj in instance_list:
+            metadata_cols.update(obj.metadata.keys())
+        metadata_cols = list(metadata_cols)
+
         cols = [[obj.name for obj in instance_list]]
-        table = Table(data=cols, names=['name'])
+        for name in metadata_cols:
+            cols.append([obj.metadata.get(name) for obj in instance_list])
+
+        table = Table(data=cols, names=['name']+ metadata_cols)
         table.meta['SACCTYPE'] = 'tracer'
         table.meta['SACCCLSS'] = cls.tracer_type
         table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}'
+        hide_null_values(table)
         return [table]
 
     @classmethod
@@ -168,7 +180,14 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
 
         """
-        return {name: cls(name) for name in table['name']}
+        metadata_cols = [col for col in table.colnames if col != 'name']
+        tracers = {}
+        for row in table:
+            name = row['name']
+            metadata = {key: row[key] for key in metadata_cols}
+            remove_dict_null_values(metadata)
+            tracers[name] = cls(name, metadata=metadata)
+        return tracers
 
 
 class NZTracer(BaseTracer, tracer_type='NZ'):
@@ -186,7 +205,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         Number density n(z) at redshift sample points.
     """
 
-    def __init__(self, name, z, nz):
+    def __init__(self, name, z, nz, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -206,7 +225,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         instance: NZTracer object
             An instance of this class
         """
-        super().__init__(name)
+        super().__init__(name, **kwargs)
         self.z = np.array(z)
         self.nz = np.array(nz)
 
@@ -238,6 +257,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
             tables.append(table)
         return tables
 
@@ -265,4 +287,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         name = table.meta['SACCNAME']
         z = table['z']
         nz = table['nz']
-        return {name: cls(name, z, nz)}
+
+        metadata = {}
+        for key, value in table.meta.items():
+            if key.startswith("META_"):
+                metadata[key[5:]] = value
+        return {name: cls(name, z, nz, metadata=metadata)}
