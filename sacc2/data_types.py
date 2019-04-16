@@ -43,10 +43,13 @@ class DataPoint:
             for tag in required_tags[data_type]:
                 if tag not in tags:
                     raise ValueError(f"Tag {tag} required for data type {data_type} (ignore_missing_tags=False)")
+
+
         # We encourage people to use existing type names, and issue a warning if they do
         # not to prod them in the right direction.
-        if data_type not in known_types:
-            warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
+        # We are removing this warning until we converge on what the data types should be
+        # if data_type not in known_types:
+        #     warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
 
     def __repr__(self):
         return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
