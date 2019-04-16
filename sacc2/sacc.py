@@ -1,6 +1,7 @@
-import numpy as np
 import copy
+import warnings
 
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
@@ -272,7 +273,7 @@ class Sacc:
         # Get the mask method to do the actual work
         self.mask_indices(~indices)
 
-    def indices(self, data_type=None, tracers=None, **select):
+    def indices(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Find the indices of all points matching the given selection criteria.
 
@@ -331,9 +332,14 @@ class Sacc:
             # Record this index
             if ok:
                 indices.append(i)
+        if len(indices)==0 and warn_empty:
+            if tracers is None:
+                warnings.warn("Empty index selected")
+            else:
+                warnings.warn("Empty index selected - maybe you should check the tracer order?")
         return np.array(indices, dtype=int)
 
-    def cut(self, data_type=None, tracers=None, **select):
+    def cut(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Remove data points, getting rid of points matching the given criteria.
 
@@ -360,10 +366,10 @@ class Sacc:
             less or greater than a threshold
         """
 
-        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
         self.cut_indices(indices)
 
-    def mask(self, data_type=None, tracers=None, **select):
+    def mask(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Remove data points, keeping only points matching the given criteria.
 
@@ -389,7 +395,7 @@ class Sacc:
             name__gt=value in the selection to select points
             less or greater than a threshold
         """
-        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
         self.mask_indices(indices)
 
 
