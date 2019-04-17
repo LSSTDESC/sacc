@@ -60,7 +60,13 @@ def test_nz_tracer():
     z = np.arange(0., 1., 0.01)
     Nz1 = 1*z # not a sensible N(z)!
     Nz2 = 2*z # not a sensible N(z)!
-    T1 = sacc2.BaseTracer.make('NZ', 'tracer1', z, Nz1, metadata=md1)
+
+    Nz3 = 3*z
+    Nz4 = 4*z
+
+    more_nz = {'v1':Nz3, 'v2':Nz4}
+
+    T1 = sacc2.BaseTracer.make('NZ', 'tracer1', z, Nz1, more_nz=more_nz, metadata=md1)
     T2 = sacc2.BaseTracer.make('NZ', 'tracer2', z, Nz2, metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
@@ -72,6 +78,29 @@ def test_nz_tracer():
     T2a = D['tracer2']
     assert T1a.metadata == md1
     assert T2a.metadata == md2
+
+    assert np.all(T1a.more_nz['v1'] == Nz3)
+    assert np.all(T1a.more_nz['v2'] == Nz4)
+
+def test_mixed_tracers():
+    md1 = {'potato': 'never'}
+    md2 = {'rank': 'duke'}
+    md3 = {'rank': 'earl', 'robes': 78}
+    z = np.arange(0., 1., 0.01)
+    Nz1 = 1*z # not a sensible N(z)!
+    Nz2 = 2*z
+    T1 = sacc2.BaseTracer.make('NZ', 'tracer1', z, Nz1)
+    T2 = sacc2.BaseTracer.make('NZ', 'tracer2', z, Nz2, metadata=md1)
+
+    M1 = sacc2.BaseTracer.make("misc", "sample1", metadata=md2)
+    M2 = sacc2.BaseTracer.make("misc", "sample2", metadata=md3)
+
+    tables = sacc2.BaseTracer.to_tables([T1, M1, T2, M2])
+    recovered = sacc2.BaseTracer.from_tables(tables)
+    assert recovered['sample1'].metadata['rank']=='duke'
+    assert recovered['sample2'].metadata['robes']==78
+    assert np.all(recovered['tracer1'].nz == Nz1)
+    assert recovered['tracer2'].metadata['potato']=='never'
 
 
 if __name__ == '__main__':

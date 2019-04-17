@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.table import Table
-from .utils import Namespace, hide_null_values, remove_dict_null_values
+from .utils import Namespace, hide_null_values, remove_dict_null_values, unique_list
 
 class BaseTracer:
     """
@@ -95,6 +95,9 @@ class BaseTracer:
         It is not quite the inverse of the to_tables method, since it
         returns a dict instead of a list.
 
+        Subclasses overrides of this method do the actual work, but should *NOT* call
+        this parent base method.
+
         Parameters
         ----------
         table_list: list
@@ -107,11 +110,20 @@ class BaseTracer:
 
         """
         tracers = {}
-        for table in table_list:
-            subclass_name = table.meta['SACCCLSS']
-            subclass = cls._tracer_classes[subclass_name]
-            tracers.update(subclass.from_table(table))
+        # Figure out the different subclasses that are present
+        subclass_names = unique_list(table.meta['SACCCLSS'] for table in table_list)
+        subclasses = [cls._tracer_classes[name] for name in subclass_names]
+
+        # For each subclass find the tables representing that subclass.
+        # We do it like this because we might want to represent one tracer with
+        # multiple tables, or one table can have multiple tracers - it depends on
+        # the tracers class and how complicated it is.
+        for name, subcls in zip(subclass_names, subclasses):
+            subcls_table_list = [table for table in table_list if table.meta['SACCCLSS']==name]
+            # and ask the subclass to read from those tables.
+            tracers.update(subcls.from_tables(subcls_table_list))
         return tracers
+
 
 
 class MiscTracer(BaseTracer, tracer_type='misc'):
@@ -175,18 +187,31 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         return [table]
 
     @classmethod
-    def from_table(cls, table):
-        """Convert an astropy table into a dictionary of instances
+    def from_tables(cls, table_list):
+        """Convert a list of astropy table into a dictionary of MiscTracer instances.
 
+        In general table_list should have a single element in, since all the 
+        MiscTracers are stored in a single table during to_tables
 
+        Parameters
+        ----------
+        table_list: List[astropy.table.Table]
+
+        Returns
+        -------
+        tracers: Dict[str: MiscTracer]
+                
         """
-        metadata_cols = [col for col in table.colnames if col != 'name']
         tracers = {}
-        for row in table:
-            name = row['name']
-            metadata = {key: row[key] for key in metadata_cols}
-            remove_dict_null_values(metadata)
-            tracers[name] = cls(name, metadata=metadata)
+
+        for table in table_list:
+            metadata_cols = [col for col in table.colnames if col != 'name']
+            
+            for row in table:
+                name = row['name']
+                metadata = {key: row[key] for key in metadata_cols}
+                remove_dict_null_values(metadata)
+                tracers[name] = cls(name, metadata=metadata)
         return tracers
 
 
@@ -221,7 +246,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             Redshift sample values
         nz: array
             Number density n(z) at redshift sample points.
-        more_nz: dict[str:array] or dict[int:array]
+        more_nz: dict[str:array]
             Optional, default=None.  Additional realizations or
             estimates of the same n(z), by name.
 
@@ -273,7 +298,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         return tables
 
     @classmethod
-    def from_table(cls, table):
+    def from_tables(cls, table_list):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -282,7 +307,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
         Parameters
         ----------
-        table: astropy.table.Table
+        table_list: list[astropy.table.Table]
             Must contain the appropriate data, for example as saved
             by to_table.
 
@@ -293,16 +318,19 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             Only contains one key/value pair for the one tracer.
 
         """
-        name = table.meta['SACCNAME']
-        z = table['z']
-        nz = table['nz']
-        more_nz = {}
-        for col in table.columns.values():
-            if col.name not in ['z', 'nz']:
-                more_nz[col.name] = col.data
+        tracers = {}
+        for table in table_list:
+            name = table.meta['SACCNAME']
+            z = table['z']
+            nz = table['nz']
+            more_nz = {}
+            for col in table.columns.values():
+                if col.name not in ['z', 'nz']:
+                    more_nz[col.name] = col.data
 
-        metadata = {}
-        for key, value in table.meta.items():
-            if key.startswith("META_"):
-                metadata[key[5:]] = value
-        return {name: cls(name, z, nz, more_nz=more_nz, metadata=metadata)}
+            metadata = {}
+            for key, value in table.meta.items():
+                if key.startswith("META_"):
+                    metadata[key[5:]] = value
+            tracers[name] = cls(name, z, nz, more_nz=more_nz, metadata=metadata)
+        return tracers
