@@ -203,9 +203,11 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         Redshift sample values
     nz: array
         Number density n(z) at redshift sample points.
+    more_nz: dict[str: array] or dict[int:array]
+        Additional estimates of the same n(z), by name
     """
 
-    def __init__(self, name, z, nz, **kwargs):
+    def __init__(self, name, z, nz, more_nz=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -219,6 +221,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             Redshift sample values
         nz: array
             Number density n(z) at redshift sample points.
+        more_nz: dict[str:array] or dict[int:array]
+            Optional, default=None.  Additional realizations or
+            estimates of the same n(z), by name.
 
         Returns
         -------
@@ -228,6 +233,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         super().__init__(name, **kwargs)
         self.z = np.array(z)
         self.nz = np.array(nz)
+        self.more_nz = {} if more_nz is None else more_nz
 
     @classmethod
     def to_tables(cls, instance_list):
@@ -252,6 +258,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         for tracer in instance_list:
             names = ['z', 'nz']
             cols = [tracer.z, tracer.nz]
+            for nz_id, col in tracer.more_nz.items():
+                names.append(str(nz_id))
+                cols.append(col)
             table = Table(data=cols, names=names)
             table.meta['SACCTYPE'] = 'tracer'
             table.meta['SACCCLSS'] = cls.tracer_type
@@ -287,9 +296,13 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         name = table.meta['SACCNAME']
         z = table['z']
         nz = table['nz']
+        more_nz = {}
+        for col in table.columns.values():
+            if col.name not in ['z', 'nz']:
+                more_nz[col.name] = col.data
 
         metadata = {}
         for key, value in table.meta.items():
             if key.startswith("META_"):
                 metadata[key[5:]] = value
-        return {name: cls(name, z, nz, metadata=metadata)}
+        return {name: cls(name, z, nz, more_nz=more_nz, metadata=metadata)}
