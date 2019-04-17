@@ -1,6 +1,6 @@
 import sacc2
 import numpy as np
-
+import scipy.linalg
 
 def test_construct():
     s = sacc2.Sacc()
@@ -101,6 +101,34 @@ def test_mixed_tracers():
     assert recovered['sample2'].metadata['robes']==78
     assert np.all(recovered['tracer1'].nz == Nz1)
     assert recovered['tracer2'].metadata['potato']=='never'
+
+def test_inverses():
+    N = 25
+    C = np.random.uniform(0,1, size=(N,N))
+    C = (C+C.T) + np.eye(N)*20
+    M1 = sacc2.BaseCovariance.make(C, N)
+    invC = M1.inverted()
+    I = np.dot(invC, C)
+    assert np.allclose(I, np.eye(N))
+
+    blocks = [np.random.uniform(0,1, size=(5,5)) for i in range(5)]
+    for b in blocks:
+        b += b.T + np.eye(5)*20
+
+    M2 = sacc2.BaseCovariance.make(blocks, N)
+    M2dense = np.zeros((N,N))
+    for i in range(5):
+        M2dense[i*5:i*5+5,i*5:i*5+5] = blocks[i]
+    invC2 = M2.inverted()
+    I = np.dot(invC2, M2dense)
+    assert np.allclose(I, np.eye(N))
+
+    d = abs(np.random.uniform(0,1,size=N))+1
+    M3 = sacc2.BaseCovariance.make(d, N)
+    invC3 = M3.inverted()
+    assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
+    assert np.allclose(invC3.diagonal() * d, 1)
+
 
 
 if __name__ == '__main__':

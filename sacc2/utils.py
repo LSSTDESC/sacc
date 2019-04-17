@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from astropy.table import Column
 import numpy as np
+import scipy.linalg
 
 # These null values are used in place
 # of missing values.
@@ -115,3 +116,44 @@ class Namespace:
 
     def index(self, s):
         return self._index[s]
+
+
+def invert_spd_matrix(M, strict=True):
+    """
+    Invert a symmetric positive definite matrix.
+
+    SPD matrices (for example, covariance matrices) have only positive eigenvalues.
+
+    Based on:
+    https://stackoverflow.com/questions/40703042/more-efficient-way-to-invert-a-matrix-knowing-it-is-symmetric-and-positive-semi
+
+    Parameters
+    ----------
+    M: 2d array
+        Matrix to invert
+
+    struct: bool, default=True
+        If True, require that the matrix is SPD.
+        If False, use a slower algorithm that will work on other matrices
+
+    Returns
+    -------
+    invM: 2d array
+        Inverse matrix
+
+    """
+    M = np.atleast_2d(M)
+
+    # Our strict mode will only work 
+    if strict:
+        L, _ = scipy.linalg.lapack.dpotrf(M, False, False)
+        invM, info = scipy.linalg.lapack.dpotri(L)
+        if info:
+            raise ValueError("Matrix is not symmpetric-positive-definite")
+        else:
+            invM = np.triu(invM) + np.triu(invM, k=1).T
+
+    else:
+        invM = np.linalg.inv(M)
+
+    return invM

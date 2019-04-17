@@ -3,6 +3,7 @@ from astropy.table import Table
 import scipy.linalg
 import numpy as np
 
+from .utils import invert_spd_matrix
 
 class BaseCovariance:
     """
@@ -191,6 +192,17 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         """
         return self.covmat[indices][:, indices]
 
+    def inverted(self):
+        """Return the inverse of the covariance matrix, as a dense array.
+
+        Returns
+        -------
+        invC: array
+            Inverse covariance
+
+        """
+        return invert_spd_matrix(self.covmat)
+
 
 class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     """A covariance subclass representing block diagonal covariances
@@ -298,7 +310,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             m = indices[(indices >= s) & (indices < e)]
             sub_blocks.append(block[m][:, m])
             s += sz
-        return scipy.linalg.block_diag(sub_blocks)
+        return scipy.linalg.block_diag(*sub_blocks)
 
     def masked(self, mask):
         """
@@ -337,9 +349,21 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
                 s += sz
             return self.__class__(sub_blocks)
         else:
-            C = scipy.linalg.block_diag(self.blocks)
+            C = scipy.linalg.block_diag(*self.blocks)
             C = C[mask][:, mask]
             return FullCovariance(C)
+
+    def inverted(self):
+        """Return the inverse of the covariance matrix, as a dense array.
+
+        Returns
+        -------
+        invC: array
+            Inverse covariance
+
+        """
+        return scipy.linalg.block_diag(*[invert_spd_matrix(B) for B in self.blocks])
+
 
 
 class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
@@ -446,3 +470,15 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
         """
         return np.diag(self.diag[indices])
+
+    def inverted(self):
+        """Return the inverse of the covariance matrix, as a dense array.
+
+        Returns
+        -------
+        invC: array
+            Inverse covariance
+
+        """
+        return np.diag(1.0/self.diag)
+
