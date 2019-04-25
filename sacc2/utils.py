@@ -89,7 +89,7 @@ class Namespace:
     designed to store strings with the same name as their contents
     as a kind of simple string enum.
 
-    N = Namespace(['a', 'b', 'c'])
+    N = Namespace('a', 'b', 'c')
 
     assert N.a=='a'
     
@@ -132,7 +132,7 @@ def invert_spd_matrix(M, strict=True):
     M: 2d array
         Matrix to invert
 
-    struct: bool, default=True
+    strict: bool, default=True
         If True, require that the matrix is SPD.
         If False, use a slower algorithm that will work on other matrices
 
