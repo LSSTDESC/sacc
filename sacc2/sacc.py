@@ -683,6 +683,7 @@ class Sacc:
 
         # Create the actual fits object
         hdr = fits.Header()
+        # save any global metadata in the header
         for k, v in S.metadata.items():
             hdr[k] = v
         hdus = [fits.PrimaryHDU(header=hdr)] + [fits.table_to_hdu(table) for table in tables]
