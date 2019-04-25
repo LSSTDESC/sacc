@@ -4,8 +4,8 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
-SPHINXPROJ    = SACC
-SOURCEDIR     = source
+SPHINXPROJ    = SACC2
+SOURCEDIR     = sacc2
 BUILDDIR      = build
 
 # Put it first so that "make" without argument is like "make help".
