@@ -32,7 +32,50 @@ known_types = Namespace(*required_tags.keys())
 
 
 class DataPoint:
+    """A class for a single data point (one scalar value).
+
+    Data points have a type, zero or more tracers, a value,
+    and any arbitrary tags that are stored in a dictionary,
+    and can be used to describe angular scales, window functions,
+    or any arbitrary information to be attached to the data.
+
+    Data points can be automatically created and added to a
+    Sacc object, so you don't normally nee to manually create them.
+
+    Attributes
+    -----------
+
+    data_type: str
+        A string, indicating the type of data point
+    tracers: tuple
+        Tuple of strings with the names of tracers to use
+    value: float
+        Mean value of this statistics
+    tags: dict
+        Dictionary of further data point metadata, such as binning info, angles, etc.
+
+    """
     def __init__(self, data_type, tracers, value, ignore_missing_tags=False, **tags):
+        """Create a new data point.
+
+        Data points can be automatically created and added to a
+        Sacc object, so you don't normally nee to manually create them.
+        
+        Parameters
+        ----------
+
+        data_type: str
+            A string, indicating the type of data point
+        tracers: tuple
+            Tuple of strings with the names of tracers to use
+        value: float
+            Mean value of this statistics
+        ignore_missing_tags: bool
+            Optional, default=False.  If True, do not complain if a tracer usually
+            needed for this data type is not present.
+        **tags: dict[str:any]
+            Dictionary of further data point metadata, such as binning info, angles, etc.
+        """
         self.data_type = data_type
         self.tracers = tracers
         self.value = value
