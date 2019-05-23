@@ -1,5 +1,5 @@
 Window Functions
 ================
 
-.. automodule:: sacc2.windows
+.. automodule:: sacc.windows
    :members:

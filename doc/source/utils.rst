@@ -1,5 +1,5 @@
 Miscellaneous Utilities
 =======================
 
-.. automodule:: sacc2.utils
+.. automodule:: sacc.utils
    :members:

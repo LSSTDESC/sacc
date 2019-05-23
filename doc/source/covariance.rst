@@ -1,5 +1,5 @@
 Covariances
 ===========
 
-.. automodule:: sacc2.covariance
+.. automodule:: sacc.covariance
    :members:

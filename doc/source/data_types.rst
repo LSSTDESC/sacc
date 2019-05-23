@@ -1,5 +1,5 @@
 Data Points
 ===========
 
-.. automodule:: sacc2.data_types
+.. automodule:: sacc.data_types
    :members:

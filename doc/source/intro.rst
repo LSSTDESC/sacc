@@ -1,17 +1,17 @@
 Overview
 ========
 
-Sacc2 is a schema for storing summary statistic data, metadata, and covariances for the Dark Energy Science Collaboration (DESC).
+sacc is a schema for storing summary statistic data, metadata, and covariances for the Dark Energy Science Collaboration (DESC).
 
-A sacc2 file can contain all the observational information required to make theoretical predictions for the mean of a measured quantity, and to calculate a likelihood of it.
+A sacc file can contain all the observational information required to make theoretical predictions for the mean of a measured quantity, and to calculate a likelihood of it.
 
-Currently sacc2 files can be saved to a FITS format, but the schema is designed to make it easy to change this if neeed; the structure of the data (in memory) is the focus, rather than the format.
+Currently sacc files can be saved to a FITS format, but the schema is designed to make it easy to change this if neeed; the structure of the data (in memory) is the focus, rather than the format.
 
 
 Basic Structure
 ---------------
 
-A sacc2.Sacc object can contain:
+A sacc.Sacc object can contain:
 
 - a series of DataPoint objects
 - a series of Tracer objects
@@ -21,9 +21,9 @@ A sacc2.Sacc object can contain:
 Creating Sacc objects
 ---------------------
 
-A typical workflow for creating new Sacc2 files is:
+A typical workflow for creating new sacc files is:
 
-- instantiate an empty Sacc object with :code:`s = sacc2.Sacc()`.
+- instantiate an empty Sacc object with :code:`s = sacc.Sacc()`.
 - add an tracer objects that will be used with :code:`s.add_tracer(type_name, tracer_name, ...)`
 - one by one, add data points to it in whatever order you prefer with :code:`s.add_data_point(data_type, tracers, value, ...)`
 - when finished, add a covariance in the same order with :code:`s.add_covariance(C)`
@@ -32,9 +32,9 @@ A typical workflow for creating new Sacc2 files is:
 Reading Sacc objects
 --------------------
 
-If you are using a Sacc2 file, for exampe in an MCMC, or for plotting:
+If you are using a sacc file, for exampe in an MCMC, or for plotting:
 
-- load the sacc data into memory with :code:`s = sacc2.Sacc.load_fits(filename)`
+- load the sacc data into memory with :code:`s = sacc.Sacc.load_fits(filename)`
 - find what data types are in the file with :code:`dt = s.get_data_types()`
 - for each data type, find what tracer combinations (e.g. tomographic bin pairs) are available with :code:`tracers = s.get_tracer_combinations(dt)`
 - for each data pair, get the mean values with :code:`data = s.get_mean(dt, tracers)`, and, for example, window functions using :code:`windows = s.get_tag(dt, tracers, "window")` or similar for other binning information

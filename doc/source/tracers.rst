@@ -1,5 +1,5 @@
 Tracers
 ===========
 
-.. automodule:: sacc2.tracers
+.. automodule:: sacc.tracers
    :members:

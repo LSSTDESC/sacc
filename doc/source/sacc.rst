@@ -1,5 +1,5 @@
 Sacc DataSets
 =============
 
-.. automodule:: sacc2.sacc
+.. automodule:: sacc.sacc
    :members:
