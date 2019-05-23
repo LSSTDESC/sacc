@@ -141,15 +141,17 @@ def invert_spd_matrix(M, strict=True):
     """
     M = np.atleast_2d(M)
 
-    # Our strict mode will only work 
+    # In strict mode we use a method which will only work for SPD matrices,
+    # and raise an exception otherwise.
     if strict:
         L, _ = scipy.linalg.lapack.dpotrf(M, False, False)
         invM, info = scipy.linalg.lapack.dpotri(L)
         if info:
-            raise ValueError("Matrix is not symmpetric-positive-definite")
+            raise ValueError("Matrix is not symmetric-positive-definite")
         else:
             invM = np.triu(invM) + np.triu(invM, k=1).T
-
+    # Otherwise we use the generic (and also slower) method that will
+    # work if, due to numerical issues, the matrix is not quite SPD
     else:
         invM = np.linalg.inv(M)
 
