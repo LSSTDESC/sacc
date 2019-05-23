@@ -158,7 +158,7 @@ class Sacc:
         tracers: tuple of str
             Strings corresponding to zero or more of the tracers in the data set
             These should either be already set up using the add_tracer method,
-            or you could set tracers_laster=True if you want to add them later.
+            or you could set tracers_later=True if you want to add them later.
             e.g. for 2pt measurements the tracers are the names of the two n(z)
             samples
 
