@@ -18,7 +18,8 @@ def test_construct():
 
 def test_full_cov():
     covmat = np.random.uniform(size=(100,100))
-    C = sacc.covariance.BaseCovariance.make(covmat, 100)
+    C = sacc.covariance.BaseCovariance.make(covmat)
+    assert C.size == 100
     assert isinstance(C, sacc.covariance.FullCovariance)
     assert np.all(C.covmat==covmat)
     hdu = C.to_hdu()
@@ -28,7 +29,8 @@ def test_full_cov():
 
 def test_block_cov():
     covmat = [np.random.uniform(size=(50,50)), np.random.uniform(size=(100,100)), np.random.uniform(size=(150,150))]
-    C = sacc.covariance.BaseCovariance.make(covmat, 300)
+    C = sacc.covariance.BaseCovariance.make(covmat)
+    assert C.size == 300
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
     hdu = C.to_hdu()
     C2 = sacc.covariance.BaseCovariance.from_hdu(hdu)
@@ -106,7 +108,8 @@ def test_inverses():
     N = 25
     C = np.random.uniform(0,1, size=(N,N))
     C = (C+C.T) + np.eye(N)*20
-    M1 = sacc.BaseCovariance.make(C, N)
+    M1 = sacc.BaseCovariance.make(C)
+    assert M1.size == N
     invC = M1.inverted()
     I = np.dot(invC, C)
     assert np.allclose(I, np.eye(N))
@@ -115,7 +118,8 @@ def test_inverses():
     for b in blocks:
         b += b.T + np.eye(5)*20
 
-    M2 = sacc.BaseCovariance.make(blocks, N)
+    M2 = sacc.BaseCovariance.make(blocks)
+    assert M2.size == N
     M2dense = np.zeros((N,N))
     for i in range(5):
         M2dense[i*5:i*5+5,i*5:i*5+5] = blocks[i]
@@ -124,7 +128,8 @@ def test_inverses():
     assert np.allclose(I, np.eye(N))
 
     d = abs(np.random.uniform(0,1,size=N))+1
-    M3 = sacc.BaseCovariance.make(d, N)
+    M3 = sacc.BaseCovariance.make(d)
+    assert M3.size == M3
     invC3 = M3.inverted()
     assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
     assert np.allclose(invC3.diagonal() * d, 1)

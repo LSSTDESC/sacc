@@ -56,7 +56,7 @@ class BaseCovariance:
         return subclass.from_hdu(hdu)
 
     @classmethod
-    def make(cls, cov, n):
+    def make(cls, cov):
         """Make an appropriate covariance object from the matrix info itself.
 
         You can pass in a list of covariance blocks for a block-diagonal, covariance
@@ -81,18 +81,13 @@ class BaseCovariance:
                 if (block.ndim != 2) or (block.shape[0] != block.shape[1]):
                     raise ValueError(f"Covariance block has wrong size or shape {block.shape}")
                 s += block.shape[0]
-            if s != n:
-                raise ValueError(f"Covariance blocks do not have the right overall size ({s}x{s}, expected {n}x{n})")
             return BlockDiagonalCovariance(cov)
         else:
             cov = np.array(cov).squeeze()
             if cov.ndim == 1:
-                if len(cov) != n:
-                    c = len(cov)
-                    raise ValueError(f"1D diagonal covariance is wrong length ({c}, expected {n})")
                 return DiagonalCovariance(cov)
-            if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]) or (cov.shape[0] != n):
-                raise ValueError(f"Covariance has wrong size or shape {cov.shape}, expected ({n}x{n})")
+            if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]):
+                raise ValueError(f"Covariance is not a 2D square matrix - shape: {cov.shape}")
             return FullCovariance(cov)
 
 

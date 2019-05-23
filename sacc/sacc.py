@@ -203,9 +203,13 @@ class Sacc:
         None
         """
         if isinstance(covariance, BaseCovariance):
-            self.covariance = covariance
+            cov = covariance
         else:
-            self.covariance = BaseCovariance.make(covariance, len(self))
+            cov = BaseCovariance.make(covariance)
+
+        expected_size = len(self)
+        if not cov.size == expected_size:
+            raise ValueError(f"Covariance has the wrong size.  Should be {expected_size} but is {cov.size}")
 
     def _indices_to_bool(self, mask):
         # Convert an array of indices into a boolean True mask
