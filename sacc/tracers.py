@@ -6,7 +6,7 @@ class BaseTracer:
     """
     A class representing some kind of tracer of astronomical objects.
 
-    Generically, SACC2 data points correspond to some combination of tracers
+    Generically, SACC data points correspond to some combination of tracers
     for example, tomographic two-point data has two tracers for each data
     point, indicating the n(z) for the corresponding tomographic bin.
 
@@ -15,7 +15,7 @@ class BaseTracer:
     require z and n(z) arrays.
 
     In general you don't need to create tracer objects yourself -
-    the Sacc2.add_tracer method will construct them for you.
+    the Sacc.add_tracer method will construct them for you.
     """
     _tracer_classes = {}
 

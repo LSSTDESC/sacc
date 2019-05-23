@@ -8,7 +8,7 @@ class BaseWindow:
     Window functions here are for 1D variables and describe
     binnings from functions onto discrete values.
 
-    They are treated as a special kind of tag value in Sacc2.
+    They are treated as a special kind of tag value in Sacc.
 
     Subclasses describe common types of window function, including
     a top hat between two values and a general tabulated
