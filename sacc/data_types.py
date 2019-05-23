@@ -44,13 +44,15 @@ class DataPoint:
 
     Attributes
     -----------
-
     data_type: str
         A string, indicating the type of data point
+
     tracers: tuple
         Tuple of strings with the names of tracers to use
+
     value: float
         Mean value of this statistics
+
     tags: dict
         Dictionary of further data point metadata, such as binning info, angles, etc.
 
@@ -65,13 +67,17 @@ class DataPoint:
         ----------
         data_type: str
             A string, indicating the type of data point
+
         tracers: tuple
             Tuple of strings with the names of tracers to use
+
         value: float
             Mean value of this statistics
+
         ignore_missing_tags: bool
             Optional, default=False.  If True, do not complain if a tracer usually
             needed for this data type is not present.
+
         **tags: dict[str:any]
             Dictionary of further data point metadata, such as binning info, angles, etc.
         """
