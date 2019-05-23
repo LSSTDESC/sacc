@@ -469,4 +469,3 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
             Inverse covariance
         """
         return np.diag(1.0/self.diag)
-

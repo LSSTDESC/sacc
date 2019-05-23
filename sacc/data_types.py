@@ -100,7 +100,8 @@ class DataPoint:
         #     warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
 
     def __repr__(self):
-        return f"<Data {self.data_type} {self.tracers} {self.value} {self.tags}>s"
+        t = ", ".join(f'{k}={v}' for (k,v) in self.tags.items())
+        return f"DataPoint(data_type='{self.data_type}', tracers={self.tracers}, value={self.value}, {t})"
 
     def get_tag(self, tag, default=None):
         """

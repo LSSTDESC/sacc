@@ -129,10 +129,25 @@ def test_inverses():
 
     d = abs(np.random.uniform(0,1,size=N))+1
     M3 = sacc.BaseCovariance.make(d)
-    assert M3.size == M3
+    assert M3.size == N
     invC3 = M3.inverted()
     assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
     assert np.allclose(invC3.diagonal() * d, 1)
+
+
+def test_data_point():
+    from sacc.data_types import DataPoint
+    dt = sacc.data_types.known_types.ggl_E
+    value = 13.4
+    tracers = ('aaa', 'bbb')
+    tags = {'ell':12, 'theta':14.3}
+    d = DataPoint(dt, tracers, value, **tags)
+    s = repr(d)
+    d2 = eval(s)
+    assert d.tracers == d2.tracers
+    assert d.tags == d2.tags
+    assert d.data_type == d2.data_type
+    assert d.value == d2.value
 
 if __name__ == '__main__':
     import pytest
