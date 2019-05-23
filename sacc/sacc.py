@@ -47,7 +47,6 @@ class Sacc:
         -------
         S: Sacc instance
             A new instance of the data set.
-
         """
         return copy.deepcopy(self)
 
@@ -143,7 +142,6 @@ class Sacc:
 
         Parameters
         ----------
-
         tracer: Tracer instance
             The tracer object to add to the data set
         """
@@ -467,7 +465,6 @@ class Sacc:
 
         Parameters
         ----------
-
         tag: str
             Tag to look up on the selected data
 
@@ -502,7 +499,6 @@ class Sacc:
 
         Parameters
         ----------
-
         data_type: str
             Select only data points which are of this data type.
             If None (the default) then match any data types
@@ -649,14 +645,12 @@ class Sacc:
 
         Parameters
         ----------
-
         filename: str
             Destination FITS file name
 
         overwrite: bool
             If False (the default), raise an error if the file already exists
             If True, overwrite the file silently.
-
         """
 
         # Since we don't want to re-order the file as a side effect
@@ -709,10 +703,8 @@ class Sacc:
 
         Parameters
         ----------
-
         filename: str
             A FITS format sacc file
-
         """
         hdu_list = fits.open(filename)
 
@@ -781,18 +773,21 @@ class Sacc:
 
         Parameters
         ----------
-
         data_type: str
             Which C_ell type to extract
+
         tracer1: str
             The name of the first tracer, for example a tomographic bin name
+
         tracer2: str
             The name of the second tracer
+
         return_cov: bool
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
-        Returns:
+        Returns
+        -------
         ell: array
             Ell values for this tracer pair
         mu: array
@@ -813,19 +808,25 @@ class Sacc:
 
         data_type: str
             Which type of xi to extract
+
         tracer1: str
             The name of the first tracer, for example a tomographic bin name
+
         tracer2: str
             The name of the second tracer
+
         return_cov: bool
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
-        Returns:
+        Returns
+        -------
         ell: array
             Ell values for this tracer pair
+
         mu: array
             Mean values for this tracer pair
+
         cov_block: 2x2 array
             (Only if return_cov=True) The block of the covariance for
             these points
@@ -891,20 +892,26 @@ class Sacc:
         Add a series of 2pt Fourier space data points, either
         individually or as a group.
 
+        Parameters
+        ----------
         data_type: str or array/list of str
             Which type C_ell to add
+
         tracer1: str or array/list of str
             The name(s) of the first tracer, for example a tomographic bin name
+
         tracer2: str or array/list of str
             The name(s) of the second tracer
+
         ell: int or array/list of int/float
             The ell values for these data points
+
         x: float or array/list of float
             The C_ell values for these data points
+
         window: Window instance
             Optional window object describing the window function
             of the data point.
-
 
         Returns
         -------
@@ -918,16 +925,23 @@ class Sacc:
         Add a series of 2pt real space data points, either
         individually or as a group.
 
+        Parameters
+        ----------
         data_type: str or array/list of str
             Which xi type to extract
+
         tracer1: str or array/list of str
             The name(s) of the first tracer, for example a tomographic bin name
+
         tracer2: str or array/list of str
             The name(s) of the second tracer
+
         theta: float or array/list of int
             The ell values for these data points
+
         x: float or array/list of float
             The C_ell values for these data points
+
         window: Window instance
             Optional window object describing the window function
             of the data point.

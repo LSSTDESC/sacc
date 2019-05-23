@@ -64,18 +64,15 @@ class BaseCovariance:
 
         A different subclass is returned for each of these cases.
 
-
         Parameters
         ----------
         cov: list[array] or array
             If a list, the total length of all the arrays in it
             should equal n.  If an array, it should be either 1D of
             length n or 2D of shape (n x n).
+
         n: int
             length of the data vector to which this covariance applies
-
-
-
         """
         if isinstance(cov, list):
             s = 0
@@ -109,6 +106,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
     size: int
         the length of the corresponding data vector
+
     covmat: 2D array
         The matrix itself, of shape (size x size)
     """
@@ -180,7 +178,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
         Parameters
         ----------
-
         indices: array
             An array of integer indices
 
@@ -215,8 +212,10 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     ----------
     blocks: list[arrays]
         list of sub-blocks of the matrix
+
     block_sizes: list[int]
         list of sizes n of each the n x n sub-blocks
+
     size: int
         overall total size of the matrix
 
@@ -240,12 +239,14 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         The data in the HDU is stored as a single 1 x size image,
         and the header contains the information needed to reconstruct it.
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
-
         hdu: astropy.fits.ImageHDU object
             HDU containing data and metadata
-
         """
         hdu = fits.ImageHDU(np.concatenate([b.flatten() for b in self.blocks]))
         hdu.name = 'covariance'
@@ -267,7 +268,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
         Returns
         -------
-
         cov: BlockDiagonalCovariance
             Loaded covariance object
 
@@ -288,14 +288,12 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
         Parameters
         ----------
-
         indices: array
             An array of integer indices, which must be in 
             ascending order
         
         Returns
         -------
-
         cov: array
             A full (dense) 2x2 array of the submatrix.
 
@@ -330,7 +328,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
         Returns
         -------
-
         cov: FullCovariance or BlockDiagonalCovariance
             A covariance with only the corresponding data points remaining
         """
@@ -360,7 +357,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         -------
         invC: array
             Inverse covariance
-
         """
         return scipy.linalg.block_diag(*[invert_spd_matrix(B) for B in self.blocks])
 
@@ -456,7 +452,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
         Parameters
         ----------
-
         indices: array
             An array of integer indices, which should be in 
             ascending order (for consistency with the 
@@ -464,7 +459,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         
         Returns
         -------
-
         cov: array
             A full (dense) 2x2 array of the submatrix.
 
@@ -478,7 +472,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         -------
         invC: array
             Inverse covariance
-
         """
         return np.diag(1.0/self.diag)
 

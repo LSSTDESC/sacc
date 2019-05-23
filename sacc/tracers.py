@@ -73,7 +73,6 @@ class BaseTracer:
 
         Returns
         -------
-
         tables: list
             List of astropy tables
         """
@@ -134,10 +133,8 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
     Attributes
     ----------
-
     name: str
         The name of the tracer
-
     """
 
     def __init__(self, name, **kwargs):
@@ -160,13 +157,11 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
 
         Parameters
         ----------
-
         instance_list: list
             list of MiscTracer objects
 
         Returns
         -------
-
         tables: list
             List containing one astropy table
         """
@@ -200,7 +195,6 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         Returns
         -------
         tracers: Dict[str: MiscTracer]
-                
         """
         tracers = {}
 
@@ -265,7 +259,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         """Convert a list of NZTracers to a list of astropy tables
 
         This is used when saving data to a file.
-
         One table is generated per tracer.
 
         Parameters
@@ -275,7 +268,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
         Returns
         -------
-
         tables: list
             List of astropy tables
         """
@@ -302,7 +294,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
-
         A single tracer object is read from the table.
 
         Parameters

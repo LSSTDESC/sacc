@@ -63,7 +63,6 @@ class DataPoint:
         
         Parameters
         ----------
-
         data_type: str
             A string, indicating the type of data point
         tracers: tuple
@@ -105,6 +104,7 @@ class DataPoint:
         ----------
         tag: str
             Tag to find on the data point
+
         default: any
             Value to return if the tag is not found
 
@@ -159,7 +159,6 @@ class DataPoint:
 
         Parameters
         ----------
-
         data: list
             A list of DataPoint objects
 
@@ -168,7 +167,7 @@ class DataPoint:
             in the tags. Default is empty.
 
         Returns
-
+        -------
         table: astropy.table.Table
             table object containing data points
         """
@@ -193,7 +192,6 @@ class DataPoint:
 
         Parameters
         ----------
-
         table: astropy.table.Table
             A table of data containing the tracers, values, and tags
 
@@ -203,7 +201,6 @@ class DataPoint:
 
         Returns
         -------
-
         data: list
             list of DataPoint objects
         """
@@ -235,9 +232,11 @@ class DataPoint:
         return data
 
     def _make_row(self, tracers, tags, lookups):
-        # Turn this data point into a list with specified tracers and tags.
-        # If some tracers or tags are missing (homogenous data set) then
-        # use blank values or Nones for them.
+        """
+        Turn this data point into a list with specified tracers and tags.
+        If some tracers or tags are missing (homogenous data set) then
+        use blank values or Nones for them.
+        """
         nt = len(tracers)
         missing = nt - len(self.tracers)
         row = list(self.tracers) + ["" for i in range(missing)]

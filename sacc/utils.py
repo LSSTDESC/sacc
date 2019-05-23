@@ -22,7 +22,6 @@ def hide_null_values(table):
     ----------
     table: astropy table
         Table to modify in-place
-
     """
 
     for name, col in list(table.columns.items()):
@@ -41,7 +40,6 @@ def remove_dict_null_values(dictionary):
     ----------
     dictionary: dict
         Dict (or subclass instance or other mapping) to modify in-place
-
     """
     # will figure out the list of keys to remove
     deletes = []
@@ -68,7 +66,6 @@ def unique_list(seq):
 
     Parameters
     ----------
-
     seq: list or sequence
         Any input object that can be iterated
 

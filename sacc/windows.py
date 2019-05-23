@@ -103,7 +103,6 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     
         Parameters
         ----------
-
         range_min: int/float
             The minimum value where the top-hat function equals 1
 
