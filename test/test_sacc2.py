@@ -1,4 +1,4 @@
-import sacc2
+import sacc
 import numpy as np
 import scipy.linalg
 

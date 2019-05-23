@@ -1,23 +1,5 @@
-Python API documentation
-========================
+Sacc DataSets
+=============
 
-.. automodule:: sacc
-   :members:
-
-.. automodule:: sacc.sacc
-   :members:
-
-.. automodule:: sacc.tracer
-   :members:
-
-.. automodule:: sacc.binning
-   :members:
-
-.. automodule:: sacc.meanvec
-   :members:
-
-.. automodule:: sacc.precision
-   :members:
-
-.. automodule:: sacc.window
+.. automodule:: sacc2.sacc
    :members:
