@@ -66,7 +66,7 @@ def test_nz_tracer():
 
     more_nz = {'v1':Nz3, 'v2':Nz4}
 
-    T1 = sacc2.BaseTracer.make('NZ', 'tracer1', z, Nz1, more_nz=more_nz, metadata=md1)
+    T1 = sacc2.BaseTracer.make('NZ', 'tracer1', z, Nz1, extra_columns=more_nz, metadata=md1)
     T2 = sacc2.BaseTracer.make('NZ', 'tracer2', z, Nz2, metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
@@ -79,8 +79,8 @@ def test_nz_tracer():
     assert T1a.metadata == md1
     assert T2a.metadata == md2
 
-    assert np.all(T1a.more_nz['v1'] == Nz3)
-    assert np.all(T1a.more_nz['v2'] == Nz4)
+    assert np.all(T1a.extra_columns['v1'] == Nz3)
+    assert np.all(T1a.extra_columns['v2'] == Nz4)
 
 def test_mixed_tracers():
     md1 = {'potato': 'never'}
@@ -129,7 +129,6 @@ def test_inverses():
     assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
     assert np.allclose(invC3.diagonal() * d, 1)
 
-
-
 if __name__ == '__main__':
-    test_save_load_tracer()
+    import pytest
+    pytest.main([__file__])
