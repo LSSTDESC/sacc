@@ -217,3 +217,25 @@ def test_keep_remove():
     s2 = s.copy()
     ind = s2.indices(tracers=('source_2', 'source_2'), ell__lt=45)
     assert len(ind)==5
+
+def test_cutting_block_cov():
+    covmat = [np.random.uniform(size=(50,50)), np.random.uniform(size=(100,100)), np.random.uniform(size=(150,150))]
+    C = sacc.covariance.BaseCovariance.make(covmat)
+    ind = list(range(50))
+    C2 = C.keeping_indices(np.arange(50))
+    assert C2.size == len(ind)
+    assert np.allclose(C2.get_block(ind), covmat[0])
+
+def test_cutting_full_cov():
+    covmat = np.random.uniform(size=(100,100))
+    C = sacc.covariance.BaseCovariance.make(covmat)
+    ind = np.arange(10, dtype=int)
+    C2 = C.keeping_indices(ind)
+    assert np.allclose(C2.get_block(ind), covmat[:10,:10])
+
+def test_cutting_diag_cov():
+    diag = np.random.uniform(size=(100,))
+    C = sacc.covariance.BaseCovariance.make(diag)
+    ind = np.arange(20, dtype=int)
+    C2 = C.keeping_indices(ind)
+    assert np.allclose(C2.get_block(ind).diagonal(), diag[:20])

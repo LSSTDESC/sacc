@@ -148,13 +148,13 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         return cls(C)
 
 
-    def masked(self, mask):
+    def keeping_indices(self, indices):
         """
-        Return a new instance with only the masked elements retained.
+        Return a new instance with only the specified indices retained.
 
         Parameters
         ----------
-        mask: array or list
+        indices: array or list
             Either an array or list of integer indices, or a boolean
             array of the same size (1D) as the matrix.
             Specifies rows/cols to keep in the new matrix.
@@ -164,7 +164,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         cov: FullCovariance
             A covariance with only the corresponding data points remaining
         """
-        C = self.covmat[mask][:, mask]
+        C = self.covmat[indices][:, indices]
         return self.__class__(C)
 
     def get_block(self, indices):
@@ -286,6 +286,8 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         cov: array
             A full (dense) 2x2 array of the submatrix.
         """
+        indices = np.array(indices)
+
         if np.any(np.diff(indices))<0:
             raise ValueError("Indices passed to BlockDiagonalCovariance.get_block must be in ascending order")
         n = len(indices)
@@ -298,9 +300,9 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             s += sz
         return scipy.linalg.block_diag(*sub_blocks)
 
-    def masked(self, mask):
+    def keeping_indices(self, indices):
         """
-        Return a new instance with only the masked elements retained.
+        Return a new instance with only the specified elements retained.
 
         This method will try to return another BlockDiagonalCovariance if
         it can, but otherwise will revert to a full one: if the mask passed
@@ -309,7 +311,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
         Parameters
         ----------
-        mask: array or list
+        indices: array or list
             Either an array or list of integer indices, or a boolean
             array of the same size (1D) as the matrix.
             Specifies rows/cols to keep in the new matrix.
@@ -319,23 +321,25 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         cov: FullCovariance or BlockDiagonalCovariance
             A covariance with only the corresponding data points remaining
         """
-        if mask.dtype == bool:
+        indices = np.array(indices)
+
+        if indices.dtype == bool:
             breaks = np.cumsum(self.block_sizes)[:-1]
-            block_masks = np.split(mask, breaks)
+            block_masks = np.split(indices, breaks)
             blocks = [self.blocks[m][:, m] for m in block_masks]
             return self.__class__(blocks)
-        elif (np.diff(mask) > 0).all():
+        elif (np.diff(indices) > 0).all():
             s = 0
             sub_blocks = []
             for block, sz in zip(self.blocks, self.block_sizes):
                 e = s + sz
-                m = mask[(mask >= s) & (mask < e)]
+                m = indices[(indices >= s) & (indices < e)]
                 sub_blocks.append(block[m][:, m])
                 s += sz
             return self.__class__(sub_blocks)
         else:
             C = scipy.linalg.block_diag(*self.blocks)
-            C = C[mask][:, mask]
+            C = C[indices][:, indices]
             return FullCovariance(C)
 
     def inverted(self):
@@ -397,14 +401,14 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         hdu.header['saccclss'] = self.cov_type
         return hdu
 
-    def masked(self, mask):
+    def keeping_indices(self, indices):
         """
-        Return a new DiagonalCovariance with only the masked elements
+        Return a new DiagonalCovariance with only the specified indices
         retained.
 
         Parameters
         ----------
-        mask: array or list
+        indices: array or list
             Either an array or list of integer indices, or a boolean
             array of the same size (1D) as the matrix.
             Specifies rows/cols to keep in the new matrix.
@@ -414,7 +418,7 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         cov: DiagonalCovariance
             A covariance with only the corresponding data points remaining
         """
-        D = self.diag[mask]
+        D = self.diag[indices]
         return self.__class__(D)
 
     @classmethod

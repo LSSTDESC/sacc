@@ -95,7 +95,7 @@ class Sacc:
         self.data = [self.data[i] for i in indices]
 
         if self.covariance is not None:
-            self.covariance = self.covariance.masked(indices)
+            self.covariance = self.covariance.keeping_indices(indices)
 
     #
     # Builder methods for building up Sacc data from scratch in memory
@@ -247,7 +247,7 @@ class Sacc:
 
         self.data = [d for i, d in enumerate(self.data) if indices[i]]
         if self.covariance is not None:
-            self.covariance = self.covariance.masked(indices)
+            self.covariance = self.covariance.keeping_indices(indices)
 
     def remove_indices(self, indices):
         """
