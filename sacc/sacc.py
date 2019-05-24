@@ -130,8 +130,7 @@ class Sacc:
         None
 
         """
-
-        tracer = BaseTracer.make(tracer_type, name, *args, *kwargs)
+        tracer = BaseTracer.make(tracer_type, name, *args, **kwargs)
         self.add_tracer_object(tracer)
 
     def add_tracer_object(self, tracer):
@@ -210,6 +209,8 @@ class Sacc:
         expected_size = len(self)
         if not cov.size == expected_size:
             raise ValueError(f"Covariance has the wrong size.  Should be {expected_size} but is {cov.size}")
+
+        self.covariance = cov
 
     def _indices_to_bool(self, indices):
         # Convert an array of indices into a boolean True mask
@@ -681,9 +682,14 @@ class Sacc:
 
         # Create the actual fits object
         hdr = fits.Header()
-        # save any global metadata in the header
-        for k, v in S.metadata.items():
-            hdr[k] = v
+
+        # save any global metadata in the header.
+        # We save the keys and values as separate header cards,
+        # because otherwise the keys are all forced to upper case
+        hdr['NMETA'] = len(S.metadata)
+        for i, (k, v) in enumerate(S.metadata.items()):
+            hdr[f'KEY{i}'] = k
+            hdr[f'VAL{i}'] = v
         hdus = [fits.PrimaryHDU(header=hdr)] + [fits.table_to_hdu(table) for table in tables]
 
         # Covariance, if needed.
@@ -710,7 +716,7 @@ class Sacc:
         filename: str
             A FITS format sacc file
         """
-        hdu_list = fits.open(filename)
+        hdu_list = fits.open(filename, "readonly")
 
         # Split the HDU's into the different sacc types
         tracer_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'tracer']
@@ -746,6 +752,20 @@ class Sacc:
         # if there are any
         if cov:
             S.add_covariance(BaseCovariance.from_hdu(cov[0]))
+
+        # Load metadata from the primary heaer
+        header = hdu_list[0].header
+
+        # Load each key,value pair in turn.
+        # This will work for normal scalar data types;
+        # arrays etc. will need some thought.
+        n_meta = header['NMETA']
+        for i in range(n_meta):
+            k = header[f'KEY{i}']
+            v = header[f'VAL{i}']
+            S.metadata[k] = v
+
+        hdu_list.close()
 
         return S
 
