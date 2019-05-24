@@ -304,7 +304,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
     def masked(self, mask):
         """
-        Return a new matrix with only the masked elements retained.
+        Return a new instance with only the masked elements retained.
 
         This method will try to return another BlockDiagonalCovariance if
         it can, but otherwise will revert to a full one: if the mask passed
