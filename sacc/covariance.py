@@ -179,7 +179,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         -------
         block: array
             a 2D array of the relevant sub-block of the matrix
-        
         """
         return self.covmat[indices][:, indices]
 
@@ -190,7 +189,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         -------
         invC: array
             Inverse covariance
-
         """
         return invert_spd_matrix(self.covmat)
 
@@ -212,7 +210,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
     size: int
         overall total size of the matrix
-
     """
     def __init__(self, blocks):
         """Create a BlockDiagonalCovariance object from a list of blocks
@@ -221,7 +218,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         ----------
         blocks: sequence of arrays
             List or other sequence of the sub-matrices
-
         """
         self.blocks = [np.atleast_2d(B) for B in blocks]
         self.block_sizes = [len(B) for B in self.blocks]
