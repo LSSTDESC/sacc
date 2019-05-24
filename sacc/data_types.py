@@ -7,33 +7,40 @@ from .utils import Namespace, hide_null_values, null_values
 
 required_tags = {
     # Shear-shear
-    # Real space
+    #   Real space
     "galaxy_shear_xi_plus": ["theta"],
     "galaxy_shear_xi_minus": ["theta"],
     "galaxy_shear_xi_plus_imaginary": ["theta"],
     "galaxy_shear_xi_minus_imaginary": ["theta"],
-    # Fourier space
+    #   Fourier space
     "galaxy_shear_ee": ["ell"],
     "galaxy_shear_bb": ["ell"],
     "galaxy_shear_eb": ["ell"],
     # Shear-position
-    # Real space
+    #   Real space
     "ggl_gamma_t": ["theta"] ,
     "ggl_gamma_x": ["theta"] ,
-    # Fourier space
-    "ggl_E": ["ell"],
-    "ggl_B": ["ell"],
+    #   Fourier space
+    "ggl_e": ["ell"],
+    "ggl_b": ["ell"],
     # Position-position
-    # Real space
+    #   Real space
     "galaxy_density_w":["theta"],
-    # Fourier space
+    #   Fourier space
     "galaxy_density_cl": ["ell"],
+
+    # Cluster lensing
+    "cluster_gamma_t": [], # could have radius instead of theta
+    "cluster_gamma_x": [],
+
+    # Cluster counts
+    "cluster_counts": [],
 }
 
 # This makes a namespace object, so you can do:
-# standard_types.ggl_E == "ggl_E"
-# also, for convenience, you can do standard_types.index('ggl_E') 
-# and 'ggl_E' in standard_types
+# standard_types.ggl_e == "ggl_e"
+# also, for convenience, you can do standard_types.index('ggl_e') 
+# and 'ggl_e' in standard_types
 
 standard_types = Namespace(*required_tags.keys())
 

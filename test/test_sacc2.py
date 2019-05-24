@@ -137,7 +137,7 @@ def test_inverses():
 
 def test_data_point():
     from sacc.data_types import DataPoint
-    dt = sacc.data_types.standard_types.ggl_E
+    dt = sacc.data_types.standard_types.ggl_e
     value = 13.4
     tracers = ('aaa', 'bbb')
     tags = {'ell':12, 'theta':14.3}
