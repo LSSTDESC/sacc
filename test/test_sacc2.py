@@ -149,6 +149,71 @@ def test_data_point():
     assert d.data_type == d2.data_type
     assert d.value == d2.value
 
-if __name__ == '__main__':
-    import pytest
-    pytest.main([__file__])
+
+def test_keep_remove():
+    s = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s.add_tracer('NZ', 'source_0', z, nz)
+    s.add_tracer('NZ', 'source_1', z, nz)
+    s.add_tracer('NZ', 'source_2', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s.add_data_point(sacc.known_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
+    for i in range(20):
+        bb = 0.1 * i
+        tracers = ('source_1', 'source_1')
+        s.add_data_point(sacc.known_types.galaxy_shear_bb, tracers, bb, ell=10.0*i)
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_2', 'source_2')
+        s.add_data_point(sacc.known_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
+
+    # Select by data type
+    s2 = s.copy()
+    s2.keep_selection(data_type=sacc.known_types.galaxy_shear_bb)
+    assert all(d.data_type==sacc.known_types.galaxy_shear_bb for d in s2.data)
+    assert len(s2)==20
+
+    # From multiple tracers
+    s2 = s.copy()
+    s2.keep_selection(data_type=sacc.known_types.galaxy_shear_ee)
+    assert all(d.data_type==sacc.known_types.galaxy_shear_ee for d in s2.data)
+    assert len(s2)==40
+
+    # Test removing a single tracer
+    s2 = s.copy()
+    s2.remove_selection(tracers=('source_1', 'source_1'))
+    for i,d in enumerate(s2.data):
+        if i<20:
+            assert d.tracers == ('source_0', 'source_0')
+        else:
+            assert d.tracers == ('source_2', 'source_2')
+    assert all(d.data_type==sacc.known_types.galaxy_shear_ee for d in s2.data)
+    assert len(s2)==40
+
+    # Test selecting by tag
+    s2 = s.copy()
+    s2.remove_selection(ell__lt=55)
+    ell = s2.get_tag('ell')
+    for e in ell:
+        assert e>55
+    s2 = s.copy()
+    s2.keep_selection(ell__lt=55)
+    ell = s2.get_tag('ell')
+    for e in ell:
+        assert e<55
+
+    # Cutting just by index
+    s2 = s.copy()
+    ind = s2.indices(tracers=('source_1', 'source_1'))
+    assert (ind == np.arange(20, 40)).all()
+
+    # multiple selections
+    s2 = s.copy()
+    ind = s2.indices(tracers=('source_2', 'source_2'), ell__lt=45)
+    assert len(ind)==5

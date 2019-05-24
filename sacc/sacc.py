@@ -211,24 +211,24 @@ class Sacc:
         if not cov.size == expected_size:
             raise ValueError(f"Covariance has the wrong size.  Should be {expected_size} but is {cov.size}")
 
-    def _indices_to_bool(self, mask):
+    def _indices_to_bool(self, indices):
         # Convert an array of indices into a boolean True mask
-        if mask.dtype not in [np.int8, np.int16, np.int32, np.int64]:
-            raise ValueError(f"Wrong mask type ({mask.  dtype}) - expected integers or boolean")
+        if indices.dtype not in [np.int8, np.int16, np.int32, np.int64]:
+            raise ValueError(f"Wrong indices type ({indices.dtype}) - expected integers or boolean")
         m = np.zeros(len(self), dtype=bool)
-        for i in mask:
+        for i in indices:
             m[i] = True
         return m
 
-    def mask_indices(self, indices):
+    def keep_indices(self, indices):
         """
         Select data points, keeping only values where the mask is True or an index is
         included in it.
 
-        You can use Sacc.cut_indices to do the opposite operation, keeping points where the mask
+        You can use Sacc.remove_indices to do the opposite operation, keeping points where the mask
         is False.
 
-        You use the Sacc.mask method to find indices and apply this method automatically,
+        You use the Sacc.keep_selection method to find indices and apply this method automatically,
         or the Sacc.indices method to manually select indices.
 
         Parameters
@@ -248,15 +248,15 @@ class Sacc:
         if self.covariance is not None:
             self.covariance = self.covariance.masked(indices)
 
-    def cut_indices(self, indices):
+    def remove_indices(self, indices):
         """
         Remove data points, getting rid of points where the mask is True or an index is
         included in it.
 
-        You can use Sacc.mask_indices to do the opposite operation, keeping points where the mask
+        You can use Sacc.keep_indices to do the opposite operation, keeping points where the mask
         is True.
 
-        You use the Sacc.cut method to find indices and apply this method automatically,
+        You use the Sacc.remove_selection method to find indices and apply this method automatically,
         or the Sacc.indices method to manually select indices.
 
         Parameters
@@ -273,7 +273,7 @@ class Sacc:
             indices = self._indices_to_bool(indices)
 
         # Get the mask method to do the actual work
-        self.mask_indices(~indices)
+        self.keep_indices(~indices)
 
     def indices(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
@@ -341,14 +341,14 @@ class Sacc:
                 warnings.warn("Empty index selected - maybe you should check the tracer order?")
         return np.array(indices, dtype=int)
 
-    def cut(self, data_type=None, tracers=None, warn_empty=True, **select):
+    def remove_selection(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Remove data points, getting rid of points matching the given criteria.
 
-        You can use Sacc.mask to do the opposite operation, keeping points where the
+        You can use Sacc.keep_selection to do the opposite operation, keeping points where the
         criteria are matched.
 
-        You can manually remove points using the Sacc.indices and Sacc.cut_indices methods.
+        You can manually remove points using the Sacc.indices and Sacc.remove_indices methods.
 
         Parameters
         ----------
@@ -369,16 +369,16 @@ class Sacc:
         """
 
         indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
-        self.cut_indices(indices)
+        self.remove_indices(indices)
 
-    def mask(self, data_type=None, tracers=None, warn_empty=True, **select):
+    def keep_selection(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Remove data points, keeping only points matching the given criteria.
 
-        You can use Sacc.cut to do the opposite operation, keeping points where the
+        You can use Sacc.remove_selection to do the opposite operation, keeping points where the
         criteria are not matched.
 
-        You can manually remove points using the Sacc.indices and Sacc.mask_indices methods.
+        You can manually remove points using the Sacc.indices and Sacc.keep_indices methods.
 
         Parameters
         ----------
@@ -398,7 +398,7 @@ class Sacc:
             less or greater than a threshold
         """
         indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
-        self.mask_indices(indices)
+        self.keep_indices(indices)
 
 
     def _get_tags_by_index(self, tags, indices):
