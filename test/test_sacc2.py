@@ -13,7 +13,7 @@ def test_construct():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s.add_data_point(sacc.known_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
 
 
 def test_full_cov():
@@ -137,7 +137,7 @@ def test_inverses():
 
 def test_data_point():
     from sacc.data_types import DataPoint
-    dt = sacc.data_types.known_types.ggl_E
+    dt = sacc.data_types.standard_types.ggl_E
     value = 13.4
     tracers = ('aaa', 'bbb')
     tags = {'ell':12, 'theta':14.3}
@@ -163,26 +163,26 @@ def test_keep_remove():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s.add_data_point(sacc.known_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
     for i in range(20):
         bb = 0.1 * i
         tracers = ('source_1', 'source_1')
-        s.add_data_point(sacc.known_types.galaxy_shear_bb, tracers, bb, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_bb, tracers, bb, ell=10.0*i)
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_2', 'source_2')
-        s.add_data_point(sacc.known_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_ee, tracers, ee, ell=10.0*i)
 
     # Select by data type
     s2 = s.copy()
-    s2.keep_selection(data_type=sacc.known_types.galaxy_shear_bb)
-    assert all(d.data_type==sacc.known_types.galaxy_shear_bb for d in s2.data)
+    s2.keep_selection(data_type=sacc.standard_types.galaxy_shear_bb)
+    assert all(d.data_type==sacc.standard_types.galaxy_shear_bb for d in s2.data)
     assert len(s2)==20
 
     # From multiple tracers
     s2 = s.copy()
-    s2.keep_selection(data_type=sacc.known_types.galaxy_shear_ee)
-    assert all(d.data_type==sacc.known_types.galaxy_shear_ee for d in s2.data)
+    s2.keep_selection(data_type=sacc.standard_types.galaxy_shear_ee)
+    assert all(d.data_type==sacc.standard_types.galaxy_shear_ee for d in s2.data)
     assert len(s2)==40
 
     # Test removing a single tracer
@@ -193,7 +193,7 @@ def test_keep_remove():
             assert d.tracers == ('source_0', 'source_0')
         else:
             assert d.tracers == ('source_2', 'source_2')
-    assert all(d.data_type==sacc.known_types.galaxy_shear_ee for d in s2.data)
+    assert all(d.data_type==sacc.standard_types.galaxy_shear_ee for d in s2.data)
     assert len(s2)==40
 
     # Test selecting by tag

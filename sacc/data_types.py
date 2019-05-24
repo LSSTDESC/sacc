@@ -6,29 +6,36 @@ from .utils import Namespace, hide_null_values, null_values
 
 
 required_tags = {
+    # Shear-shear
+    # Real space
     "galaxy_shear_xi_plus": ["theta"],
     "galaxy_shear_xi_minus": ["theta"],
     "galaxy_shear_xi_plus_imaginary": ["theta"],
     "galaxy_shear_xi_minus_imaginary": ["theta"],
-    "galaxy_density_w":["theta"] ,
-    "ggl_gamma_t":["theta"] ,
-    "ggl_gamma_x":["theta"] ,
+    # Fourier space
     "galaxy_shear_ee": ["ell"],
     "galaxy_shear_bb": ["ell"],
     "galaxy_shear_eb": ["ell"],
-    "galaxy_density_cl": ["ell"],
+    # Shear-position
+    # Real space
+    "ggl_gamma_t": ["theta"] ,
+    "ggl_gamma_x": ["theta"] ,
+    # Fourier space
     "ggl_E": ["ell"],
     "ggl_B": ["ell"],
-    
-
+    # Position-position
+    # Real space
+    "galaxy_density_w":["theta"],
+    # Fourier space
+    "galaxy_density_cl": ["ell"],
 }
 
 # This makes a namespace object, so you can do:
-# known_types.ggl_E == "ggl_E"
-# also, for convenience, you can do known_types.index('ggl_E') 
-# and 'ggl_E' in known_types
+# standard_types.ggl_E == "ggl_E"
+# also, for convenience, you can do standard_types.index('ggl_E') 
+# and 'ggl_E' in standard_types
 
-known_types = Namespace(*required_tags.keys())
+standard_types = Namespace(*required_tags.keys())
 
 
 class DataPoint:
@@ -96,7 +103,7 @@ class DataPoint:
         # We encourage people to use existing type names, and issue a warning if they do
         # not to prod them in the right direction.
         # We are removing this warning until we converge on what the data types should be
-        # if data_type not in known_types:
+        # if data_type not in standard_types:
         #     warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
 
     def __repr__(self):

@@ -9,7 +9,7 @@ from .tracers import BaseTracer
 from .windows import BaseWindow
 from .covariance import BaseCovariance
 from .utils import unique_list
-from .data_types import known_types, DataPoint
+from .data_types import standard_types, DataPoint
 
 class Sacc:
     """
@@ -61,8 +61,8 @@ class Sacc:
         def order_key(row):
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
-            if row.data_type in known_types:
-                dt = known_types.index(row.data_type)
+            if row.data_type in standard_types:
+                dt = standard_types.index(row.data_type)
             else:
                 dt = hash(row.data_type)
             # If known, order by ell or theta.
