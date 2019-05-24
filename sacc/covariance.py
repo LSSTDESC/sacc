@@ -150,7 +150,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
     def masked(self, mask):
         """
-        Return a new matrix with only the masked elements retained.
+        Return a new instance with only the masked elements retained.
 
         Parameters
         ----------
@@ -161,7 +161,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
         Returns
         -------
-
         cov: FullCovariance
             A covariance with only the corresponding data points remaining
         """
@@ -265,7 +264,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         -------
         cov: BlockDiagonalCovariance
             Loaded covariance object
-
         """
         n = hdu.header['blocks']
         block_sizes = [hdu.header[f'size_{i}'] for i in range(n)]
@@ -291,7 +289,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         -------
         cov: array
             A full (dense) 2x2 array of the submatrix.
-
         """
         if np.any(np.diff(indices))<0:
             raise ValueError("Indices passed to BlockDiagonalCovariance.get_block must be in ascending order")
@@ -418,7 +415,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
         Returns
         -------
-
         cov: DiagonalCovariance
             A covariance with only the corresponding data points remaining
         """
@@ -456,7 +452,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         -------
         cov: array
             A full (dense) 2x2 array of the submatrix.
-
         """
         return np.diag(self.diag[indices])
 
