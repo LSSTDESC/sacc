@@ -4,37 +4,67 @@ from astropy.table import Table
 
 from .utils import Namespace, hide_null_values, null_values
 
+# The format for a data type name looks like this:
+# {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
+#     sources: type(s) of astrophysical sources to which this applies
+#     properties: feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+#     statistic_type: mathematical type of the statistic
+#     statistic_subtype: optional additional specifier
 
 required_tags = {
-    # Shear-shear
-    #   Real space
-    "galaxy_shear_xi_plus": ["theta"],
-    "galaxy_shear_xi_minus": ["theta"],
-    "galaxy_shear_xi_plus_imaginary": ["theta"],
-    "galaxy_shear_xi_minus_imaginary": ["theta"],
-    #   Fourier space
-    "galaxy_shear_ee": ["ell"],
-    "galaxy_shear_bb": ["ell"],
-    "galaxy_shear_eb": ["ell"],
-    # Shear-position
-    #   Real space
-    "ggl_gamma_t": ["theta"] ,
-    "ggl_gamma_x": ["theta"] ,
-    #   Fourier space
-    "ggl_e": ["ell"],
-    "ggl_b": ["ell"],
-    # Position-position
-    #   Real space
-    "galaxy_density_w":["theta"],
-    #   Fourier space
+
+    "galaxy_density_2pt": ["theta"],
     "galaxy_density_cl": ["ell"],
+    "galaxy_density_cosebi": [],
 
-    # Cluster lensing
-    "cluster_gamma_t": [], # could have radius instead of theta
-    "cluster_gamma_x": [],
+    "galaxy_shear_cl_ee": ["ell"],
+    "galaxy_shear_cl_bb": ["ell"],
+    "galaxy_shear_cl_ee": ["ell"],
+    "galaxy_shear_cl_bb": ["ell"],
+    "galaxy_shear_cl_eb": ["ell"],
+    "galaxy_shear_cl_be": ["ell"],
+    "galaxy_shear_2pt_plus": ["theta"],
+    "galaxy_shear_2pt_minus": ["theta"],
+    "galaxy_shear_2pt_eplus": ["theta"],
+    "galaxy_shear_2pt_eminus": ["theta"],
+    "galaxy_shear_2pt_bplus": ["theta"],
+    "galaxy_shear_2pt_bminus": ["theta"],
+    "galaxy_shear_cosebi_ee": [],
+    "galaxy_shear_cosebi_bb": [],
 
-    # Cluster counts
-    "cluster_counts": [],
+    "galaxy_convergence_cl": ["ell"],
+    "galaxy_convergence_2pt": ["theta"],
+
+    "galaxy_shearDensity_cl_e": ["ell"],
+    "galaxy_shearDensity_cl_b": ["ell"],
+    "galaxy_shearDensity_2pt_t": ["theta"],
+    "galaxy_shearDensity_2pt_x": ["theta"],
+    "galaxy_shearDensity_cosebi_e": [],
+    "galaxy_shearDensity_cosebi_b": [],
+    "galaxy_convergence_count_peak": ["sigma"],
+    "galaxy_convergence_count_trough": ["sigma"] ,
+
+    "cmb_temperature_cl_tt": ["ell"],
+
+    "cmb_polarization_cl_ee": ["ell"],
+    "cmb_polarization_cl_bb": ["ell"],
+    "cmb_polarization_cl_eb": ["ell"],
+    "cmb_polarization_cl_be": ["ell"],
+
+    "cmb_temperaturePolarization_cl_t": ["ell"],
+    "cmb_temperaturePolarization_cl_t": ["ell"],
+    "cmbGalaxy_temperatureShear_cl_te": ["ell"],
+    "cmbGalaxy_temperatureShear_cl_tb": ["ell"],
+
+    "cluster_mass_count_wl": [],
+    "cluster_mass_count_xray": [],
+
+    "clusterGalaxy_densityShear_cl_te": ["ell"],
+    "clusterGalaxy_densityShear_cl_tb": ["ell"],
+    "clusterGalaxy_densityShear_2pt_t": ["theta"],
+    "clusterGalaxy_densityShear_2pt_x": ["theta"],
+    "clusterGalaxy_densityShear_2pt_rt": ["radius"],
+    "clusterGalaxy_densityShear_2pt_rx": ["radius"],
 }
 
 # This makes a namespace object, so you can do:
