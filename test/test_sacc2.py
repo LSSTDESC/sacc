@@ -1,4 +1,5 @@
 import sacc
+import sacc.data_types
 import numpy as np
 import scipy.linalg
 
@@ -239,3 +240,9 @@ def test_cutting_diag_cov():
     ind = np.arange(20, dtype=int)
     C2 = C.keeping_indices(ind)
     assert np.allclose(C2.get_block(ind).diagonal(), diag[:20])
+
+def test_parse_data_names():
+    for name in sacc.data_types.required_tags:
+        sources, props, stat, sub = sacc.parse_data_type_name(name)
+        name2 = sacc.build_data_type_name(sources, props, stat, sub)
+        assert name == name2

@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import re
 
 from astropy.table import Column
 import numpy as np
@@ -156,3 +157,8 @@ def invert_spd_matrix(M, strict=True):
         invM = np.linalg.inv(M)
 
     return invM
+
+
+def camel_case_split_and_lowercase(identifier):
+    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
+    return [m.group(0).lower() for m in matches]
