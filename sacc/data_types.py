@@ -13,7 +13,7 @@ from .utils import Namespace, hide_null_values, null_values, camel_case_split_an
 
 required_tags = {
 
-    "galaxy_density_2pt": ["theta"],
+    "galaxy_density_xi": ["theta"],
     "galaxy_density_cl": ["ell"],
     "galaxy_density_cosebi": [],
 
@@ -23,22 +23,22 @@ required_tags = {
     "galaxy_shear_cl_bb": ["ell"],
     "galaxy_shear_cl_eb": ["ell"],
     "galaxy_shear_cl_be": ["ell"],
-    "galaxy_shear_2pt_plus": ["theta"],
-    "galaxy_shear_2pt_minus": ["theta"],
-    "galaxy_shear_2pt_eplus": ["theta"],
-    "galaxy_shear_2pt_eminus": ["theta"],
-    "galaxy_shear_2pt_bplus": ["theta"],
-    "galaxy_shear_2pt_bminus": ["theta"],
+    "galaxy_shear_xi_plus": ["theta"],
+    "galaxy_shear_xi_minus": ["theta"],
+    "galaxy_shear_xi_eplus": ["theta"],
+    "galaxy_shear_xi_eminus": ["theta"],
+    "galaxy_shear_xi_bplus": ["theta"],
+    "galaxy_shear_xi_bminus": ["theta"],
     "galaxy_shear_cosebi_ee": [],
     "galaxy_shear_cosebi_bb": [],
 
     "galaxy_convergence_cl": ["ell"],
-    "galaxy_convergence_2pt": ["theta"],
+    "galaxy_convergence_xi": ["theta"],
 
     "galaxy_shearDensity_cl_e": ["ell"],
     "galaxy_shearDensity_cl_b": ["ell"],
-    "galaxy_shearDensity_2pt_t": ["theta"],
-    "galaxy_shearDensity_2pt_x": ["theta"],
+    "galaxy_shearDensity_xi_t": ["theta"],
+    "galaxy_shearDensity_xi_x": ["theta"],
     "galaxy_shearDensity_cosebi_e": [],
     "galaxy_shearDensity_cosebi_b": [],
 
@@ -60,10 +60,10 @@ required_tags = {
 
     "clusterGalaxy_densityShear_cl_te": ["ell"],
     "clusterGalaxy_densityShear_cl_tb": ["ell"],
-    "clusterGalaxy_densityShear_2pt_t": ["theta"],
-    "clusterGalaxy_densityShear_2pt_x": ["theta"],
-    "clusterGalaxy_densityShear_2pt_rt": ["radius"],
-    "clusterGalaxy_densityShear_2pt_rx": ["radius"],
+    "clusterGalaxy_densityShear_xi_t": ["theta"],
+    "clusterGalaxy_densityShear_xi_x": ["theta"],
+    "clusterGalaxy_densityShear_xi_rt": ["radius"],
+    "clusterGalaxy_densityShear_xi_rx": ["radius"],
 }
 
 
