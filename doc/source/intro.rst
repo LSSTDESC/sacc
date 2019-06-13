@@ -41,6 +41,44 @@ If you are using a sacc file, for exampe in an MCMC, or for plotting:
 
 You can also select pieces of the data and covariance with various different API methods.
 
+Data Types
+----------
+
+Every data point in Sacc has a data type, a string that identifies the type of measurement it refers to.
+
+There are a number of predefined type strings that you can see like this::
+
+    import sacc
+    print(sacc.standard_types)
+
+
+If your data corresponds to one of these types then it's better to use the pre-defined name.
+Otherwise, you can make your own.  There is a standard format for these strings::
+
+    {sources}_{properties}_{statistic}[_{subtype}]
+
+where the last item, subtype, is optional.  If there are multiple sources or properties (as in,
+for example, cross-correlation measurements) then they are separated by being shown in camelCase.
+
+You can create a type string in the correct format using the command :code:`sacc.build_data_type_name`::
+
+    import sacc
+    # the astrophysical sources involved.
+    # We use 'cm21' since '21cm' starts with a number which is not allowed in variable names.
+    sources = ['quasars', 'cm21']
+    # the properties of these two sources we are measuring.  If they were the same
+    # property for the two sources we would not repeat it
+    properties = ['density', 'Intensity']
+    # The statistc, Fourier space C_ell values
+    statistic = 'cl'
+    # There is no futher specified needed here - everything is scalar.
+    subtype = None
+    data_type = sacc.build_data_type_name(sources, properties, statistic, subtype)
+    print(data_type)
+    # prints 'quasarsCm21_densityIntensity_cl'
+
+
+
 Data Points
 -----------
 
