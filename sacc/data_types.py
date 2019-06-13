@@ -1,4 +1,5 @@
 import warnings
+from collections import namedtuple
 
 from astropy.table import Table
 
@@ -94,6 +95,7 @@ required_tags = {
     "galaxy_shear_xi_plus": ['theta'],
 }
 
+parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
 
 def parse_data_type_name(name):
     """Parse a data type name into its component parts
@@ -133,7 +135,7 @@ def parse_data_type_name(name):
             f"(must have 3 or 4 underscore-sparated parts): {name}")
     sources = camel_case_split_and_lowercase(sources)
     properties = camel_case_split_and_lowercase(properties)
-    return sources, properties, statistic, subtype
+    return parsedDataTypeName(sources, properties, statistic, subtype)
 
 def build_data_type_name(sources, properties, statistic, subtype=None):
     """
