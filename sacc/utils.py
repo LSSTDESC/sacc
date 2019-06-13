@@ -112,8 +112,13 @@ class Namespace:
     def __getitem__(self, s):
         return getattr(self, s)
 
+    def __str__(self):
+        return "\n".join(f"- {s}" for s in self._index)
+
     def index(self, s):
         return self._index[s]
+
+
 
 
 def invert_spd_matrix(M, strict=True):
