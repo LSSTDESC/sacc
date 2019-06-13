@@ -160,9 +160,9 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
         Type name of the form: {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
     """
     if not isinstance(sources, str):
-        sources = "".join([sources[0]] + [s.capitalize() for s in sources[1:]])
+        sources = "".join([sources[0]] + [s.lower().capitalize() for s in sources[1:]])
     if not isinstance(properties, str):
-        properties = "".join([properties[0]] + [s.capitalize() for s in properties[1:]])
+        properties = "".join([properties[0]] + [s.lower().capitalize() for s in properties[1:]])
     if subtype:
         return f"{sources}_{properties}_{statistic}_{subtype}"
     else:
