@@ -1,19 +1,6 @@
-"""
-:mod:`sacc` contains one main class and 4 subclasses:
-
-- :class:`sacc.sacc.SACC`
-- :class:`sacc.binning.Binning`
-- :class:`sacc.tracer.Tracer`
-- :class:`sacc.meanvec.MeanVec`
-- :class:`sacc.precision.Precision`
-- :class:`sacc.window.Window`
-"""
-
-# import individual classes into sacc namespace
-from .tracer import Tracer
-from .window import Window
-from .binning import Binning
-from .meanvec import MeanVec
-from .precision import Precision
-from .sacc import SACC
-from .coadd import coadd
+from .sacc import Sacc, DataPoint
+from .windows import Window, TopHatWindow
+from .data_types import standard_types, parse_data_type_name, build_data_type_name
+from .tracers import BaseTracer
+from .covariance import BaseCovariance
+__version__ = '0.2.0'
