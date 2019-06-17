@@ -1,0 +1,2 @@
+include setup.py README.md requirements.txt setup.py
+recursive-include sacc *.py
