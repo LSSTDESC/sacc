@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import distutils
-from distutils.core import setup
+from setuptools import setup
 
 description = "SACC - the LSST/DESC summary statistic data format library"
 
