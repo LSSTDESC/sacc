@@ -23,7 +23,7 @@ Documentation & Examples
 
 Documentation can be found [on ReadTheDocs](https://sacc.readthedocs.io/en/latest/).
 
-The examples directory on github contains ipython notebooks showing various ways of constructing and using sacc data files.
+The [examples directory](https://github.com/LSSTDESC/sacc/tree/master/examples) on github contains ipython notebooks showing various ways of constructing and using sacc data files.
 
 If you have a problem you've not been able to debug, or a feature request/suggestion the you can [open an issue](https://github.com/LSSTDESC/sacc/issues) to discuss it.
 
