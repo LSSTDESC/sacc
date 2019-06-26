@@ -1,4 +1,4 @@
-sacc
+Sacc
 ====
 
 SACC (Save All Correlations and Covariances) is a format and reference library for general storage
@@ -9,7 +9,7 @@ Survey Telescope (LSST) project.
 Installation
 ------------
 
-You can install with the command:
+You can install sacc with the command:
 
 ``pip install sacc``
 
@@ -17,25 +17,29 @@ You can install with the command:
 
 Or for development versions you can download the repository with git and install from there using ``python setup.py install``
 
-Examples
---------
 
-The examples directory on github contains ipython notebooks showing various ways of constructing sacc data,
-manipulating it, saving it, and loading it.
-
-Conceptual Summary
-------------------
-
-Sacc models summary statistics using the following concepts:
-
-- a Sacc dataset, containing all the information needed to construct likelihoods of some data.
-- Tracers, objects usually corresponding to groups of astrophysical objects and the metadata needed to make predictions for theoretical quantities based on them.
-- Windows, objects describing the mapping from a range of theory measurements to individual binned statistics
-- Data Points, statistical measurements of some observable quantity, each of which has one or more Tracers and optionally some Windows.
-- Covariances, describing the statistic covariance between data points.
-
-
-Documentation
--------------
+Documentation & Examples
+------------------------
 
 Documentation can be found [on ReadTheDocs](https://sacc.readthedocs.io/en/latest/).
+
+The examples directory on github contains ipython notebooks showing various ways of constructing and using sacc data files.
+
+If you have a problem you've not been able to debug, or a feature request/suggestion the you can [open an issue](https://github.com/LSSTDESC/sacc/issues) to discuss it.
+
+Versions
+--------
+
+The current release is [version 0.2.2](https://github.com/LSSTDESC/sacc/releases/tag/0.2.2).
+
+You can find a list of [previous releases here](https://github.com/LSSTDESC/sacc/releases).  The 0.2 series releases are all compatible; 0.1 is a previous version of the format.
+
+The master branch includes more recent (non-released) development changes.
+
+
+Citation
+--------
+
+Sacc has been submitted to the [Astrophysics Source Code Library](https://ascl.net/code/v/2277); follow the link that will appear there to NASA ADS to export a bibtex citation.
+
+The core developers of Sacc are Joe Zuntz (maintainer), David Alonso, and Matt Becker.
