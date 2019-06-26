@@ -2,6 +2,7 @@ import sacc
 import sacc.data_types
 import numpy as np
 import scipy.linalg
+import pytest
 
 def test_construct():
     s = sacc.Sacc()
@@ -15,6 +16,19 @@ def test_construct():
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+
+
+def test_tracers_later():
+    s = sacc.Sacc()
+
+    with pytest.raises(ValueError):
+        tracers = ('source_0', 'source_0')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, 0.0, ell=1)
+
+    s = sacc.Sacc()
+
+    tracers = ('source_0', 'source_0')
+    s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, 0.0, tracers_later=True, ell=1)
 
 
 def test_full_cov():
