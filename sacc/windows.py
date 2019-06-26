@@ -166,7 +166,7 @@ class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
 
     This object is the same as the TopHat form, except that in between
     the min and max values it is assumed to be constant in the log of the
-    argument.  The difference arises when this objects is used elsewhere.
+    argument.  The difference arises when this object is used elsewhere.
     """
     pass
 
