@@ -260,3 +260,25 @@ def test_parse_data_names():
         sources, props, stat, sub = sacc.parse_data_type_name(name)
         name2 = sacc.build_data_type_name(sources, props, stat, sub)
         assert name == name2
+
+def test_window():
+    W1 = []
+    for i in range(10):
+        w = sacc.TopHatWindow(i*10, (i+1)*10)
+        W1.append(w)
+    tables = sacc.TopHatWindow.to_tables(W1)
+    W2 = sacc.TopHatWindow.from_tables(tables)
+    for w1 in W1:
+        w2 = W2[id(w1)]
+        assert (w1.min, w1.max) == (w2.min, w2.max)
+
+def test_log_window():
+    W1 = []
+    for i in range(10):
+        w = sacc.LogTopHatWindow(i*10, (i+1)*10)
+        W1.append(w)
+    tables = sacc.LogTopHatWindow.to_tables(W1)
+    W2 = sacc.LogTopHatWindow.from_tables(tables)
+    for w1 in W1:
+        w2 = W2[id(w1)]
+        assert (w1.min, w1.max) == (w2.min, w2.max)

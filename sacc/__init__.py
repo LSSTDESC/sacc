@@ -1,5 +1,5 @@
 from .sacc import Sacc, DataPoint
-from .windows import Window, TopHatWindow
+from .windows import Window, TopHatWindow, LogTopHatWindow
 from .data_types import standard_types, parse_data_type_name, build_data_type_name
 from .tracers import BaseTracer
 from .covariance import BaseCovariance

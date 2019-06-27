@@ -160,6 +160,16 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         return {row['id']: cls(row['min'], row['max']) for row in table}
 
 
+
+class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
+    """A window function that is log-constant between two values.
+
+    This object is the same as the TopHat form, except that in between
+    the min and max values it is assumed to be constant in the log of the
+    argument.  The difference arises when this object is used elsewhere.
+    """
+    pass
+
 class Window(BaseWindow, window_type='Standard'):
     """The Window class defines a tabulated window function.
 
