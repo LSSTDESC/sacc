@@ -8,6 +8,7 @@ import scipy.linalg as la
 
 from .precision import Precision
 from .meanvec import MeanVec
+from .windows import Window
 
 def coadd(sacclist, mode='Cinv'):
 
@@ -40,6 +41,11 @@ def coadd_area(sacclist):
     cw = w_current**2*outsacc.precision.getCovarianceMatrix()
     swd = w_current*outsacc.mean.vector
     w = w_current*1.
+    # Collect windows
+    if outsacc.binning.windows is None:
+        wins = None
+    else:
+        wins = [(w.ls, w_current * w.w) for w in outsacc.binning.windows]
 
     for s in toadd:
         assert(s.mean.vector.shape==outsacc.mean.vector.shape)
@@ -51,6 +57,11 @@ def coadd_area(sacclist):
         swd += w_current*s.mean.vector
         w += w_current
 
+        # Update windows
+        if wins is not None:
+            for iw,_ in enumerate(wins):
+                wins[iw][1] += s.binning.windows[iw].w * w_current
+
         assert (len(outsacc.tracers) == len(s.tracers))
         for otr, ctr in zip(outsacc.tracers, s.tracers):
             for z, zp in zip(otr.z, ctr.z):
@@ -59,6 +70,11 @@ def coadd_area(sacclist):
 
     newmean = swd/w
     cw /= w**2
+    # Replace windows
+    if wins is not None:
+        for iw,_ in enumerate(wins):
+            wins[iw][1]/=w
+        outsacc.windows=np.array([Window(ls=win[0],w=win[1]) for win in wins])
     outsacc.precision = Precision(cw, is_covariance=True)
     outsacc.mean = MeanVec(newmean)
 
@@ -95,5 +111,3 @@ def coadd_Cinv(sacclist):
     outsacc.mean=MeanVec(newmean)
 
     return outsacc
-
-    
