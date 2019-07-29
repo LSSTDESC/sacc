@@ -218,6 +218,9 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
     Attributes
     ----------
 
+    spin: int
+        Spin for this observable. Eithe 0 (e.g. galaxy overdensity)
+        or 2 (e.g. cosmic shear).
     nu: array
          Array of frequencies.
     bpss_nu: array
@@ -238,10 +241,11 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
          Frequency units ('GHz' by default).
     """
 
-    def __init__(self, name, nu, bpss_nu, ell, beam_ell,
+    def __init__(self, name, spin, nu, bpss_nu, ell, beam_ell,
                  bpss_extra=None, beam_extra=None,
                  nu_unit='GHz', **kwargs):
         super().__init__(name, **kwargs)
+        self.spin = spin
         self.nu = np.array(nu)
         self.nu_unit = nu_unit
         self.bpss_nu = np.array(bpss_nu)
@@ -266,6 +270,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             table.meta['SACCNAME'] = tracer.name
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:bpss'
             table.meta['NU_UNIT'] = tracer.nu_unit
+            table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
             remove_dict_null_values(table.meta)
@@ -282,6 +287,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
             remove_dict_null_values(table.meta)
@@ -317,6 +323,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             ell = []
             beam_ell = []
             beam_extra = {}
+            spin = 0
 
             if 'bpss' in dt:
                 table = dt['bpss']
@@ -327,6 +334,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                     if col.name not in ['nu', 'bpss_nu']:
                         bpss_extra[col.name] = col.data
                 nu_unit = table.meta['NU_UNIT']
+                spin = table.meta['SPIN']
 
                 for key, value in table.meta.items():
                     if key.startswith("META_"):
@@ -339,11 +347,12 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                 for col in table.columns.values():
                     if col.name not in ['ell', 'beam_ell']:
                         beam_extra[col.name] = col.data
+                spin = table.meta['SPIN']
                 for key, value in table.meta.items():
                     if key.startswith("META_"):
                         metadata[key[5:]] = value
 
-            tracers[name] = cls(name, nu, bpss_nu, ell, beam_ell,
+            tracers[name] = cls(name, spin, nu, bpss_nu, ell, beam_ell,
                                 bpss_extra=bpss_extra, beam_extra=beam_extra,
                                 nu_unit=nu_unit, metadata=metadata)
         return tracers
@@ -357,6 +366,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
     Attributes
     ----------
 
+    spin: int
+        Spin for this observable. Eithe 0 (e.g. galaxy overdensity)
+        or 2 (e.g. cosmic shear).
     z: array
         Redshift sample values
     nz: array
@@ -365,7 +377,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         Additional estimates of the same n(z), by name
     """
 
-    def __init__(self, name, z, nz, extra_columns=None, **kwargs):
+    def __init__(self, name, spin, z, nz, extra_columns=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -375,6 +387,9 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         name: str
             The name for this specific tracer, e.g. a
             tomographic bin identifier.
+        spin: int
+            Spin for this observable. Eithe 0 (e.g. galaxy overdensity)
+            or 2 (e.g. cosmic shear).
         z: array
             Redshift sample values
         nz: array
@@ -422,6 +437,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
+            table.meta['SPIN'] = spin
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
             remove_dict_null_values(table.meta)
@@ -458,9 +474,10 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
                 if col.name not in ['z', 'nz']:
                     extra_columns[col.name] = col.data
 
+            spin = table.meta['SPIN']
             metadata = {}
             for key, value in table.meta.items():
                 if key.startswith("META_"):
                     metadata[key[5:]] = value
-            tracers[name] = cls(name, z, nz, extra_columns=extra_columns, metadata=metadata)
+            tracers[name] = cls(name, spin, z, nz, extra_columns=extra_columns, metadata=metadata)
         return tracers
