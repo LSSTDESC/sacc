@@ -209,6 +209,145 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         return tracers
 
 
+class NuMapTracer(BaseTracer, tracer_type='NuMap'):
+    """
+    A Tracer type for a sky map at a given frequency.
+
+    Takes at least four arguments, defining the bandpass and beam.
+
+    Attributes
+    ----------
+
+    nu: array
+         Array of frequencies.
+    bpss_nu: array
+         Bandpass transmission.
+    bpss_extra: array
+         Other bandpass-related arrays
+         (e.g. uncertainties, principal components,
+         alternative measurements, whatever).
+    ell: array
+         Array of multipole values at which the beam is defined.
+    beam_ell: array
+         Beam.
+    beam_extra: array
+         Other beam-related arrays
+         (e.g. uncertainties, principal components,
+         alternative measurements, whatever).
+    nu_unit: str
+         Frequency units ('GHz' by default).
+    """
+
+    def __init__(self, name, nu, bpss_nu, ell, beam_ell,
+                 bpss_extra=None, beam_extra=None,
+                 nu_unit='GHz', **kwargs):
+        super().__init__(name, **kwargs)
+        self.nu = np.array(nu)
+        self.nu_unit = nu_unit
+        self.bpss_nu = np.array(bpss_nu)
+        self.bpss_extra = {} if bpss_extra is None else bpss_extra
+        self.ell = np.array(ell)
+        self.beam_ell = np.array(beam_ell)
+        self.beam_extra = {} if beam_extra is None else beam_extra
+
+    @classmethod
+    def to_tables(cls, instance_list):
+        tables = []
+        for tracer in instance_list:
+            # Bandpasses
+            names = ['nu', 'bpss_nu']
+            cols = [tracer.nu, tracer.bpss_nu]
+            for bpss_id, col in tracer.bpss_extra.items():
+                names.append(str(bpss_id))
+                cols.append(col)
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:bpss'
+            table.meta['NU_UNIT'] = tracer.nu_unit
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
+            tables.append(table)
+
+            # Beams
+            names = ['ell', 'beam_ell']
+            cols = [tracer.ell, tracer.beam_ell]
+            for beam_id, col in tracer.beam_extra.items():
+                names.append(str(beam_id))
+                cols.append(col)
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
+            tables.append(table)
+        return tables
+
+    @classmethod
+    def from_tables(cls, table_list):
+        tracers = {}
+
+        # Collect beam and bandpass tables describing the same tracer
+        tr_tables = {}
+        for table in table_list:
+            # Read name and table type
+            name = table.meta['SACCNAME']
+            tabtyp = table.meta['EXTNAME'].split(':')[-1]
+            if tabtyp not in ['bpss','beam']:
+                raise KeyError("Unknown table type " + table.meta['EXTNAME'])
+
+            # If not present yet, create new tracer entry
+            if name not in tr_tables:
+                tr_tables[name]={}
+            # Add table
+            tr_tables[name][tabtyp]=table
+
+        # Now loop through different tracers and build them from their tables
+        for n, dt in tr_tables.items():
+            metadata = {}
+            nu = []
+            bpss_nu = []
+            bpss_extra = {}
+            nu_unit = 'GHz'
+            ell = []
+            beam_ell = []
+            beam_extra = {}
+
+            if 'bpss' in dt:
+                table = dt['bpss']
+                name = table.meta['SACCNAME']
+                nu = table['nu']
+                bpss_nu = table['bpss_nu']
+                for col in table.columns.values():
+                    if col.name not in ['nu', 'bpss_nu']:
+                        bpss_extra[col.name] = col.data
+                nu_unit = table.meta['NU_UNIT']
+
+                for key, value in table.meta.items():
+                    if key.startswith("META_"):
+                        metadata[key[5:]] = value
+            if 'beam' in dt:
+                table = dt['beam']
+                name = table.meta['SACCNAME']
+                ell = table['ell']
+                beam_ell = table['beam_ell']
+                for col in table.columns.values():
+                    if col.name not in ['ell', 'beam_ell']:
+                        beam_extra[col.name] = col.data
+                for key, value in table.meta.items():
+                    if key.startswith("META_"):
+                        metadata[key[5:]] = value
+
+            tracers[name] = cls(name, nu, bpss_nu, ell, beam_ell,
+                                bpss_extra=bpss_extra, beam_extra=beam_extra,
+                                nu_unit=nu_unit, metadata=metadata)
+        return tracers
+                            
 class NZTracer(BaseTracer, tracer_type='NZ'):
     """
     A Tracer type for tomographic n(z) data.
