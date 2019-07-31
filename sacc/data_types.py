@@ -24,8 +24,8 @@ required_tags = {
     "xi_0e": ['theta'],
     "xi_0b": ['theta'],
     "xi_+_re": ['theta'],
-    "xi_+_re": ['theta'],
-    "xi_-_im": ['theta'],
+    "xi_+_im": ['theta'],
+    "xi_-_re": ['theta'],
     "xi_-_im": ['theta'],
     "count": []
 }
