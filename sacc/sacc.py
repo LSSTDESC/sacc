@@ -145,6 +145,20 @@ class SACC(object):
         self.mean.cullVector(ndx)
         self.precision.cullMatrix(ndx)
 
+    def selectTracers(self, tracers):
+        """
+        Select all elements of the data vector (and covariance, etc.) that belong to tracers.
+        :param tracers: list of tracers to use in analysis
+        """
+
+        ndx = np.array([])
+        for i1, i2, _, _, ndx_tracer in self.sortTracers():
+            if i1 in tracers and i2 in tracers:
+                ndx = np.concatenate((ndx, ndx_tracer))
+        self.binning.cullBinning(ndx)
+        self.mean.cullVector(ndx)
+        self.precision.cullMatrix(ndx)
+
     def cullType(self,typ) :
         """
         Select all elements of the data vector (and covariance, etc.) with the same `type = typ`.
