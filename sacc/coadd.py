@@ -8,7 +8,7 @@ import scipy.linalg as la
 
 from .precision import Precision
 from .meanvec import MeanVec
-from .windows import Window
+from .window import Window
 
 def coadd(sacclist, mode='Cinv'):
 
@@ -45,7 +45,7 @@ def coadd_area(sacclist):
     if outsacc.binning.windows is None:
         wins = None
     else:
-        wins = [(w.ls, w_current * w.w) for w in outsacc.binning.windows]
+        wins = [[win.ls, w_current * win.w] for win in outsacc.binning.windows]
 
     for s in toadd:
         assert(s.mean.vector.shape==outsacc.mean.vector.shape)
