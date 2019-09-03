@@ -151,7 +151,7 @@ class SACC(object):
         :param tracers: list of tracers to use in analysis
         """
 
-        ndx = np.array([])
+        ndx = np.array([], dtype='int')
         for i1, i2, _, _, ndx_tracer in self.sortTracers():
             if i1 in tracers and i2 in tracers:
                 ndx = np.concatenate((ndx, ndx_tracer))
