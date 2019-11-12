@@ -775,22 +775,42 @@ class Sacc:
     #
     #
 
-    def _get_2pt(self, data_type, tracer1, tracer2, return_cov, angle_name):
+    def _get_2pt(self, data_type, tracer1, tracer2, return_cov, angle_name, return_windows):
         # Internal helper method for get_ell_cl and get_theta_xi
         ind = self.indices(data_type, (tracer1, tracer2))
 
         mu = np.array(self.mean[ind])
         angle = np.array(self._get_tags_by_index([angle_name], ind)[0])
 
+        if return_windows:
+            ws=unique_list(self.data[i].tags.get('window') for i in ind)
+            if len(ws) != 1 :
+                raise ValueError("You have asked for window functions, however, the points "
+                                 "you have selected have different windows associated to them."
+                                 "Please narrow down your selection (specify tracers and "
+                                 "data type) or get windows later.")
+            ws = ws[0]
+            if ws is None:
+                raise ValueError("You asked for window functions, but no windows "
+                                 "are associated to these data.")
+            w_inds = np.array(self._get_tags_by_index(['window_id'], ind)[0])
+            ws = (ws.values, ws.weight.T[w_inds])
+
         if return_cov:
             if self.covariance is None:
                 raise ValueError("This sacc data does not have a covariance attached")
             cov_block = self.covariance.get_block(ind)
-            return angle, mu, cov_block
+            if return_windows:
+                return angle, mu, cov_block, ws
+            else:
+                return angle, mu, cov_block
         else:
-            return angle, mu
+            if return_windows:
+                return angle, mu, ws
+            else:
+                return angle, mu
 
-    def get_ell_cl(self, data_type, tracer1, tracer2, return_cov=False):
+    def get_ell_cl(self, data_type, tracer1, tracer2, return_cov=False, return_windows=False):
         """
         Helper method to extract the ell and C_ell values for a specific
         data type (e.g. 'shear_ee' and pair of tomographic bins)
@@ -810,6 +830,10 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_windows: bool
+            If True, also return the block of the window functions
+            corresponding to these points.  Default=False
+
         Returns
         -------
         ell: array
@@ -819,10 +843,13 @@ class Sacc:
         cov_block: 2x2 array
             (Only if return_cov=True) The block of the covariance for
             these points
-        """
-        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'ell')
 
-    def get_theta_xi(self, data_type, tracer1, tracer2, return_cov=False):
+        windows: 2D array
+            (Only if return_windows=True) Window functions for these points.
+        """
+        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'ell', return_windows)
+
+    def get_theta_xi(self, data_type, tracer1, tracer2, return_cov=False, return_windows=False):
         """
         Helper method to extract the theta and correlation function values for a specific
         data type (e.g. 'shear_xi' and pair of tomographic bins)
@@ -843,6 +870,10 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_windows: bool
+            If True, also return the block of the window functions
+            corresponding to these points.  Default=False
+
         Returns
         -------
         ell: array
@@ -851,11 +882,14 @@ class Sacc:
         mu: array
             Mean values for this tracer pair
 
-        cov_block: 2x2 array
+        cov_block: 2D array
             (Only if return_cov=True) The block of the covariance for
             these points
+
+        windows: 2D array
+            (Only if return_windows=True) Window functions for these points.
         """
-        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'theta')
+        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'theta', return_windows)
 
     def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name,
                  window, window_id, tracers_later):
