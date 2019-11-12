@@ -791,10 +791,11 @@ class Sacc:
                                  "data type) or get windows later.")
             ws = ws[0]
             if ws is None:
-                raise ValueError("You asked for window functions, but no windows "
-                                 "are associated to these data.")
-            w_inds = np.array(self._get_tags_by_index(['window_id'], ind)[0])
-            ws = (ws.values, ws.weight.T[w_inds])
+                warnings.warn("You asked for window functions, but no windows "
+                              "are associated to these data.")
+            else:
+                w_inds = np.array(self._get_tags_by_index(['window_id'], ind)[0])
+                ws = (ws.values, ws.weight.T[w_inds])
 
         if return_cov:
             if self.covariance is None:
