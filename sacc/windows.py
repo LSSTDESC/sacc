@@ -174,7 +174,8 @@ class Window(BaseWindow, window_type='Standard'):
     """The Window class defines a tabulated window function.
 
     The class contains tabulated values of the abscissa (e.g. ell or theta) and
-    corresponding weights values for each one.
+    corresponding weights values for each one. More than one set of weights can
+    be used.
 
     The function could be integrated or summed depending on the 
     context.
@@ -182,9 +183,11 @@ class Window(BaseWindow, window_type='Standard'):
     Attributes
     ----------
     values: array
-        The points at which the weights are defines
+        An array of dimension (N) containing the points at which the
+        weights are defined.
     weight:
-        The weights corresponding to each value
+        An array of dimensions (N, N_weight) containing N_weight sets of
+        weights corresponding to each value.
 
     """
     def __init__(self, values, weight):
