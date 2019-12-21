@@ -282,3 +282,48 @@ def test_log_window():
     for w1 in W1:
         w2 = W2[id(w1)]
         assert (w1.min, w1.max) == (w2.min, w2.max)
+
+
+def test_concatenate_covariance():
+    v1 = np.array([1.,2.,3.])
+    v2 = np.array([4.])
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.DiagonalCovariance)
+    assert np.allclose(C.diag, [1,2,3,4])
+
+    v1 = np.array([2.])
+    v2 = np.array([[3., 0.1],[0.1, 3]])
+
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
+    test_C = np.array([
+        [2.0, 0.0, 0.0],
+        [0.0, 3.0, 0.1],
+        [0.0, 0.1, 3.0]]
+        )
+    assert np.allclose(C.get_dense(), test_C)
+
+    v1 = np.array([
+        [2.0, 0.2,],
+        [0.2, 3.0,]]
+        )
+    v2 = np.array([
+        [4.0, -0.2,],
+        [-0.2, 5.0,]]
+        )
+    test_C = np.array([
+        [2.0, 0.2, 0.0, 0.0],
+        [0.2, 3.0, 0.0, 0.0],
+        [0.0, 0.0, 4.0,-0.2],
+        [0.0, 0.0,-0.2, 5.0]]
+        )
+
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
+    assert np.allclose(C.get_dense(), test_C)

@@ -84,6 +84,8 @@ class BaseCovariance:
             return BlockDiagonalCovariance(cov)
         else:
             cov = np.array(cov).squeeze()
+            if cov.ndim == 0:
+                return DiagonalCovariance(np.atleast_1d(cov))
             if cov.ndim == 1:
                 return DiagonalCovariance(cov)
             if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]):
@@ -191,6 +193,17 @@ class FullCovariance(BaseCovariance, cov_type='full'):
             Inverse covariance
         """
         return invert_spd_matrix(self.covmat)
+
+    def get_dense(self):
+        """Return a copy of the covariance matrix in dense form.
+
+        Returns
+        --------
+
+        C: array
+            The full covariance
+        """
+        return self.covmat.copy()
 
 
 class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
@@ -352,6 +365,17 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         """
         return scipy.linalg.block_diag(*[invert_spd_matrix(B) for B in self.blocks])
 
+    def get_dense(self):
+        """Return a copy of the covariance matrix in dense form.
+
+        Returns
+        --------
+
+        C: array
+            The full covariance
+        """
+        return scipy.linalg.block_diag(*self.blocks)
+
 
 
 class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
@@ -464,3 +488,39 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
             Inverse covariance
         """
         return np.diag(1.0/self.diag)
+
+    def get_dense(self):
+        """Return a copy of the covariance matrix in dense form.
+
+        Returns
+        --------
+
+        C: array
+            The full covariance
+        """
+        return np.diag(self.diag)
+
+
+def concatenate_covariances(*covariances):
+    # If all the covariances are diagonal then the concatenated
+    # version can be diagonal
+    if all(isinstance(cov, DiagonalCovariance) for cov in covariances):
+        variances = np.concatenate([cov.diag for cov in covariances])
+        return DiagonalCovariance(variances)
+
+    # Otherwise we have to get things in a common form, and
+    # make a block-diagonal covariance.
+    blocks = []
+
+    # For each of the pieces we extract any blocks
+    # that will go into the concatenation
+    for cov in covariances:
+        # For an existing block-diagonal covariance
+        # we retain the block structure
+        if isinstance(cov, BlockDiagonalCovariance):
+            blocks += cov.blocks
+        # For everything else we just use a dense matrix
+        else:
+            blocks.append(cov.get_dense())
+
+    return BlockDiagonalCovariance(blocks)
