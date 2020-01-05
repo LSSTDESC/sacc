@@ -562,6 +562,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             An instance of this class
         """
         super().__init__(name, quantity, **kwargs)
+        self.spin = spin
         self.z = np.array(z)
         self.nz = np.array(nz)
         self.extra_columns = {} if extra_columns is None else extra_columns
@@ -596,7 +597,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
-            table.meta['SPIN'] = spin
+            table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
             remove_dict_null_values(table.meta)
