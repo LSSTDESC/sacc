@@ -251,6 +251,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
 
     def __init__(self, name, quantity, spin, ell, beam_ell,
                  beam_extra=None, map_unit='none', **kwargs):
+        print(kwargs)
         super().__init__(name, quantity, **kwargs)
         self.spin = spin
         self.map_unit = map_unit
@@ -321,7 +322,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
                 for col in table.columns.values():
                     if col.name not in ['ell', 'beam_ell']:
                         beam_extra[col.name] = col.data
-                map_unit = table.meat['MAP_UNIT']
+                map_unit = table.meta['MAP_UNIT']
                 spin = table.meta['SPIN']
                 for key, value in table.meta.items():
                     if key.startswith("META_"):
@@ -490,7 +491,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                 for col in table.columns.values():
                     if col.name not in ['ell', 'beam_ell']:
                         beam_extra[col.name] = col.data
-                map_unit = table.meat['MAP_UNIT']
+                map_unit = table.meta['MAP_UNIT']
                 spin = table.meta['SPIN']
                 for key, value in table.meta.items():
                     if key.startswith("META_"):

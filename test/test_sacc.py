@@ -73,6 +73,69 @@ def test_misc_tracer():
     assert T2a.metadata == md2
 
 
+def test_numap_tracer():
+    md1 = {'mac': 'yes', 'cheese': 'of_course', 'quantity': 3}
+    md2 = {'mac': 'no', 'cheese': 'no'}
+    ell = np.linspace(2, 1000, 1000)
+    beam = np.exp(-0.1 * ell * (ell + 1))
+    beam_extra = {'err1': np.sin(ell * 0.1)}
+    nu = np.linspace(30., 60., 100)
+    bpss = np.ones(100)
+    bpss_extra = {'err1': bpss * 0.1,
+                  'err2': bpss * 0.05}
+
+    T1 = sacc.BaseTracer.make('NuMap', 'band1', 'sat_temperature', 0,
+                              nu, bpss, ell, beam,
+                              bpss_extra=bpss_extra,
+                              beam_extra=beam_extra,
+                              metadata=md2)
+    T2 = sacc.BaseTracer.make('NuMap', 'band2', 'sat_temperature', 0,
+                              nu, bpss, ell, beam,
+                              bpss_extra=bpss_extra,
+                              beam_extra=beam_extra,
+                              metadata=md1)
+
+    assert T2.metadata == md1
+    assert T1.metadata == md2
+
+    tables = sacc.BaseTracer.to_tables([T1, T2])
+    D = sacc.BaseTracer.from_tables(tables)
+
+    T1a = D['band1']
+    T2a = D['band2']
+    assert T1a.metadata == md2
+    assert T2a.metadata == md1
+    assert np.all(T1a.bpss_extra['err1'] == 0.1 * bpss)
+
+
+def test_map_tracer():
+    md1 = {'mac': 'yes', 'cheese': 'of_course', 'quantity': 3}
+    md2 = {'mac': 'no', 'cheese': 'no'}
+    ell = np.linspace(2, 1000, 1000)
+    beam = np.exp(-0.1 * ell * (ell + 1))
+    err = np.sin(ell * 0.1)
+    beam_extra = {'err1': err}
+
+    T1 = sacc.BaseTracer.make('Map', 'y_milca', 'compton_y', 0,
+                              ell, beam, beam_extra=beam_extra,
+                              metadata=md1)
+    T2 = sacc.BaseTracer.make('Map', 'y_nilc', 'compton_y', 0,
+                              ell, beam, beam_extra=beam_extra,
+                              metadata=md2)
+
+    assert T1.metadata == md1
+    assert T2.metadata == md2
+
+    tables = sacc.BaseTracer.to_tables([T1, T2])
+    D = sacc.BaseTracer.from_tables(tables)
+
+    T1a = D['y_milca']
+    T2a = D['y_nilc']
+    assert T1a.metadata == md1
+    assert T2a.metadata == md2
+    assert np.all(T1a.beam_extra['err1'] == err)
+
+
 def test_nz_tracer():
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height':1.83}
     md2 = {'potato': 'never'}
