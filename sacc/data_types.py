@@ -13,181 +13,97 @@ from .utils import Namespace, hide_null_values, null_values, camel_case_split_an
 #     statistic_subtype: optional additional specifier
 
 required_tags = {
-    "clusterGalaxy_densityConvergence_cl": ['ell'],
-    "clusterGalaxy_densityConvergence_xi": ['theta'],
-    "clusterGalaxy_densityShear_cl_b": ['ell'],
-    "clusterGalaxy_densityShear_cl_e": ['ell'],
-    "clusterGalaxy_densityShear_xi_t": ['theta'],
-    "clusterGalaxy_densityShear_xi_x": ['theta'],
-    "clusterGalaxy_density_cl": ['ell'],
-    "clusterGalaxy_density_xi": ['theta'],
-    "cluster_density_cl": ['ell'],
-    "cluster_density_xi": ['theta'],
-    "cluster_mass_count_wl": [],
-    "cluster_mass_count_xray": [],
-    "cmbCluster_polarizationDensity_cl_b": ['ell'],
-    "cmbCluster_polarizationDensity_cl_e": ['ell'],
-    "cmbCluster_polarizationDensity_xi_t": ['theta'],
-    "cmbCluster_polarizationDensity_xi_x": ['theta'],
-    "cmbCluster_temperatureDensity_cl": ['ell'],
-    "cmbCluster_temperatureDensity_xi": ['theta'],
-    "cmbCluster_convergenceDensity_cl": ['ell'],
-    "cmbCluster_convergenceDensity_xi": ['theta'],
-    "cmbGalaxy_convergenceDensity_cl": ['ell'],
-    "cmbGalaxy_convergenceDensity_xi": ['theta'],
-    "cmbGalaxy_convergenceShear_cl_b": ['ell'],
-    "cmbGalaxy_convergenceShear_cl_e": ['ell'],
-    "cmbGalaxy_convergenceShear_xi_t": ['theta'],
-    "cmbGalaxy_convergenceShear_xi_x": ['theta'],
-    "cmbGalaxy_convergence_cl": ['ell'],
-    "cmbGalaxy_convergence_xi": ['theta'],
-    "cmbGalaxy_polarizationConvergence_cl_b": ['ell'],
-    "cmbGalaxy_polarizationConvergence_cl_e": ['ell'],
-    "cmbGalaxy_polarizationConvergence_xi_t": ['theta'],
-    "cmbGalaxy_polarizationConvergence_xi_x": ['theta'],
-    "cmbGalaxy_polarizationDensity_cl_b": ['ell'],
-    "cmbGalaxy_polarizationDensity_cl_e": ['ell'],
-    "cmbGalaxy_polarizationDensity_xi_t": ['theta'],
-    "cmbGalaxy_polarizationDensity_xi_x": ['theta'],
-    "cmbGalaxy_polarizationShear_cl_bb": ['ell'],
-    "cmbGalaxy_polarizationShear_cl_be": ['ell'],
-    "cmbGalaxy_polarizationShear_cl_eb": ['ell'],
-    "cmbGalaxy_polarizationShear_cl_ee": ['ell'],
-    "cmbGalaxy_polarizationShear_xi_minus": ['theta'],
-    "cmbGalaxy_polarizationShear_xi_plus": ['theta'],
-    "cmbGalaxy_polarizationShear_xi_imagMinus": ['theta'],
-    "cmbGalaxy_polarizationShear_xi_imagPlus": ['theta'],
-    "cmbGalaxy_polarizationShear_cosebi_e": ['ell'],
-    "cmbGalaxy_polarizationShear_cosebi_b": ['ell'],
-    "cmbGalaxy_temperatureConvergence_cl": ['ell'],
-    "cmbGalaxy_temperatureConvergence_xi": ['theta'],
-    "cmbGalaxy_temperatureDensity_cl": ['ell'],
-    "cmbGalaxy_temperatureDensity_xi": ['theta'],
-    "cmbGalaxy_temperatureShear_cl_b": ['ell'],
-    "cmbGalaxy_temperatureShear_cl_e": ['ell'],
-    "cmbGalaxy_temperatureShear_xi_t": ['theta'],
-    "cmbGalaxy_temperatureShear_xi_x": ['theta'],
-    "cmb_convergence_cl": ['ell'],
-    "cmb_convergence_xi": ['theta'],
-    "cmb_polarization_cl_bb": ['ell'],
-    "cmb_polarization_cl_be": ['ell'],
-    "cmb_polarization_cl_eb": ['ell'],
-    "cmb_polarization_cl_ee": ['ell'],
-    "cmb_polarization_xi_minus": ['theta'],
-    "cmb_polarization_xi_plus": ['theta'],
-    "cmb_polarization_xi_imagMinus": ['theta'],
-    "cmb_polarization_xi_imagPlus": ['theta'],
-    "cmb_polarization_cosebi_e": [],
-    "cmb_polarization_cosebi_b": [],
-    "cmb_polarizationConvergence_cl_e": ['ell'],
-    "cmb_polarizationConvergence_cl_b": ['ell'],
-    "cmb_polarizationConvergence_xi_t": ['theta'],
-    "cmb_polarizationConvergence_xi_x": ['theta'],
-    "cmb_temperaturePolarization_cl_e": ['ell'],
-    "cmb_temperaturePolarization_cl_b": ['ell'],
-    "cmb_temperaturePolarization_xi_t": ['theta'],
-    "cmb_temperaturePolarization_xi_x": ['theta'],
-    "cmb_temperature_cl": ['ell'],
-    "cmb_temperatureConvergence_cl": ["ell"],
-    "cmb_temperatureConvergence_xi": ["theta"],
-    "galaxy_convergenceDensity_cl": ['ell'],
-    "galaxy_convergenceDensity_xi": ['theta'],
-    "galaxy_convergence_cl": ['ell'],
-    "galaxy_convergence_xi": ['theta'],
-    "galaxy_density_cl": ['ell'],
-    "galaxy_density_xi": ['theta'],
-    "galaxy_shearConvergence_cl_b": ['ell'],
-    "galaxy_shearConvergence_cl_e": ['ell'],
-    "galaxy_shearConvergence_xi_t": ['theta'],
-    "galaxy_shearConvergence_xi_x": ['theta'],
-    "galaxy_shearDensity_cl_b": ['ell'],
-    "galaxy_shearDensity_cl_e": ['ell'],
-    "galaxy_shearDensity_xi_t": ['theta'],
-    "galaxy_shearDensity_xi_x": ['theta'],
-    "galaxy_shear_cl_bb": ['ell'],
-    "galaxy_shear_cl_be": ['ell'],
-    "galaxy_shear_cl_eb": ['ell'],
-    "galaxy_shear_cl_ee": ['ell'],
-    "galaxy_shear_cosebi_bb": [],
-    "galaxy_shear_cosebi_ee": [],
-    "galaxy_shear_xi_minus": ['theta'],
-    "galaxy_shear_xi_plus": ['theta'],
-    "galaxy_shear_xi_imagMinus": ['theta'],
-    "galaxy_shear_xi_imagPlus": ['theta'],
+    "cl_00": ['ell'],
+    "cl_0e": ['ell'],
+    "cl_0b": ['ell'],
+    "cl_ee": ['ell'],
+    "cl_eb": ['ell'],
+    "cl_be": ['ell'],
+    "cl_bb": ['ell'],
+    "xi_00": ['theta'],
+    "xi_0e": ['theta'],
+    "xi_0b": ['theta'],
+    "xi_+_re": ['theta'],
+    "xi_+_im": ['theta'],
+    "xi_-_re": ['theta'],
+    "xi_-_im": ['theta'],
+    "count": []
 }
 
-parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
-
+#parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
+#
 def parse_data_type_name(name):
-    """Parse a data type name into its component parts
-
-    Data type names take the form:
-    {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
-
-    where sources and properties are camel-case if there is more than one of them
-
-    Parameters
-    ----------
-    name: str
-        A data type name
-
-    Returns
-    -------
-    sources: list[str]
-        type(s) of astrophysical sources to which this applies
-
-    properties: list[str]
-        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
-
-    statistic_type: str
-        mathematical type of the statistic
-
-    statistic_subtype: str or None
-        optional additional specifier
-    """
-    parts = name.split("_")
-    if len(parts)==3:
-        sources, properties, statistic = parts
-        subtype = None
-    elif len(parts)==4:
-        sources, properties, statistic, subtype = parts
-    else:
-        raise ValueError("The supplied name is not a valid data type name"
-            f"(must have 3 or 4 underscore-sparated parts): {name}")
-    sources = camel_case_split_and_lowercase(sources)
-    properties = camel_case_split_and_lowercase(properties)
-    return parsedDataTypeName(sources, properties, statistic, subtype)
-
+    return
+#    """Parse a data type name into its component parts
+#
+#    Data type names take the form:
+#    {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
+#
+#    where sources and properties are camel-case if there is more than one of them
+#
+#    Parameters
+#    ----------
+#    name: str
+#        A data type name
+#
+#    Returns
+#    -------
+#    sources: list[str]
+#        type(s) of astrophysical sources to which this applies
+#
+#    properties: list[str]
+#        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+#
+#    statistic_type: str
+#        mathematical type of the statistic
+#
+#    statistic_subtype: str or None
+#        optional additional specifier
+#    """
+#    parts = name.split("_")
+#    if len(parts)==3:
+#        sources, properties, statistic = parts
+#        subtype = None
+#    elif len(parts)==4:
+#        sources, properties, statistic, subtype = parts
+#    else:
+#        raise ValueError("The supplied name is not a valid data type name"
+#            f"(must have 3 or 4 underscore-sparated parts): {name}")
+#    sources = camel_case_split_and_lowercase(sources)
+#    properties = camel_case_split_and_lowercase(properties)
+#    return parsedDataTypeName(sources, properties, statistic, subtype)
+#
 def build_data_type_name(sources, properties, statistic, subtype=None):
-    """
-
-    Parameters
-    ----------
-    sources: str or list[str]
-        type(s) of astrophysical sources to which this applies
-
-    properties: str or list[str]
-        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
-
-    statistic_type: str
-        mathematical type of the statistic
-
-    statistic_subtype: str or None
-        optional additional specifier.  Default is None
-
-    Returns
-    -------
-    name: str
-        Type name of the form: {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
-    """
-    if not isinstance(sources, str):
-        sources = "".join([sources[0]] + [s.lower().capitalize() for s in sources[1:]])
-    if not isinstance(properties, str):
-        properties = "".join([properties[0]] + [s.lower().capitalize() for s in properties[1:]])
-    if subtype:
-        return f"{sources}_{properties}_{statistic}_{subtype}"
-    else:
-        return f"{sources}_{properties}_{statistic}"
+    return
+#    """
+#
+#    Parameters
+#    ----------
+#    sources: str or list[str]
+#        type(s) of astrophysical sources to which this applies
+#
+#    properties: str or list[str]
+#        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+#
+#    statistic_type: str
+#        mathematical type of the statistic
+#
+#    statistic_subtype: str or None
+#        optional additional specifier.  Default is None
+#
+#    Returns
+#    -------
+#    name: str
+#        Type name of the form: {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
+#    """
+#    if not isinstance(sources, str):
+#        sources = "".join([sources[0]] + [s.lower().capitalize() for s in sources[1:]])
+#    if not isinstance(properties, str):
+#        properties = "".join([properties[0]] + [s.lower().capitalize() for s in properties[1:]])
+#    if subtype:
+#        return f"{sources}_{properties}_{statistic}_{subtype}"
+#    else:
+#        return f"{sources}_{properties}_{statistic}"
 
 
 
