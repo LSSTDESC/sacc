@@ -533,35 +533,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     def __init__(self, name, quantity, spin, z, nz,
                  extra_columns=None, **kwargs):
-        """
-        Create a tracer corresponding to a distribution in redshift n(z),
-        for example of galaxies.
-
-        Parameters
-        ----------
-        name: str
-            The name for this specific tracer, e.g. a
-            tomographic bin identifier.
-        quantity: str
-            String describing the physical quantity described by this
-            tracer (e.g. galaxy_overdensity, galaxy_shear, galaxy_size,
-            mean_flux).
-        spin: int
-            Spin for this observable. Eithe 0 (e.g. galaxy overdensity)
-            or 2 (e.g. cosmic shear).
-        z: array
-            Redshift sample values
-        nz: array
-            Number density n(z) at redshift sample points.
-        extra_columns: dict[str:array]
-            Optional, default=None.  Additional realizations or
-            estimates of the same n(z), by name.
-
-        Returns
-        -------
-        instance: NZTracer object
-            An instance of this class
-        """
         super().__init__(name, quantity, **kwargs)
         self.spin = spin
         self.z = np.array(z)

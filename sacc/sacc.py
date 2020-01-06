@@ -101,7 +101,7 @@ class Sacc:
     # Builder methods for building up Sacc data from scratch in memory
     #
 
-    def add_tracer(self, tracer_type, name, *args, **kwargs):
+    def add_tracer(self, tracer_type, name, quantity, *args, **kwargs):
         """
         Add a new tracer
 
@@ -115,7 +115,12 @@ class Sacc:
         name: str
             A name for the tracer
 
-        *args:
+        quantity: str
+            String describing the physical quantity described
+            by this tracer (e.g. antenna_temperature, Compton_y,
+            galaxy_overdensity, galaxy_size, etc.).
+
+         *args:
             Additional arguments to pass to the tracer constructor.
             These depend on the type of the tracer.  For n(z) tracers
             these should be z and nz arrays
@@ -130,7 +135,7 @@ class Sacc:
         None
 
         """
-        tracer = BaseTracer.make(tracer_type, name, *args, **kwargs)
+        tracer = BaseTracer.make(tracer_type, name, quantity, *args, **kwargs)
         self.add_tracer_object(tracer)
 
     def add_tracer_object(self, tracer):
