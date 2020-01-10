@@ -325,3 +325,57 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
                     metadata[key[5:]] = value
             tracers[name] = cls(name, z, nz, extra_columns=extra_columns, metadata=metadata)
         return tracers
+
+
+def combine_dictionaries(d1, d2, suffix1=None, suffix2=None, cmp=None):
+    """Combine two dictionaries, preventing clashes and optionally renaming keys
+
+    This combines two dictionaries, raising an error in the event of
+    there being identical keys in each with different values.
+
+    This can be prevented by supplying suffix1 and/or suffix2, which will
+    be appended to the keys in each dictionary.
+
+    If there is still a clash 
+
+    Parameters
+    ----------
+    d1: dict
+
+    d2: dict
+
+    suffix1: str
+        Optional, default=None, suffix for keys in d1
+
+    suffix2: str
+        Optional, default=None, suffix for keys in d2
+    """
+
+    if suffix1 is not None:
+        output = {key+suffix1: value for key, value in d1.items()}
+    else:
+        output = d1.copy()
+
+    if suffix2 is not None:
+        d2 = {key+suffix1: value for key, value in d2.items()}
+
+
+    for key, value in d2.items():
+        if (key in output) and (output[key] != value):
+            raise ValueError("Name collision in tracers."
+                "Set suffix1 or suffix2, or set them better")
+        output[key] = value
+
+    return output
+
+
+# if both None, raise error on clash
+# if one None, on clash give that one a suffix
+# if neither None,  on clash give that one a suffix
+# rename_all = True: use suffixes on all
+#strategy
+#None - raise an error
+first
+second
+tag_all
+tag_clash

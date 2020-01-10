@@ -984,3 +984,16 @@ class Sacc:
 
         """
         self._add_2pt(data_type, tracer1, tracer2, x, theta, 'theta', window, tracers_later)
+
+
+
+def concatenate(*data_sets):
+    pass
+    # If two tracers have the same name they should be the same, otherwise, error? Or rename one?
+    # Or we
+    # There are a few strategies for combining metadata - overwriting,
+    # adding a suffix to all the keys, adding a suffix to keys present in both, adding a suffix
+    # to keys present in both whenever they have different values. 
+    # Metadata should also record that this concatenation has been made
+    # Either all the data sets should have covariances or none of them should.  Concatenating
+    # covariances should be straightforward and should always result in a block-diagonal covariance
