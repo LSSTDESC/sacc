@@ -362,3 +362,8 @@ def test_concatenate_data():
     assert 'source_0_1' in s3.tracers
     assert 'source_0_2' in s3.tracers
     assert len(s3) == len(s1) + len(s2)
+
+    # check data points in right order
+    for i in range(20):
+        assert s3.data[i].get_tag('ell') == 10.0*i
+        assert s3.data[i+20].get_tag('ell') == 10.0*i
