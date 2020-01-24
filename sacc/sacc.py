@@ -7,7 +7,7 @@ from astropy.table import Table
 
 from .tracers import BaseTracer
 from .windows import BaseWindow
-from .covariance import BaseCovariance
+from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
 
@@ -94,7 +94,7 @@ class Sacc:
         """
         self.data = [self.data[i] for i in indices]
 
-        if self.covariance is not None:
+        if self.has_covariance():
             self.covariance = self.covariance.keeping_indices(indices)
 
     #
@@ -176,7 +176,7 @@ class Sacc:
         -------
         None
         """
-        if self.covariance is not None:
+        if self.has_covariance():
             raise ValueError("You cannot add a data point after setting the covariance")
         tracers = tuple(tracers)
         for tracer in tracers:
@@ -212,6 +212,16 @@ class Sacc:
 
         self.covariance = cov
 
+    def has_covariance(self):
+        """ Return whether or not this data set has a covariance attached to it
+
+        Returns
+        -------
+        bool
+            Whether or not a covariance has been added to this data
+        """
+        return self.covariance is not None
+
     def _indices_to_bool(self, indices):
         # Convert an array of indices into a boolean True mask
         if indices.dtype not in [np.int8, np.int16, np.int32, np.int64]:
@@ -246,7 +256,7 @@ class Sacc:
             indices = self._indices_to_bool(indices)
 
         self.data = [d for i, d in enumerate(self.data) if indices[i]]
-        if self.covariance is not None:
+        if self.has_covariance():
             self.covariance = self.covariance.keeping_indices(indices)
 
     def remove_indices(self, indices):
@@ -783,7 +793,7 @@ class Sacc:
         angle = np.array(self._get_tags_by_index([angle_name], ind)[0])
 
         if return_cov:
-            if self.covariance is None:
+            if not self.has_covariance():
                 raise ValueError("This sacc data does not have a covariance attached")
             cov_block = self.covariance.get_block(ind)
             return angle, mu, cov_block
@@ -987,13 +997,85 @@ class Sacc:
 
 
 
-def concatenate(*data_sets):
-    pass
-    # If two tracers have the same name they should be the same, otherwise, error? Or rename one?
-    # Or we
-    # There are a few strategies for combining metadata - overwriting,
-    # adding a suffix to all the keys, adding a suffix to keys present in both, adding a suffix
-    # to keys present in both whenever they have different values. 
-    # Metadata should also record that this concatenation has been made
+def concatenate_data_sets(*data_sets, labels=None):
+    # Early return of an empty data set object
+    if len(data_sets) == 0:
+        return Sacc()
+
+    data_0 = data_sets[0]
+
     # Either all the data sets should have covariances or none of them should.  Concatenating
     # covariances should be straightforward and should always result in a block-diagonal covariance
+    if data_0.has_covariance():
+        if not all(data_set.has_covariance() for data_set in data_sets):
+            raise ValueError("Either all concatenated data sets must have covariances, "
+                             "or none of them")
+    else:
+        if any(data_set.has_covariance() for data_set in data_sets):
+            raise ValueError("Either all concatenated data sets must have covariances, "
+                             "or none of them")
+
+    output = Sacc()
+
+    # Copy the tracers to the new 
+    for i, data_set in enumerate(data_sets):
+        for tracer in data_set.tracers.values():
+
+            # We will be modifying the tracer, so we copy it.
+            tracer = copy.deepcopy(tracer)
+
+            # Optionally add a suffix label to avoid name clashes.
+            if labels is not None:
+                tracer.name += labels[i]
+
+            # Check for duplicate tracer names.
+            # Probably this happens because the user has not provided
+            # any labels to use as tracer suffices.  But it could also
+            # happen if they have chosen really really bad labels
+            if tracer.name in output.tracers:
+                if labels is None:
+                    raise ValueError("There is a name clash between tracers in the data sets."
+                                     "Use the labels option to give new names to them")
+                else:
+                    raise ValueError("After applying your labels there is still a name "
+                                     "clash between tracers in your concatenation.  Try "
+                                     "different labels?")
+            # Build up the combined tracer collection
+            output.add_tracer_object(tracer)
+
+        for d in data_set.data:
+            # Shallow copy because we do not want to clone Window functions,
+            # since they are often shared. The reason we do it at all
+            # is because we may be modifying the tracers names below
+            d = copy.copy(d)
+            # Rename the tracers if required.
+            if labels is not None:
+                label = labels[i]
+                d.tracers = tuple([t+label for t in d.tracers])
+            # And build up the combined data vector
+            output.data.append(d)
+
+    # Combine the covariances
+    if data_sets[0].has_covariance():
+        covs = [d.covariance for d in data_sets]
+        cov = concatenate_covariances(*covs)
+        output.add_covariance(cov)
+
+    # Now just the metadata left.
+    # We allow data sets to have names the same
+    # as long as their 
+    for i, data_set in enumerate(data_sets):
+        for key, val in data_set.metadata.items():
+
+            # Use the label as a suffix here also.
+            if labels is not None:
+                key = key + labels[i]
+
+            # Check for clashing metadata
+            if (key in output.metadata ) and (value != output.metadata[value]):
+                raise ValueError("Metadata in concatenated Saccs have same name. "
+                    "Set the labels parameter to fix this.")
+
+            output.metadata[key] = value
+
+    return output

@@ -336,7 +336,7 @@ def combine_dictionaries(d1, d2, suffix1=None, suffix2=None, cmp=None):
     This can be prevented by supplying suffix1 and/or suffix2, which will
     be appended to the keys in each dictionary.
 
-    If there is still a clash 
+    If there is still a clash, an error is raised.
 
     Parameters
     ----------
@@ -367,15 +367,3 @@ def combine_dictionaries(d1, d2, suffix1=None, suffix2=None, cmp=None):
         output[key] = value
 
     return output
-
-
-# if both None, raise error on clash
-# if one None, on clash give that one a suffix
-# if neither None,  on clash give that one a suffix
-# rename_all = True: use suffixes on all
-#strategy
-#None - raise an error
-first
-second
-tag_all
-tag_clash
