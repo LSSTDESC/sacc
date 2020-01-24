@@ -998,6 +998,30 @@ class Sacc:
 
 
 def concatenate_data_sets(*data_sets, labels=None):
+    """Combine multiple sacc data sets together into one.
+
+    In case of two tracers or metadata items with the same name,
+    you can use the labels option to pass in a list of strings to append
+    to all the names.
+
+    The Covariance will be combined into either a BlockDiagonal covariance or
+    a Diagonal covariance, depending on the inputs.  Either all inputs should
+    have a covariance attached or none of them.
+
+    Parameters
+    ----------
+    *data_sets: Sacc objects
+        The data sets to combined
+
+    labels: List[str]
+        Optional list of strings to append to tracer and metadata names, in case of a clash.
+
+    Returns
+    -------
+    output: Sacc object
+        The combined data set.
+
+    """
     # Early return of an empty data set object
     if len(data_sets) == 0:
         return Sacc()
@@ -1046,7 +1070,9 @@ def concatenate_data_sets(*data_sets, labels=None):
         for d in data_set.data:
             # Shallow copy because we do not want to clone Window functions,
             # since they are often shared. The reason we do it at all
-            # is because we may be modifying the tracers names below
+            # is because we may be modifying the tracers names below.
+            # Should we add a label to the data point too?  Or is the tracer
+            # info sufficient?
             d = copy.copy(d)
             # Rename the tracers if required.
             if labels is not None:
