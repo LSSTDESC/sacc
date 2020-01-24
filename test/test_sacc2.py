@@ -367,3 +367,9 @@ def test_concatenate_data():
     for i in range(20):
         assert s3.data[i].get_tag('ell') == 10.0*i
         assert s3.data[i+20].get_tag('ell') == 10.0*i
+        t1 = s3.data[i].tracers[0]
+        t2 = s3.data[i+20].tracers[0]
+        assert t1 == 'source_0_1'
+        assert t2 == 'source_0_2'
+        s3.get_tracer(t1)
+        s3.get_tracer(t2)
