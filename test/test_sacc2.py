@@ -289,7 +289,7 @@ def test_concatenate_covariance():
     v2 = np.array([4.])
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
-    C = sacc.concatenate_covariances(A, B)
+    C = sacc.covariance.concatenate_covariances(A, B)
     assert isinstance(C, sacc.covariance.DiagonalCovariance)
     assert np.allclose(C.diag, [1,2,3,4])
 
@@ -298,7 +298,7 @@ def test_concatenate_covariance():
 
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
-    C = sacc.concatenate_covariances(A, B)
+    C = sacc.covariance.concatenate_covariances(A, B)
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
     test_C = np.array([
         [2.0, 0.0, 0.0],
@@ -324,6 +324,41 @@ def test_concatenate_covariance():
 
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
-    C = sacc.concatenate_covariances(A, B)
+    C = sacc.covariance.concatenate_covariances(A, B)
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
     assert np.allclose(C.get_dense(), test_C)
+
+def test_concatenate_data():
+    s1 = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s1.add_tracer('NZ', 'source_0', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s1.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+
+
+    s2 = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s2.add_tracer('NZ', 'source_0', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+
+    # name clash
+    with pytest.raises(ValueError):
+        sacc.concatenate_data_sets(s1, s2)
+
+    s3 = sacc.concatenate_data_sets(s1, s2, labels=['_1', '_2'])
+    assert 'source_0_1' in s3.tracers
+    assert 'source_0_2' in s3.tracers
+    assert len(s3) == len(s1) + len(s2)
