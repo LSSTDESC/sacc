@@ -310,7 +310,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         tracers: dict
             Dict mapping string names to tracer objects.
             Only contains one key/value pair for the one tracer.
-
         """
         tracers = {}
         for table in table_list:
