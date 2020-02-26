@@ -125,7 +125,7 @@ def test_inverses():
     C = (C+C.T) + np.eye(N)*20
     M1 = sacc.BaseCovariance.make(C)
     assert M1.size == N
-    invC = M1.inverted()
+    invC = M1.inverse
     I = np.dot(invC, C)
     assert np.allclose(I, np.eye(N))
 
@@ -138,14 +138,14 @@ def test_inverses():
     M2dense = np.zeros((N,N))
     for i in range(5):
         M2dense[i*5:i*5+5,i*5:i*5+5] = blocks[i]
-    invC2 = M2.inverted()
+    invC2 = M2.inverse
     I = np.dot(invC2, M2dense)
     assert np.allclose(I, np.eye(N))
 
     d = abs(np.random.uniform(0,1,size=N))+1
     M3 = sacc.BaseCovariance.make(d)
     assert M3.size == N
-    invC3 = M3.inverted()
+    invC3 = M3.inverse
     assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
     assert np.allclose(invC3.diagonal() * d, 1)
 
@@ -305,7 +305,7 @@ def test_concatenate_covariance():
         [0.0, 3.0, 0.1],
         [0.0, 0.1, 3.0]]
         )
-    assert np.allclose(C.get_dense(), test_C)
+    assert np.allclose(C.dense, test_C)
 
     v1 = np.array([
         [2.0, 0.2,],
@@ -326,7 +326,7 @@ def test_concatenate_covariance():
     B = sacc.BaseCovariance.make(v2)
     C = sacc.covariance.concatenate_covariances(A, B)
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
-    assert np.allclose(C.get_dense(), test_C)
+    assert np.allclose(C.dense, test_C)
 
 def test_concatenate_data():
     s1 = sacc.Sacc()
