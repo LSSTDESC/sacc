@@ -352,13 +352,13 @@ def test_concatenate_data():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i, label='xxx')
 
     # name clash
     with pytest.raises(ValueError):
         sacc.concatenate_data_sets(s1, s2)
 
-    s3 = sacc.concatenate_data_sets(s1, s2, labels=['_1', '_2'])
+    s3 = sacc.concatenate_data_sets(s1, s2, labels=['1', '2'])
     assert 'source_0_1' in s3.tracers
     assert 'source_0_2' in s3.tracers
     assert len(s3) == len(s1) + len(s2)
@@ -367,6 +367,8 @@ def test_concatenate_data():
     for i in range(20):
         assert s3.data[i].get_tag('ell') == 10.0*i
         assert s3.data[i+20].get_tag('ell') == 10.0*i
+        assert s3.data[i].get_tag('label') == '1'
+        assert s3.data[i+20].get_tag('label') == 'xxx_2'
         t1 = s3.data[i].tracers[0]
         t2 = s3.data[i+20].tracers[0]
         assert t1 == 'source_0_1'
