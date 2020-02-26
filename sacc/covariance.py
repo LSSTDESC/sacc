@@ -8,6 +8,7 @@ from .utils import invert_spd_matrix
 class BaseCovariance:
     """
     The abstract base class for covariances in different forms.
+    These are not currently designed to be modified after creation.
 
     The three concrete subclasses that are created are:
 
@@ -25,6 +26,15 @@ class BaseCovariance:
         The type of the covariance (class variable)
     """
     _covariance_classes = {}
+
+    def __init__(self):
+        """Abstract superclass constructor.
+
+        All the subclasses need _dense and _dense_inverse forms.
+
+        """
+        self._dense = None
+        self._dense_inverse = None
 
     # This method gets called whenever a subclass is
     # defined.  The keyword argument in the class definition
@@ -94,6 +104,38 @@ class BaseCovariance:
                 raise ValueError(f"Covariance is not a 2D square matrix - shape: {cov.shape}")
             return FullCovariance(cov)
 
+    @property
+    def dense(self):
+        """
+        A dense matrix form of the covariance
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        covmat: 2D array
+            Numpy array of dense form of matrix
+        """
+        if self._dense is None:
+            self._dense = self._get_dense()
+
+        return self._dense
+
+    @property
+    def inverse(self):
+        """A dense matrix form of the inverse of the covariance matrix
+
+        Returns
+        -------
+        invC: array
+            Inverse covariance
+        """
+        if self._dense_inverse is None:
+            self._dense_inverse = self._get_dense_inverse()
+        return self._dense_inverse
+
 
 class FullCovariance(BaseCovariance, cov_type='full'):
     """
@@ -111,6 +153,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     def __init__(self, covmat):
         self.covmat = np.atleast_2d(covmat)
         self.size = self.covmat.shape[0]
+        super().__init__()
 
     def to_hdu(self):
         """
@@ -185,24 +228,13 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         """
         return self.covmat[indices][:, indices]
 
-    def inverted(self):
-        """Return the inverse of the covariance matrix, as a dense array.
-
-        Returns
-        -------
-        invC: array
-            Inverse covariance
-        """
+    def _get_dense_inverse(self):
         return invert_spd_matrix(self.covmat)
 
-    def get_dense(self):
-        """Return a copy of the covariance matrix in dense form.
-
-        Returns
-        --------
-        C: array
-            The full covariance
-        """
+    def _get_dense(self):
+        # Internal method to get a dense form of the matrix.
+        # Use the property Covariance.dense instead of calling this
+        # directly.
         return self.covmat.copy()
 
 
@@ -235,6 +267,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         self.blocks = [np.atleast_2d(B) for B in blocks]
         self.block_sizes = [len(B) for B in self.blocks]
         self.size = sum(self.block_sizes)
+        super().__init__()
 
     def to_hdu(self):
         """Write a FITS HDU from the data, ready to be saved.
@@ -355,24 +388,15 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             C = C[indices][:, indices]
             return FullCovariance(C)
 
-    def inverted(self):
-        """Return the inverse of the covariance matrix, as a dense array.
-
-        Returns
-        -------
-        invC: array
-            Inverse covariance
-        """
+    def _get_dense_inverse(self):
+        # Invert all the blocks individually and then
+        # connect them all together
         return scipy.linalg.block_diag(*[invert_spd_matrix(B) for B in self.blocks])
 
-    def get_dense(self):
-        """Return a copy of the covariance matrix in dense form.
-
-        Returns
-        --------
-        C: array
-            The full covariance
-        """
+    def _get_dense(self):
+        # Internal method to get a dense form of the matrix.
+        # Use the property Covariance.dense instead of calling this
+        # directly.
         return scipy.linalg.block_diag(*self.blocks)
 
 
@@ -401,6 +425,7 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         """
         self.diag = np.atleast_1d(variances)
         self.size = len(self.diag)
+        super().__init__()
 
     def to_hdu(self):
         """
@@ -477,24 +502,14 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         """
         return np.diag(self.diag[indices])
 
-    def inverted(self):
-        """Return the inverse of the covariance matrix, as a dense array.
-
-        Returns
-        -------
-        invC: array
-            Inverse covariance
-        """
+    def _get_dense_inverse(self):
+        # Trivial inverse
         return np.diag(1.0/self.diag)
 
-    def get_dense(self):
-        """Return a copy of the covariance matrix in dense form.
-
-        Returns
-        --------
-        C: array
-            The full covariance
-        """
+    def _get_dense(self):
+        # Internal method to get a dense form of the matrix.
+        # Use the property Covariance.dense instead of calling this
+        # directly.
         return np.diag(self.diag)
 
 
@@ -518,6 +533,6 @@ def concatenate_covariances(*covariances):
             blocks += cov.blocks
         # For everything else we just use a dense matrix
         else:
-            blocks.append(cov.get_dense())
+            blocks.append(cov.dense)
 
     return BlockDiagonalCovariance(blocks)
