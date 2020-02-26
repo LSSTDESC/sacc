@@ -1,4 +1,4 @@
 astropy
 scipy
-numpy
+numpy>=1.16
 numpydoc
