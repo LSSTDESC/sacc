@@ -106,7 +106,6 @@ class BaseTracer:
         -------
         tracers: dict
             Dict mapping string names to tracer objects.
-
         """
         tracers = {}
         # Figure out the different subclasses that are present
@@ -217,11 +216,12 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     Attributes
     ----------
-
     z: array
         Redshift sample values
+
     nz: array
         Number density n(z) at redshift sample points.
+
     extra_columns: dict[str: array] or dict[int:array]
         Additional estimates of the same n(z), by name
     """
@@ -236,10 +236,13 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         name: str
             The name for this specific tracer, e.g. a
             tomographic bin identifier.
+
         z: array
             Redshift sample values
+
         nz: array
             Number density n(z) at redshift sample points.
+
         extra_columns: dict[str:array]
             Optional, default=None.  Additional realizations or
             estimates of the same n(z), by name.

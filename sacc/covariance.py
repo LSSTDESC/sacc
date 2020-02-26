@@ -48,7 +48,9 @@ class BaseCovariance:
         hdu: astropy.fits.ImageHDU instance
             An HDU object with covariance info in it
 
-        Returns: instance
+        Returns
+        -------
+        instance: BaseCovariance
             A covariance instance
         """
         subclass_name = hdu.header['saccclss']
@@ -100,7 +102,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
     Attributes
     ----------
-
     size: int
         the length of the corresponding data vector
 
@@ -199,7 +200,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
 
         Returns
         --------
-
         C: array
             The full covariance
         """
@@ -370,7 +370,6 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
 
         Returns
         --------
-
         C: array
             The full covariance
         """
@@ -389,7 +388,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
     diag: array
         The diagonal terms in the covariance (i.e. the variances)
-
     """
     def __init__(self, variances):
         """
@@ -494,7 +492,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
 
         Returns
         --------
-
         C: array
             The full covariance
         """
