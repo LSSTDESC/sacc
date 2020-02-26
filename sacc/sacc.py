@@ -1026,6 +1026,11 @@ def concatenate_data_sets(*data_sets, labels=None):
     if len(data_sets) == 0:
         return Sacc()
 
+    # check for wrong number of labels
+    if labels is not None:
+        if len(labels)!=len(data_sets):
+            raise ValueError("Wrong number of labels supplied when concatenating data sets")
+
     data_0 = data_sets[0]
 
     # Either all the data sets should have covariances or none of them should.  Concatenating
@@ -1050,7 +1055,7 @@ def concatenate_data_sets(*data_sets, labels=None):
 
             # Optionally add a suffix label to avoid name clashes.
             if labels is not None:
-                tracer.name += labels[i]
+                tracer.name = f'{tracer.name}_{labels[i]}'
 
             # Check for duplicate tracer names.
             # Probably this happens because the user has not provided
@@ -1071,13 +1076,20 @@ def concatenate_data_sets(*data_sets, labels=None):
             # Shallow copy because we do not want to clone Window functions,
             # since they are often shared. The reason we do it at all
             # is because we may be modifying the tracers names below.
-            # Should we add a label to the data point too?  Or is the tracer
-            # info sufficient?
             d = copy.copy(d)
+
             # Rename the tracers if required.
             if labels is not None:
                 label = labels[i]
-                d.tracers = tuple([t+label for t in d.tracers])
+                d.tracers = tuple([f'{t}_{label}' for t in d.tracers])
+                # Data points might reasonably have a label already,
+                # but we would like to add a label from this concatenation
+                # process too.  If they have both, we concatenat them.
+                # For consistency with the tracers we don't include an
+                # underscore
+                orig_label = d.get_tag('label', '')
+                d.tags['label'] = f'{orig_label}_{label}' if orig_label else label
+
             # And build up the combined data vector
             output.data.append(d)
 
