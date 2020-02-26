@@ -1088,8 +1088,7 @@ def concatenate_data_sets(*data_sets, labels=None):
         output.add_covariance(cov)
 
     # Now just the metadata left.
-    # We allow data sets to have names the same
-    # as long as their 
+    # It is an error if there is a key that is the same in both
     for i, data_set in enumerate(data_sets):
         for key, val in data_set.metadata.items():
 
@@ -1098,7 +1097,7 @@ def concatenate_data_sets(*data_sets, labels=None):
                 key = key + labels[i]
 
             # Check for clashing metadata
-            if (key in output.metadata ) and (value != output.metadata[value]):
+            if key in output.metadata:
                 raise ValueError("Metadata in concatenated Saccs have same name. "
                     "Set the labels parameter to fix this.")
 
