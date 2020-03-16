@@ -125,7 +125,7 @@ def test_inverses():
     C = (C+C.T) + np.eye(N)*20
     M1 = sacc.BaseCovariance.make(C)
     assert M1.size == N
-    invC = M1.inverted()
+    invC = M1.inverse
     I = np.dot(invC, C)
     assert np.allclose(I, np.eye(N))
 
@@ -138,14 +138,14 @@ def test_inverses():
     M2dense = np.zeros((N,N))
     for i in range(5):
         M2dense[i*5:i*5+5,i*5:i*5+5] = blocks[i]
-    invC2 = M2.inverted()
+    invC2 = M2.inverse
     I = np.dot(invC2, M2dense)
     assert np.allclose(I, np.eye(N))
 
     d = abs(np.random.uniform(0,1,size=N))+1
     M3 = sacc.BaseCovariance.make(d)
     assert M3.size == N
-    invC3 = M3.inverted()
+    invC3 = M3.inverse
     assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
     assert np.allclose(invC3.diagonal() * d, 1)
 
@@ -282,3 +282,96 @@ def test_log_window():
     for w1 in W1:
         w2 = W2[id(w1)]
         assert (w1.min, w1.max) == (w2.min, w2.max)
+
+
+def test_concatenate_covariance():
+    v1 = np.array([1.,2.,3.])
+    v2 = np.array([4.])
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.covariance.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.DiagonalCovariance)
+    assert np.allclose(C.diag, [1,2,3,4])
+
+    v1 = np.array([2.])
+    v2 = np.array([[3., 0.1],[0.1, 3]])
+
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.covariance.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
+    test_C = np.array([
+        [2.0, 0.0, 0.0],
+        [0.0, 3.0, 0.1],
+        [0.0, 0.1, 3.0]]
+        )
+    assert np.allclose(C.dense, test_C)
+
+    v1 = np.array([
+        [2.0, 0.2,],
+        [0.2, 3.0,]]
+        )
+    v2 = np.array([
+        [4.0, -0.2,],
+        [-0.2, 5.0,]]
+        )
+    test_C = np.array([
+        [2.0, 0.2, 0.0, 0.0],
+        [0.2, 3.0, 0.0, 0.0],
+        [0.0, 0.0, 4.0,-0.2],
+        [0.0, 0.0,-0.2, 5.0]]
+        )
+
+    A = sacc.BaseCovariance.make(v1)
+    B = sacc.BaseCovariance.make(v2)
+    C = sacc.covariance.concatenate_covariances(A, B)
+    assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
+    assert np.allclose(C.dense, test_C)
+
+def test_concatenate_data():
+    s1 = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s1.add_tracer('NZ', 'source_0', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s1.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+
+
+    s2 = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s2.add_tracer('NZ', 'source_0', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i, label='xxx')
+
+    # name clash
+    with pytest.raises(ValueError):
+        sacc.concatenate_data_sets(s1, s2)
+
+    s3 = sacc.concatenate_data_sets(s1, s2, labels=['1', '2'])
+    assert 'source_0_1' in s3.tracers
+    assert 'source_0_2' in s3.tracers
+    assert len(s3) == len(s1) + len(s2)
+
+    # check data points in right order
+    for i in range(20):
+        assert s3.data[i].get_tag('ell') == 10.0*i
+        assert s3.data[i+20].get_tag('ell') == 10.0*i
+        assert s3.data[i].get_tag('label') == '1'
+        assert s3.data[i+20].get_tag('label') == 'xxx_2'
+        t1 = s3.data[i].tracers[0]
+        t2 = s3.data[i+20].tracers[0]
+        assert t1 == 'source_0_1'
+        assert t2 == 'source_0_2'
+        s3.get_tracer(t1)
+        s3.get_tracer(t2)
