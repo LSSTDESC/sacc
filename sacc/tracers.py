@@ -43,6 +43,7 @@ class BaseTracer:
 
         name: str
             The name for this specific tracer.
+
         quantity: str
             String describing the physical quantity described
             by this tracer (e.g. antenna_temperature, Compton_y,
@@ -111,7 +112,6 @@ class BaseTracer:
         -------
         tracers: dict
             Dict mapping string names to tracer objects.
-
         """
         tracers = {}
         # Figure out the different subclasses that are present
@@ -139,13 +139,14 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
     ----------
     name: str
         The name of the tracer
+
     quantity: str
         String describing the physical quantity described
         by this tracer (e.g. antenna_temperature, Compton_y,
         galaxy_overdensity, galaxy_size, convergence, etc.).
     """
 
-    def __init__(self, name, quantity,  **kwargs):
+    def __init__(self, name, quantity, **kwargs):
         super().__init__(name, quantity, **kwargs)
 
     @classmethod
@@ -219,7 +220,7 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
                 tracers[name] = cls(name, quantity, metadata=metadata)
         return tracers
 
-
+    
 class MapTracer(BaseTracer, tracer_type='Map'):
     """
     A Tracer type for a sky map.
@@ -515,23 +516,62 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
     name: str
         The name for this specific tracer, e.g. a
         tomographic bin identifier.
+
     quantity: str
         String describing the physical quantity described by this
         tracer (e.g. galaxy_overdensity, galaxy_shear, galaxy_size,
         mean_flux).
+
     spin: int
         Spin for this observable. Either 0 (e.g. galaxy overdensity)
         or 2 (e.g. cosmic shear).
+
     z: array
         Redshift sample values
+
     nz: array
         Number density n(z) at redshift sample points.
+
     extra_columns: dict[str: array] or dict[int: array]
         Additional estimates of the same n(z), by name
     """
 
     def __init__(self, name, quantity, spin, z, nz,
                  extra_columns=None, **kwargs):
+        """
+        Create a tracer corresponding to a distribution in redshift n(z),
+        for example of galaxies.
+
+        Parameters
+        ----------
+        name: str
+            The name for this specific tracer, e.g. a
+            tomographic bin identifier.
+
+        quantity: str
+            String describing the physical quantity described by this
+            tracer (e.g. galaxy_overdensity, galaxy_shear, galaxy_size,
+            mean_flux).
+
+        spin: int
+            Spin for this observable. Either 0 (e.g. galaxy overdensity)
+            or 2 (e.g. cosmic shear).
+
+        z: array
+            Redshift sample values
+
+        nz: array
+            Number density n(z) at redshift sample points.
+
+        extra_columns: dict[str:array]
+            Optional, default=None.  Additional realizations or
+            estimates of the same n(z), by name.
+
+        Returns
+        -------
+        instance: NZTracer object
+            An instance of this class
+        """
         super().__init__(name, quantity, **kwargs)
         self.spin = spin
         self.z = np.array(z)
@@ -593,7 +633,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         tracers: dict
             Dict mapping string names to tracer objects.
             Only contains one key/value pair for the one tracer.
-
         """
         tracers = {}
         for table in table_list:

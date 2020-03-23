@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from astropy.table import Table
 
-from .utils import Namespace, hide_null_values, null_values, camel_case_split_and_lowercase
+from .utils import Namespace, hide_null_values, null_values
 
 # The format for a data type name looks like this:
 # {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
@@ -29,82 +29,6 @@ required_tags = {
     "xi_-_im": ['theta'],
     "count": []
 }
-
-#parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
-#
-def parse_data_type_name(name):
-    return
-#    """Parse a data type name into its component parts
-#
-#    Data type names take the form:
-#    {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
-#
-#    where sources and properties are camel-case if there is more than one of them
-#
-#    Parameters
-#    ----------
-#    name: str
-#        A data type name
-#
-#    Returns
-#    -------
-#    sources: list[str]
-#        type(s) of astrophysical sources to which this applies
-#
-#    properties: list[str]
-#        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
-#
-#    statistic_type: str
-#        mathematical type of the statistic
-#
-#    statistic_subtype: str or None
-#        optional additional specifier
-#    """
-#    parts = name.split("_")
-#    if len(parts)==3:
-#        sources, properties, statistic = parts
-#        subtype = None
-#    elif len(parts)==4:
-#        sources, properties, statistic, subtype = parts
-#    else:
-#        raise ValueError("The supplied name is not a valid data type name"
-#            f"(must have 3 or 4 underscore-sparated parts): {name}")
-#    sources = camel_case_split_and_lowercase(sources)
-#    properties = camel_case_split_and_lowercase(properties)
-#    return parsedDataTypeName(sources, properties, statistic, subtype)
-#
-def build_data_type_name(sources, properties, statistic, subtype=None):
-    return
-#    """
-#
-#    Parameters
-#    ----------
-#    sources: str or list[str]
-#        type(s) of astrophysical sources to which this applies
-#
-#    properties: str or list[str]
-#        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
-#
-#    statistic_type: str
-#        mathematical type of the statistic
-#
-#    statistic_subtype: str or None
-#        optional additional specifier.  Default is None
-#
-#    Returns
-#    -------
-#    name: str
-#        Type name of the form: {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
-#    """
-#    if not isinstance(sources, str):
-#        sources = "".join([sources[0]] + [s.lower().capitalize() for s in sources[1:]])
-#    if not isinstance(properties, str):
-#        properties = "".join([properties[0]] + [s.lower().capitalize() for s in properties[1:]])
-#    if subtype:
-#        return f"{sources}_{properties}_{statistic}_{subtype}"
-#    else:
-#        return f"{sources}_{properties}_{statistic}"
-
 
 
 # This makes a namespace object, so you can do:
