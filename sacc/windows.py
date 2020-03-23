@@ -78,6 +78,24 @@ class BaseWindow:
             windows.update(subclass.from_table(table))
         return windows
 
+    def get_section(self, indices):
+        """Return the part of this window corresponding to
+        the input indices
+
+        Parameters
+        ----------
+        indices: array_like
+            List of integer indices.
+
+        Returns
+        -------
+        W: Window object
+            Part of the window function corresponding to the
+            input indices
+        """
+        raise NotImplementedError("get_section is not implemented for this "
+                                  " window function class.")
+
 
 class TopHatWindow(BaseWindow, window_type='TopHat'):
     """A window function that is constant between two values.
@@ -162,6 +180,8 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         """
         return {table.meta['SACCNAME']: cls(table['min'], table['max'])}
 
+    def get_section(self, indices):
+        return TopHatWindow(self.min[indices], self.max[indices])
 
 
 class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
@@ -171,7 +191,9 @@ class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
     the min and max values it is assumed to be constant in the log of the
     argument.  The difference arises when this object is used elsewhere.
     """
-    pass
+    def get_section(self, indices):
+        return LogTopHatWindow(self.min[indices], self.max[indices])
+
 
 class Window(BaseWindow, window_type='Standard'):
     """The Window class defines a tabulated window function.
@@ -245,3 +267,6 @@ class Window(BaseWindow, window_type='Standard'):
             Dictionary of id -> Window instances
         """
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
+
+    def get_section(self, indices):
+        return Window(self.values, self.weight[:, indices])

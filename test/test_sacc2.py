@@ -4,6 +4,7 @@ import numpy as np
 import scipy.linalg
 import pytest
 
+
 def test_construct():
     s = sacc.Sacc()
 

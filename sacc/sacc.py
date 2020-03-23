@@ -810,7 +810,7 @@ class Sacc:
                               "are associated to these data.")
             else:
                 w_inds = np.array(self._get_tags_by_index(['window_id'], ind)[0])
-                ws = (ws.values, ws.weight.T[w_inds])
+                ws = ws.get_section(w_inds)
 
         if return_cov:
             if not self.has_covariance():
