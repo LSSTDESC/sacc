@@ -1,7 +1,6 @@
 import sacc
 import sacc.data_types
 import numpy as np
-import scipy.linalg
 import pytest
 
 
@@ -24,7 +23,8 @@ def test_tracers_later():
 
     with pytest.raises(ValueError):
         tracers = ('source_0', 'source_0')
-        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, 0.0, ell=1)
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, 0.0, ell=1)
 
     s = sacc.Sacc()
 
@@ -34,33 +34,33 @@ def test_tracers_later():
 
 
 def test_full_cov():
-    covmat = np.random.uniform(size=(100,100))
+    covmat = np.random.uniform(size=(100, 100))
     C = sacc.covariance.BaseCovariance.make(covmat)
     assert C.size == 100
     assert isinstance(C, sacc.covariance.FullCovariance)
-    assert np.all(C.covmat==covmat)
+    assert np.all(C.covmat == covmat)
     hdu = C.to_hdu()
     C2 = sacc.covariance.BaseCovariance.from_hdu(hdu)
     assert np.allclose(C.covmat, C2.covmat)
 
 
 def test_block_cov():
-    covmat = [np.random.uniform(size=(50,50)),
-              np.random.uniform(size=(100,100)),
-              np.random.uniform(size=(150,150))]
+    covmat = [np.random.uniform(size=(50, 50)),
+              np.random.uniform(size=(100, 100)),
+              np.random.uniform(size=(150, 150))]
     C = sacc.covariance.BaseCovariance.make(covmat)
     assert C.size == 300
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
     hdu = C.to_hdu()
     C2 = sacc.covariance.BaseCovariance.from_hdu(hdu)
-    assert len(C2.blocks)==3
+    assert len(C2.blocks) == 3
     assert C.block_sizes == C2.block_sizes
     for i in range(3):
         assert np.allclose(C.blocks[i], C2.blocks[i])
 
 
 def test_misc_tracer():
-    md1 = {'potato': 'if_necessary', 'answer': 42, 'height':1.83}
+    md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     T1 = sacc.BaseTracer.make('Misc', 'tracer1', 'some_potatos', metadata=md1)
     T2 = sacc.BaseTracer.make('Misc', 'tracer2', 'no_potatos', metadata=md2)
@@ -140,16 +140,16 @@ def test_map_tracer():
 
 
 def test_nz_tracer():
-    md1 = {'potato': 'if_necessary', 'answer': 42, 'height':1.83}
+    md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     z = np.arange(0., 1., 0.01)
-    Nz1 = 1*z # not a sensible N(z)!
-    Nz2 = 2*z # not a sensible N(z)!
+    Nz1 = 1*z  # not a sensible N(z)!
+    Nz2 = 2*z  # not a sensible N(z)!
 
     Nz3 = 3*z
     Nz4 = 4*z
 
-    more_nz = {'v1':Nz3, 'v2':Nz4}
+    more_nz = {'v1': Nz3, 'v2': Nz4}
 
     T1 = sacc.BaseTracer.make('NZ', 'tracer1', 'delta_g', spin=0,
                               z=z, nz=Nz1, extra_columns=more_nz,
@@ -158,7 +158,7 @@ def test_nz_tracer():
                               z=z, nz=Nz2, metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
-    
+
     tables = sacc.BaseTracer.to_tables([T1, T2])
     D = sacc.BaseTracer.from_tables(tables)
 
@@ -176,7 +176,7 @@ def test_mixed_tracers():
     md2 = {'rank': 'duke'}
     md3 = {'rank': 'earl', 'robes': 78}
     z = np.arange(0., 1., 0.01)
-    Nz1 = 1*z # not a sensible N(z)!
+    Nz1 = 1*z  # not a sensible N(z)!
     Nz2 = 2*z
     T1 = sacc.BaseTracer.make('NZ', 'tracer1', 'galaxy_size',
                               0, z, Nz1)
@@ -188,40 +188,41 @@ def test_mixed_tracers():
 
     tables = sacc.BaseTracer.to_tables([T1, M1, T2, M2])
     recovered = sacc.BaseTracer.from_tables(tables)
-    assert recovered['sample1'].metadata['rank']=='duke'
-    assert recovered['sample2'].metadata['robes']==78
+    assert recovered['sample1'].metadata['rank'] == 'duke'
+    assert recovered['sample2'].metadata['robes'] == 78
     assert np.all(recovered['tracer1'].nz == Nz1)
-    assert recovered['tracer2'].metadata['potato']=='never'
+    assert recovered['tracer2'].metadata['potato'] == 'never'
 
 
 def test_inverses():
     N = 25
-    C = np.random.uniform(0,1, size=(N,N))
+    C = np.random.uniform(0, 1, size=(N, N))
     C = (C+C.T) + np.eye(N)*20
     M1 = sacc.BaseCovariance.make(C)
     assert M1.size == N
     invC = M1.inverse
-    I = np.dot(invC, C)
-    assert np.allclose(I, np.eye(N))
+    ii = np.dot(invC, C)
+    assert np.allclose(ii, np.eye(N))
 
-    blocks = [np.random.uniform(0,1, size=(5,5)) for i in range(5)]
+    blocks = [np.random.uniform(0, 1, size=(5, 5))
+              for i in range(5)]
     for b in blocks:
         b += b.T + np.eye(5)*20
 
     M2 = sacc.BaseCovariance.make(blocks)
     assert M2.size == N
-    M2dense = np.zeros((N,N))
+    M2dense = np.zeros((N, N))
     for i in range(5):
-        M2dense[i*5:i*5+5,i*5:i*5+5] = blocks[i]
+        M2dense[i*5:i*5+5, i*5:i*5+5] = blocks[i]
     invC2 = M2.inverse
-    I = np.dot(invC2, M2dense)
-    assert np.allclose(I, np.eye(N))
+    ii = np.dot(invC2, M2dense)
+    assert np.allclose(ii, np.eye(N))
 
-    d = abs(np.random.uniform(0,1,size=N))+1
+    d = abs(np.random.uniform(0, 1, size=N))+1
     M3 = sacc.BaseCovariance.make(d)
     assert M3.size == N
     invC3 = M3.inverse
-    assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3)))==0
+    assert np.count_nonzero(invC3 - np.diag(np.diagonal(invC3))) == 0
     assert np.allclose(invC3.diagonal() * d, 1)
 
 
@@ -230,7 +231,7 @@ def test_data_point():
     dt = sacc.data_types.standard_types.galaxy_shearDensity_cl_e
     value = 13.4
     tracers = ('aaa', 'bbb')
-    tags = {'ell':12, 'theta':14.3}
+    tags = {'ell': 12, 'theta': 14.3}
     d = DataPoint(dt, tracers, value, **tags)
     s = repr(d)
     d2 = eval(s)
@@ -253,50 +254,56 @@ def test_keep_remove():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, ee, ell=10.0*i)
     for i in range(20):
         bb = 0.1 * i
         tracers = ('source_1', 'source_1')
-        s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb, tracers, bb, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb,
+                         tracers, bb, ell=10.0*i)
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_2', 'source_2')
-        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, ee, ell=10.0*i)
 
     # Select by data type
     s2 = s.copy()
     s2.keep_selection(data_type=sacc.standard_types.galaxy_shear_cl_bb)
-    assert all(d.data_type==sacc.standard_types.galaxy_shear_cl_bb for d in s2.data)
-    assert len(s2)==20
+    assert all(d.data_type == sacc.standard_types.galaxy_shear_cl_bb
+               for d in s2.data)
+    assert len(s2) == 20
 
     # From multiple tracers
     s2 = s.copy()
     s2.keep_selection(data_type=sacc.standard_types.galaxy_shear_cl_ee)
-    assert all(d.data_type==sacc.standard_types.galaxy_shear_cl_ee for d in s2.data)
-    assert len(s2)==40
+    assert all(d.data_type == sacc.standard_types.galaxy_shear_cl_ee
+               for d in s2.data)
+    assert len(s2) == 40
 
     # Test removing a single tracer
     s2 = s.copy()
     s2.remove_selection(tracers=('source_1', 'source_1'))
-    for i,d in enumerate(s2.data):
-        if i<20:
+    for i, d in enumerate(s2.data):
+        if i < 20:
             assert d.tracers == ('source_0', 'source_0')
         else:
             assert d.tracers == ('source_2', 'source_2')
-    assert all(d.data_type==sacc.standard_types.galaxy_shear_cl_ee for d in s2.data)
-    assert len(s2)==40
+    assert all(d.data_type == sacc.standard_types.galaxy_shear_cl_ee
+               for d in s2.data)
+    assert len(s2) == 40
 
     # Test selecting by tag
     s2 = s.copy()
     s2.remove_selection(ell__lt=55)
     ell = s2.get_tag('ell')
     for e in ell:
-        assert e>55
+        assert e > 55
     s2 = s.copy()
     s2.keep_selection(ell__lt=55)
     ell = s2.get_tag('ell')
     for e in ell:
-        assert e<55
+        assert e < 55
 
     # Cutting just by index
     s2 = s.copy()
@@ -306,11 +313,13 @@ def test_keep_remove():
     # multiple selections
     s2 = s.copy()
     ind = s2.indices(tracers=('source_2', 'source_2'), ell__lt=45)
-    assert len(ind)==5
+    assert len(ind) == 5
 
 
 def test_cutting_block_cov():
-    covmat = [np.random.uniform(size=(50,50)), np.random.uniform(size=(100,100)), np.random.uniform(size=(150,150))]
+    covmat = [np.random.uniform(size=(50, 50)),
+              np.random.uniform(size=(100, 100)),
+              np.random.uniform(size=(150, 150))]
     C = sacc.covariance.BaseCovariance.make(covmat)
     ind = list(range(50))
     C2 = C.keeping_indices(np.arange(50))
@@ -319,11 +328,12 @@ def test_cutting_block_cov():
 
 
 def test_cutting_full_cov():
-    covmat = np.random.uniform(size=(100,100))
+    covmat = np.random.uniform(size=(100, 100))
     C = sacc.covariance.BaseCovariance.make(covmat)
     ind = np.arange(10, dtype=int)
     C2 = C.keeping_indices(ind)
-    assert np.allclose(C2.get_block(ind), covmat[:10,:10])
+    assert np.allclose(C2.get_block(ind),
+                       covmat[:10, :10])
 
 
 def test_cutting_diag_cov():
@@ -348,7 +358,7 @@ def test_window():
     ells = np.arange(nl)
     w = np.zeros([nb, nl])
     for i in range(nb):
-        w[i,i * dl: (i+1)*dl] = 1./dl
+        w[i, i*dl: (i+1)*dl] = 1./dl
 
     W1 = [sacc.Window(ells, w.T)]
 
@@ -385,16 +395,16 @@ def test_log_window():
 
 
 def test_concatenate_covariance():
-    v1 = np.array([1.,2.,3.])
+    v1 = np.array([1., 2., 3.])
     v2 = np.array([4.])
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
     C = sacc.covariance.concatenate_covariances(A, B)
     assert isinstance(C, sacc.covariance.DiagonalCovariance)
-    assert np.allclose(C.diag, [1,2,3,4])
+    assert np.allclose(C.diag, [1, 2, 3, 4])
 
     v1 = np.array([2.])
-    v2 = np.array([[3., 0.1],[0.1, 3]])
+    v2 = np.array([[3., 0.1], [0.1, 3]])
 
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
@@ -407,20 +417,14 @@ def test_concatenate_covariance():
         )
     assert np.allclose(C.dense, test_C)
 
-    v1 = np.array([
-        [2.0, 0.2,],
-        [0.2, 3.0,]]
-        )
-    v2 = np.array([
-        [4.0, -0.2,],
-        [-0.2, 5.0,]]
-        )
-    test_C = np.array([
-        [2.0, 0.2, 0.0, 0.0],
-        [0.2, 3.0, 0.0, 0.0],
-        [0.0, 0.0, 4.0,-0.2],
-        [0.0, 0.0,-0.2, 5.0]]
-        )
+    v1 = np.array([[2.0, 0.2, ],
+                   [0.2, 3.0, ]])
+    v2 = np.array([[4.0, -0.2, ],
+                   [-0.2, 5.0, ]])
+    test_C = np.array([[2.0, 0.2, 0.0, 0.0],
+                       [0.2, 3.0, 0.0, 0.0],
+                       [0.0, 0.0, 4.0, -0.2],
+                       [0.0, 0.0, -0.2, 5.0]])
 
     A = sacc.BaseCovariance.make(v1)
     B = sacc.BaseCovariance.make(v2)
@@ -440,8 +444,8 @@ def test_concatenate_data():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s1.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i)
-
+        s1.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                          tracers, ee, ell=10.0*i)
 
     s2 = sacc.Sacc()
 
@@ -453,7 +457,8 @@ def test_concatenate_data():
     for i in range(20):
         ee = 0.1 * i
         tracers = ('source_0', 'source_0')
-        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee, tracers, ee, ell=10.0*i, label='xxx')
+        s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                          tracers, ee, ell=10.0*i, label='xxx')
 
     # name clash
     with pytest.raises(ValueError):

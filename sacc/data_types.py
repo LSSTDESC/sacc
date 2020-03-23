@@ -1,14 +1,15 @@
-import warnings
 from collections import namedtuple
 
 from astropy.table import Table
 
-from .utils import Namespace, hide_null_values, null_values, camel_case_split_and_lowercase
+from .utils import (Namespace, hide_null_values,
+                    null_values, camel_case_split_and_lowercase)
 
 # The format for a data type name looks like this:
 # {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
 #     sources: type(s) of astrophysical sources to which this applies
-#     properties: feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+#     properties: feature(s)/characterisic(s) of those sources/fields to
+#         which the statistic applies
 #     statistic_type: mathematical type of the statistic
 #     statistic_subtype: optional additional specifier
 
@@ -136,40 +137,51 @@ required_tags_verbose = {
 
 required_tags = {**required_tags_concise, **required_tags_verbose}
 
-parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
+parsedDataTypeName = namedtuple('parsedDataTypeName',
+                                'sources properties statistic subtype')
+
 
 def parse_data_type_name(name):
     """Parse a verbose data type name into its component parts
     Verbose data type names take the form:
     {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
-    where sources and properties are camel-case if there is more than one of them
+    where sources and properties are camel-case if there is more
+    than one of them
+
     Parameters
     ----------
     name: str
         A data type name
+
     Returns
     -------
     sources: list[str]
         type(s) of astrophysical sources to which this applies
+
     properties: list[str]
-        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+        feature(s)/characterisic(s) of those sources/fields to
+        which the statistic applies
+
     statistic_type: str
         mathematical type of the statistic
+
     statistic_subtype: str or None
         optional additional specifier
     """
     parts = name.split("_")
-    if len(parts)==3:
+    if len(parts) == 3:
         sources, properties, statistic = parts
         subtype = None
-    elif len(parts)==4:
+    elif len(parts) == 4:
         sources, properties, statistic, subtype = parts
     else:
-        raise ValueError("The supplied name is not a valid verbose data type name"
-                         f"(must have 3 or 4 underscore-sparated parts): {name}")
+        raise ValueError("The supplied name is not a valid "
+                         "verbose data type name (must have "
+                         f"3 or 4 underscore-sparated parts): {name}")
     sources = camel_case_split_and_lowercase(sources)
     properties = camel_case_split_and_lowercase(properties)
     return parsedDataTypeName(sources, properties, statistic, subtype)
+
 
 def build_data_type_name(sources, properties, statistic, subtype=None):
     """
@@ -177,21 +189,29 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
     ----------
     sources: str or list[str]
         type(s) of astrophysical sources to which this applies
+
     properties: str or list[str]
-        feature(s)/characterisic(s) of those sources/fields to which the statistic applies
+        feature(s)/characterisic(s) of those sources/fields to
+        which the statistic applies
+
     statistic_type: str
         mathematical type of the statistic
+
     statistic_subtype: str or None
         optional additional specifier.  Default is None
+
     Returns
     -------
     name: str
-        Type name of the form: {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
+        Type name of the form:
+           {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
     """
     if not isinstance(sources, str):
-        sources = "".join([sources[0]] + [s.lower().capitalize() for s in sources[1:]])
+        sources = "".join([sources[0]] + [s.lower().capitalize()
+                                          for s in sources[1:]])
     if not isinstance(properties, str):
-        properties = "".join([properties[0]] + [s.lower().capitalize() for s in properties[1:]])
+        properties = "".join([properties[0]] + [s.lower().capitalize()
+                                                for s in properties[1:]])
     if subtype:
         return f"{sources}_{properties}_{statistic}_{subtype}"
     else:
@@ -200,7 +220,7 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
 
 # This makes a namespace object, so you can do:
 # standard_types.ggl_e == "ggl_e"
-# also, for convenience, you can do standard_types.index('ggl_e') 
+# also, for convenience, you can do standard_types.index('ggl_e')
 # and 'ggl_e' in standard_types
 
 standard_types = Namespace(*required_tags.keys())
@@ -229,15 +249,16 @@ class DataPoint:
         Mean value of this statistics
 
     tags: dict
-        Dictionary of further data point metadata, such as binning info, angles, etc.
-
+        Dictionary of further data point metadata, such as binning
+        info, angles, etc.
     """
-    def __init__(self, data_type, tracers, value, ignore_missing_tags=False, **tags):
+    def __init__(self, data_type, tracers, value,
+                 ignore_missing_tags=False, **tags):
         """Create a new data point.
 
         Data points can be automatically created and added to a
         Sacc object, so you don't normally nee to manually create them.
-        
+
         Parameters
         ----------
         data_type: str
@@ -250,11 +271,12 @@ class DataPoint:
             Mean value of this statistics
 
         ignore_missing_tags: bool
-            Optional, default=False.  If True, do not complain if a tracer usually
-            needed for this data type is not present.
+            Optional, default=False.  If True, do not complain if a
+            tracer usually needed for this data type is not present.
 
         **tags: dict[str:any]
-            Dictionary of further data point metadata, such as binning info, angles, etc.
+            Dictionary of further data point metadata, such as binning
+            info, angles, etc.
         """
         self.data_type = data_type
         self.tracers = tracers
@@ -265,18 +287,24 @@ class DataPoint:
         if (data_type in required_tags) and (not ignore_missing_tags):
             for tag in required_tags[data_type]:
                 if tag not in tags:
-                    raise ValueError(f"Tag {tag} required for data type {data_type} (ignore_missing_tags=False)")
+                    raise ValueError("Tag {tag} required for data type "
+                                     f"{data_type} "
+                                     "(ignore_missing_tags=False)")
 
-
-        # We encourage people to use existing type names, and issue a warning if they do
-        # not to prod them in the right direction.
-        # We are removing this warning until we converge on what the data types should be
+        # We encourage people to use existing type names, and issue a
+        # warning if they do not to prod them in the right direction.
+        # We are removing this warning until we converge on what the
+        # data types should be
         # if data_type not in standard_types:
-        #     warnings.warn(f"Unknown data_type value {data_type}. If possible use a pre-defined type, or add to the list.")
+        #     warnings.warn(f"Unknown data_type value {data_type}. "
+        #                   "If possible use a pre-defined type, or "
+        #                   "add to the list.")
 
     def __repr__(self):
-        t = ", ".join(f'{k}={v}' for (k,v) in self.tags.items())
-        return f"DataPoint(data_type='{self.data_type}', tracers={self.tracers}, value={self.value}, {t})"
+        t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items())
+        st = f"DataPoint(data_type='{self.data_type}', "
+        st += f"tracers={self.tracers}, value={self.value}, {t})"
+        return st
 
     def get_tag(self, tag, default=None):
         """
@@ -405,8 +433,10 @@ class DataPoint:
                 # This is mainly used for Window instances.
                 if k in lookups:
                     tags[k] = lookups[k].get(v, v)
-                # Now delete and null values, as indicated by the sentinel above.
-                if hasattr(tags[k], 'dtype') and v == null_values[tags[k].dtype.kind]:
+                # Now delete and null values, as indicated by the
+                # sentinel above.
+                if ((hasattr(tags[k], 'dtype')) and
+                    (v == null_values[tags[k].dtype.kind])):
                     del tags[k]
             # Finally convert back to a data point and record
             data_point = cls(data_type, tracers, value, **tags)

@@ -5,6 +5,7 @@ import numpy as np
 
 from .utils import invert_spd_matrix
 
+
 class BaseCovariance:
     """
     The abstract base class for covariances in different forms.
@@ -13,11 +14,11 @@ class BaseCovariance:
     The three concrete subclasses that are created are:
 
     FullCovariance - for dense matrices
-    
-    BlockDiagonalCovariance - for block diagonal matrices 
+
+    BlockDiagonalCovariance - for block diagonal matrices
         (those in which some sub-blocks are dense but without correlation
         between the blocks
-    
+
     DiagonalCovariance - a covariance where the elements are uncorrelated
 
     Attributes
@@ -71,8 +72,8 @@ class BaseCovariance:
     def make(cls, cov):
         """Make an appropriate covariance object from the matrix info itself.
 
-        You can pass in a list of covariance blocks for a block-diagonal, covariance
-        a 1D array for a diagonal covariance, or a full matrix.
+        You can pass in a list of covariance blocks for a block-diagonal,
+        covariance a 1D array for a diagonal covariance, or a full matrix.
 
         A different subclass is returned for each of these cases.
 
@@ -91,7 +92,8 @@ class BaseCovariance:
             for block in cov:
                 block = np.atleast_2d(block)
                 if (block.ndim != 2) or (block.shape[0] != block.shape[1]):
-                    raise ValueError(f"Covariance block has wrong size or shape {block.shape}")
+                    raise ValueError("Covariance block has wrong size "
+                                     f"or shape {block.shape}")
                 s += block.shape[0]
             return BlockDiagonalCovariance(cov)
         else:
@@ -101,7 +103,8 @@ class BaseCovariance:
             if cov.ndim == 1:
                 return DiagonalCovariance(cov)
             if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]):
-                raise ValueError(f"Covariance is not a 2D square matrix - shape: {cov.shape}")
+                raise ValueError("Covariance is not a 2D square matrix "
+                                 f"- shape: {cov.shape}")
             return FullCovariance(cov)
 
     @property
@@ -192,7 +195,6 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         """
         C = hdu.data
         return cls(C)
-
 
     def keeping_indices(self, indices):
         """
@@ -324,9 +326,9 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         Parameters
         ----------
         indices: array
-            An array of integer indices, which must be in 
+            An array of integer indices, which must be in
             ascending order
-        
+
         Returns
         -------
         cov: array
@@ -334,9 +336,10 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         """
         indices = np.array(indices)
 
-        if np.any(np.diff(indices))<0:
-            raise ValueError("Indices passed to BlockDiagonalCovariance.get_block must be in ascending order")
-        n = len(indices)
+        if np.any(np.diff(indices)) < 0:
+            raise ValueError("Indices passed to "
+                             "BlockDiagonalCovariance.get_block "
+                             "must be in ascending order")
         s = 0
         sub_blocks = []
         for block, sz in zip(self.blocks, self.block_sizes):
@@ -391,14 +394,14 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     def _get_dense_inverse(self):
         # Invert all the blocks individually and then
         # connect them all together
-        return scipy.linalg.block_diag(*[invert_spd_matrix(B) for B in self.blocks])
+        return scipy.linalg.block_diag(*[invert_spd_matrix(B)
+                                         for B in self.blocks])
 
     def _get_dense(self):
         # Internal method to get a dense form of the matrix.
         # Use the property Covariance.dense instead of calling this
         # directly.
         return scipy.linalg.block_diag(*self.blocks)
-
 
 
 class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
@@ -491,10 +494,10 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         Parameters
         ----------
         indices: array
-            An array of integer indices, which should be in 
-            ascending order (for consistency with the 
+            An array of integer indices, which should be in
+            ascending order (for consistency with the
             block diagonal interface)
-        
+
         Returns
         -------
         cov: array

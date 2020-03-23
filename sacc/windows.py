@@ -118,7 +118,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     """
     def __init__(self, range_min, range_max):
         """Create a top-hat window
-    
+
         Parameters
         ----------
         range_min: array_like
@@ -138,7 +138,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         A single table is created for all the windows.
 
         The tables contain an ID column which uniquely identifies the
-        window instance, but only whilst running a given python process - 
+        window instance, but only whilst running a given python process -
         it is not portable.  It should not be used for anythng other than I/O.
 
         Parameters
@@ -202,7 +202,7 @@ class Window(BaseWindow, window_type='Standard'):
     corresponding weights values for each one. More than one set of weights can
     be used.
 
-    The function could be integrated or summed depending on the 
+    The function could be integrated or summed depending on the
     context.
 
     Attributes
@@ -226,7 +226,7 @@ class Window(BaseWindow, window_type='Standard'):
         One table is created per window.
 
         The tables contain an ID column which uniquely identifies the
-        window instance, but only whilst running a given python process - 
+        window instance, but only whilst running a given python process -
         it is not portable.  It should not be used for anythng other than I/O.
 
         Parameters
