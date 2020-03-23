@@ -12,7 +12,7 @@ from .utils import Namespace, hide_null_values, null_values, camel_case_split_an
 #     statistic_type: mathematical type of the statistic
 #     statistic_subtype: optional additional specifier
 
-required_tags = {
+required_tags_concise = {
     "cl_00": ['ell'],
     "cl_0e": ['ell'],
     "cl_0b": ['ell'],
@@ -27,7 +27,10 @@ required_tags = {
     "xi_plus_im": ['theta'],
     "xi_minus_re": ['theta'],
     "xi_minus_im": ['theta'],
-    "count": [],
+    "count": []
+}
+
+required_tags_verbose = {
     "clusterGalaxy_densityConvergence_cl": ['ell'],
     "clusterGalaxy_densityConvergence_xi": ['theta'],
     "clusterGalaxy_densityShear_cl_b": ['ell'],
@@ -131,11 +134,13 @@ required_tags = {
     "galaxy_shear_xi_imagPlus": ['theta'],
 }
 
+required_tags = {**required_tags_concise, **required_tags_verbose}
+
 parsedDataTypeName = namedtuple('parsedDataTypeName', 'sources properties statistic subtype')
 
 def parse_data_type_name(name):
-    """Parse a data type name into its component parts
-    Data type names take the form:
+    """Parse a verbose data type name into its component parts
+    Verbose data type names take the form:
     {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
     where sources and properties are camel-case if there is more than one of them
     Parameters
@@ -160,7 +165,7 @@ def parse_data_type_name(name):
     elif len(parts)==4:
         sources, properties, statistic, subtype = parts
     else:
-        raise ValueError("The supplied name is not a valid data type name"
+        raise ValueError("The supplied name is not a valid verbose data type name"
                          f"(must have 3 or 4 underscore-sparated parts): {name}")
     sources = camel_case_split_and_lowercase(sources)
     properties = camel_case_split_and_lowercase(properties)
