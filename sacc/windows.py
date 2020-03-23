@@ -103,10 +103,10 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     
         Parameters
         ----------
-        range_min: int/float
+        range_min: array_like
             The minimum value where the top-hat function equals 1
 
-        range_max: int/float
+        range_max: array_like
             The maximum value where the top-hat function equals 1
 
         """
@@ -133,14 +133,17 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         table: list
             List of astropy.table.Table instances
         """
-        mins = [w.min for w in window_list]
-        maxs = [w.max for w in window_list]
-        ids = [id(w) for w in window_list]
-        t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
-        t.meta['SACCTYPE'] = 'window'
-        t.meta['SACCCLSS'] = cls.window_type
-        t.meta['EXTNAME'] = 'window:' + cls.window_type
-        return [t]
+        tables = []
+        for w in window_list:
+            cols = [w.min, w.max]
+            names = ['min', 'max']
+            t = Table(data=cols, names=names)
+            t.meta['SACCTYPE'] = 'window'
+            t.meta['SACCCLSS'] = cls.window_type
+            t.meta['SACCNAME'] = id(w)
+            t.meta['EXTNAME'] = 'window:' + cls.window_type
+            tables.append(t)
+        return tables
 
     @classmethod
     def from_table(cls, table):
@@ -157,7 +160,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         windows: dict
             Dictionary of id -> TopHatWindow instances
         """
-        return {row['id']: cls(row['min'], row['max']) for row in table}
+        return {table.meta['SACCNAME']: cls(table['min'], table['max'])}
 
 
 
