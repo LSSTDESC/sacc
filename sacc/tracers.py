@@ -251,7 +251,6 @@ class MapTracer(BaseTracer, tracer_type='Map'):
 
     def __init__(self, name, quantity, spin, ell, beam_ell,
                  beam_extra=None, map_unit='none', **kwargs):
-        print(kwargs)
         super().__init__(name, quantity, **kwargs)
         self.spin = spin
         self.map_unit = map_unit
