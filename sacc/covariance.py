@@ -21,7 +21,7 @@ class BaseCovariance:
 
     DiagonalCovariance - a covariance where the elements are uncorrelated
 
-    Attributes
+    Parameters
     ----------
     cov_type: string
         The type of the covariance (class variable)
@@ -145,7 +145,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     A covariance subclass representing a full matrix with correlations
     anywhere.  Represented as an n x n matrix.
 
-    Attributes
+    Parameters
     ----------
     size: int
         the length of the corresponding data vector
@@ -247,7 +247,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     but without correlations between the blocks. This feature can be taken
     advantage of when doing matrix operations like multiplication or inversion.
 
-    Attributes
+    Parameters
     ----------
     blocks: list[arrays]
         list of sub-blocks of the matrix
@@ -408,7 +408,7 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
     """A covariance subclass representing covariances that are
     purely diagonal.
 
-    Attributes
+    Parameters
     ----------
     size: int
         The size of the matrix

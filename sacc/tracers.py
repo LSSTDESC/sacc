@@ -139,7 +139,7 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
     MiscTracers do not have any attributes except for their
     name, so can be used for tagging external data, for example.
 
-    Attributes
+    Parameters
     ----------
     name: str
         The name of the tracer
@@ -232,9 +232,8 @@ class MapTracer(BaseTracer, tracer_type='Map'):
 
     Takes at least two arguments, defining the map beam.
 
-    Attributes
+    Parameters
     ----------
-
     name: str
         The name for this specific tracer object.
     quantity: str
@@ -345,9 +344,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
 
     Takes at least four arguments, defining the bandpass and beam.
 
-    Attributes
+    Parameters
     ----------
-
     name: str
         The name for this specific tracer, e.g. a frequency band
         identifier.
@@ -519,9 +517,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     Takes two arguments arrays of z and n(z)
 
-    Attributes
+    Parameters
     ----------
-
     name: str
         The name for this specific tracer, e.g. a
         tomographic bin identifier.

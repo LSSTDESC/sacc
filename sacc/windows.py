@@ -107,9 +107,8 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     the upper limit should be exclusive, so that you can use
     range(win.min, win.max) to select the right ell values.
 
-    Attributes
+    Parameters
     ----------
-
     min: int/float
         The minimum value where the top-hat function equals 1
 
@@ -205,7 +204,7 @@ class Window(BaseWindow, window_type='Standard'):
     The function could be integrated or summed depending on the
     context.
 
-    Attributes
+    Parameters
     ----------
     values: array
         An array of dimension (N) containing the points at which the

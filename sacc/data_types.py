@@ -237,7 +237,7 @@ class DataPoint:
     Data points can be automatically created and added to a
     Sacc object, so you don't normally nee to manually create them.
 
-    Attributes
+    Parameters
     -----------
     data_type: str
         A string, indicating the type of data point
