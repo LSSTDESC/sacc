@@ -1,5 +1,5 @@
+import warnings
 from collections import namedtuple
-
 from astropy.table import Table
 
 from .utils import (Namespace, hide_null_values,
@@ -293,12 +293,10 @@ class DataPoint:
 
         # We encourage people to use existing type names, and issue a
         # warning if they do not to prod them in the right direction.
-        # We are removing this warning until we converge on what the
-        # data types should be
-        # if data_type not in standard_types:
-        #     warnings.warn(f"Unknown data_type value {data_type}. "
-        #                   "If possible use a pre-defined type, or "
-        #                   "add to the list.")
+        if data_type not in standard_types:
+            warnings.warn(f"Unknown data_type value {data_type}. "
+                          "If possible use a pre-defined type, or "
+                          "add to the list.")
 
     def __repr__(self):
         t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items())

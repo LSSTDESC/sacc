@@ -103,7 +103,8 @@ class Sacc:
     # Builder methods for building up Sacc data from scratch in memory
     #
 
-    def add_tracer(self, tracer_type, name, quantity, *args, **kwargs):
+    def add_tracer(self, tracer_type, name,
+                   *args, quantity='generic', **kwargs):
         """
         Add a new tracer
 
@@ -137,7 +138,8 @@ class Sacc:
         None
 
         """
-        tracer = BaseTracer.make(tracer_type, name, quantity, *args, **kwargs)
+        tracer = BaseTracer.make(tracer_type, name, quantity=quantity,
+                                 *args, **kwargs)
         self.add_tracer_object(tracer)
 
     def add_tracer_object(self, tracer):

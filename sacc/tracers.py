@@ -1,7 +1,22 @@
 import numpy as np
 from astropy.table import Table
-from .utils import (hide_null_values,
+from .utils import (Namespace, hide_null_values,
                     remove_dict_null_values, unique_list)
+import warnings
+
+standard_quantities = Namespace('galaxy_shear',
+                                'galaxy_density',
+                                'galaxy_convergence',
+                                'cluster_density',
+                                'cmb_temperature',
+                                'cmb_polarization',
+                                'cmb_convergence',
+                                'cmb_tSZ',
+                                'cmb_kSZ',
+                                'cluster_mass_count_wl',
+                                'cluster_mass_count_xray',
+                                'cluster_mass_count_tSZ',
+                                'generic')
 
 
 class BaseTracer:
@@ -21,7 +36,13 @@ class BaseTracer:
     """
     _tracer_classes = {}
 
-    def __init__(self, name, quantity, **kwargs):
+    def __init__(self, name, quantity='generic', **kwargs):
+        # We encourage people to use existing quantity names, and issue a
+        # warning if they do not to prod them in the right direction.
+        if quantity not in standard_quantities:
+            warnings.warn(f"Unknown quantity {quantity}. "
+                          "If possible use a pre-defined quantity, or "
+                          "add to the list.")
         self.name = name
         self.quantity = quantity
         self.metadata = kwargs.pop('metadata', {})
@@ -31,7 +52,7 @@ class BaseTracer:
         cls.tracer_type = tracer_type
 
     @classmethod
-    def make(cls, tracer_type, name, quantity, *args, **kwargs):
+    def make(cls, tracer_type, name, *args, quantity='generic', **kwargs):
         """
         Select a Tracer subclass based on tracer_type
         and instantiate in instance of it with the remaining
@@ -47,8 +68,8 @@ class BaseTracer:
 
         quantity: str
             String describing the physical quantity described
-            by this tracer (e.g. antenna_temperature, Compton_y,
-            galaxy_overdensity, galaxy_size, etc.).
+            by this tracer (e.g. galaxy_density, cmb_temperature
+            etc.).
 
         Returns
         -------
@@ -56,7 +77,7 @@ class BaseTracer:
             An instance of a Tracer subclass
         """
         subclass = cls._tracer_classes[tracer_type]
-        obj = subclass(name, quantity, *args, **kwargs)
+        obj = subclass(name, *args, quantity=quantity, **kwargs)
         return obj
 
     @classmethod
@@ -150,8 +171,8 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
         galaxy_overdensity, galaxy_size, convergence, etc.).
     """
 
-    def __init__(self, name, quantity, **kwargs):
-        super().__init__(name, quantity, **kwargs)
+    def __init__(self, name, quantity='generic', **kwargs):
+        super().__init__(name, quantity=quantity, **kwargs)
 
     @classmethod
     def to_tables(cls, instance_list):
@@ -222,7 +243,7 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
                 quantity = row['quantity']
                 metadata = {key: row[key] for key in metadata_cols}
                 remove_dict_null_values(metadata)
-                tracers[name] = cls(name, quantity, metadata=metadata)
+                tracers[name] = cls(name, quantity=quantity, metadata=metadata)
         return tracers
 
 
@@ -254,9 +275,9 @@ class MapTracer(BaseTracer, tracer_type='Map'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
-    def __init__(self, name, quantity, spin, ell, beam_ell,
+    def __init__(self, name, spin, ell, beam_ell, quantity='generic',
                  beam_extra=None, map_unit='none', **kwargs):
-        super().__init__(name, quantity, **kwargs)
+        super().__init__(name, quantity=quantity, **kwargs)
         self.spin = spin
         self.map_unit = map_unit
         self.ell = np.array(ell)
@@ -332,8 +353,8 @@ class MapTracer(BaseTracer, tracer_type='Map'):
                     if key.startswith("META_"):
                         metadata[key[5:]] = value
 
-            tracers[name] = cls(name, quantity, spin, ell, beam_ell,
-                                beam_extra=beam_extra,
+            tracers[name] = cls(name, spin, ell, beam_ell,
+                                quantity=quantity, beam_extra=beam_extra,
                                 map_unit=map_unit, metadata=metadata)
         return tracers
 
@@ -378,11 +399,11 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
-    def __init__(self, name, quantity, spin,
-                 nu, bpss_nu, ell, beam_ell,
+    def __init__(self, name, spin, nu, bpss_nu,
+                 ell, beam_ell, quantity='generic',
                  bpss_extra=None, beam_extra=None,
                  nu_unit='GHz', map_unit='none', **kwargs):
-        super().__init__(name, quantity, **kwargs)
+        super().__init__(name, quantity=quantity, **kwargs)
         self.spin = spin
         self.nu = np.array(nu)
         self.nu_unit = nu_unit
@@ -500,9 +521,10 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                     if key.startswith("META_"):
                         metadata[key[5:]] = value
 
-            tracers[name] = cls(name, quantity, spin,
+            tracers[name] = cls(name, spin,
                                 nu, bpss_nu,
                                 ell, beam_ell,
+                                quantity=quantity,
                                 bpss_extra=bpss_extra,
                                 beam_extra=beam_extra,
                                 map_unit=map_unit,
@@ -542,8 +564,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         Additional estimates of the same n(z), by name
     """
 
-    def __init__(self, name, quantity, spin, z, nz,
-                 extra_columns=None, **kwargs):
+    def __init__(self, name, spin, z, nz,
+                 quantity='generic', extra_columns=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -578,7 +600,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         instance: NZTracer object
             An instance of this class
         """
-        super().__init__(name, quantity, **kwargs)
+        super().__init__(name, quantity=quantity, **kwargs)
         self.spin = spin
         self.z = np.array(z)
         self.nz = np.array(nz)
@@ -656,7 +678,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             for key, value in table.meta.items():
                 if key.startswith("META_"):
                     metadata[key[5:]] = value
-            tracers[name] = cls(name, quantity, spin, z, nz,
+            tracers[name] = cls(name, spin, z, nz,
+                                quantity=quantity,
                                 extra_columns=extra_columns,
                                 metadata=metadata)
         return tracers

@@ -4,13 +4,29 @@ import numpy as np
 import pytest
 
 
+def test_quantity_warning():
+    s = sacc.Sacc()
+    with pytest.warns(UserWarning):
+        s.add_tracer('Misc', 'source_0',
+                     quantity='dummy')
+
+
+def test_data_type_warning():
+    s = sacc.Sacc()
+    s.add_tracer('Misc', 'source_0')
+    with pytest.warns(UserWarning):
+        s.add_data_point('cl_wrong', ('source_0', 'source_0'),
+                         0.1, ell=10.)
+
+
 def test_construct():
     s = sacc.Sacc()
 
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s.add_tracer('NZ', 'source_0', 'delta_b', spin=0, z=z, nz=nz)
+    s.add_tracer('NZ', 'source_0', 0, z, nz,
+                 quantity='galaxy_density')
 
     for i in range(20):
         ee = 0.1 * i
@@ -62,8 +78,10 @@ def test_block_cov():
 def test_misc_tracer():
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
-    T1 = sacc.BaseTracer.make('Misc', 'tracer1', 'some_potatos', metadata=md1)
-    T2 = sacc.BaseTracer.make('Misc', 'tracer2', 'no_potatos', metadata=md2)
+    T1 = sacc.BaseTracer.make('Misc', 'tracer1',
+                              quantity='generic', metadata=md1)
+    T2 = sacc.BaseTracer.make('Misc', 'tracer2',
+                              quantity='generic', metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
 
@@ -87,13 +105,15 @@ def test_numap_tracer():
     bpss_extra = {'err1': bpss * 0.1,
                   'err2': bpss * 0.05}
 
-    T1 = sacc.BaseTracer.make('NuMap', 'band1', 'sat_temperature', 0,
+    T1 = sacc.BaseTracer.make('NuMap', 'band1', 0,
                               nu, bpss, ell, beam,
+                              quantity='cmb_temperature',
                               bpss_extra=bpss_extra,
                               beam_extra=beam_extra,
                               metadata=md2)
-    T2 = sacc.BaseTracer.make('NuMap', 'band2', 'sat_temperature', 0,
+    T2 = sacc.BaseTracer.make('NuMap', 'band2', 0,
                               nu, bpss, ell, beam,
+                              quantity='cmb_convergence',
                               bpss_extra=bpss_extra,
                               beam_extra=beam_extra,
                               metadata=md1)
@@ -119,11 +139,15 @@ def test_map_tracer():
     err = np.sin(ell * 0.1)
     beam_extra = {'err1': err}
 
-    T1 = sacc.BaseTracer.make('Map', 'y_milca', 'compton_y', 0,
-                              ell, beam, beam_extra=beam_extra,
+    T1 = sacc.BaseTracer.make('Map', 'y_milca',
+                              0, ell, beam,
+                              quantity='cmb_tSZ',
+                              beam_extra=beam_extra,
                               metadata=md1)
-    T2 = sacc.BaseTracer.make('Map', 'y_nilc', 'compton_y', 0,
-                              ell, beam, beam_extra=beam_extra,
+    T2 = sacc.BaseTracer.make('Map', 'y_nilc',
+                              0, ell, beam,
+                              quantity='cmb_kSZ',
+                              beam_extra=beam_extra,
                               metadata=md2)
 
     assert T1.metadata == md1
@@ -151,11 +175,13 @@ def test_nz_tracer():
 
     more_nz = {'v1': Nz3, 'v2': Nz4}
 
-    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 'delta_g', spin=0,
-                              z=z, nz=Nz1, extra_columns=more_nz,
+    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 0, z, Nz1,
+                              quantity='galaxy_density',
+                              extra_columns=more_nz,
                               metadata=md1)
-    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 'shear', spin=2,
-                              z=z, nz=Nz2, metadata=md2)
+    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 2, z, Nz2,
+                              quantity='galaxy_shear',
+                              metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
 
@@ -178,13 +204,13 @@ def test_mixed_tracers():
     z = np.arange(0., 1., 0.01)
     Nz1 = 1*z  # not a sensible N(z)!
     Nz2 = 2*z
-    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 'galaxy_size',
-                              0, z, Nz1)
-    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 'galaxy_shear',
-                              2, z, Nz2, metadata=md1)
+    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 0, z, Nz1,
+                              quantity='galaxy_convergence')
+    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 2, z, Nz2,
+                              quantity='galaxy_shear', metadata=md1)
 
-    M1 = sacc.BaseTracer.make("Misc", "sample1", 'noblemen', metadata=md2)
-    M2 = sacc.BaseTracer.make("Misc", "sample2", 'aristocrats', metadata=md3)
+    M1 = sacc.BaseTracer.make("Misc", "sample1", metadata=md2)
+    M2 = sacc.BaseTracer.make("Misc", "sample2", metadata=md3)
 
     tables = sacc.BaseTracer.to_tables([T1, M1, T2, M2])
     recovered = sacc.BaseTracer.from_tables(tables)
@@ -247,9 +273,12 @@ def test_keep_remove():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s.add_tracer('NZ', 'source_0', 'delta_g', 0, z, nz)
-    s.add_tracer('NZ', 'source_1', 'shear', 2, z, nz)
-    s.add_tracer('NZ', 'source_2', 'stars', 0, z, nz)
+    s.add_tracer('NZ', 'source_0', 0, z, nz,
+                 quantity='galaxy_density')
+    s.add_tracer('NZ', 'source_1', 2, z, nz,
+                 quantity='galaxy_shear')
+    s.add_tracer('NZ', 'source_2', 0, z, nz,
+                 quantity='cluster_density')
 
     for i in range(20):
         ee = 0.1 * i
@@ -439,7 +468,7 @@ def test_concatenate_data():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s1.add_tracer('NZ', 'source_0', 'shear', 2, z, nz)
+    s1.add_tracer('NZ', 'source_0', 2, z, nz, quantity='galaxy_shear')
 
     for i in range(20):
         ee = 0.1 * i
@@ -452,7 +481,7 @@ def test_concatenate_data():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s2.add_tracer('NZ', 'source_0', 'shear', 2, z, nz)
+    s2.add_tracer('NZ', 'source_0', 2, z, nz, quantity='galaxy_shear')
 
     for i in range(20):
         ee = 0.1 * i
