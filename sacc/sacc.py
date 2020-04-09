@@ -104,7 +104,7 @@ class Sacc:
     #
 
     def add_tracer(self, tracer_type, name,
-                   *args, quantity='generic', **kwargs):
+                   *args, **kwargs):
         """
         Add a new tracer
 
@@ -117,11 +117,6 @@ class Sacc:
 
         name: str
             A name for the tracer
-
-        quantity: str
-            String describing the physical quantity described
-            by this tracer (e.g. antenna_temperature, Compton_y,
-            galaxy_overdensity, galaxy_size, etc.).
 
         *args:
             Additional arguments to pass to the tracer constructor.
@@ -138,7 +133,7 @@ class Sacc:
         None
 
         """
-        tracer = BaseTracer.make(tracer_type, name, quantity=quantity,
+        tracer = BaseTracer.make(tracer_type, name,
                                  *args, **kwargs)
         self.add_tracer_object(tracer)
 
