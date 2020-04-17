@@ -145,7 +145,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     A covariance subclass representing a full matrix with correlations
     anywhere.  Represented as an n x n matrix.
 
-    Parameters
+    Attributes
     ----------
     size: int
         the length of the corresponding data vector
