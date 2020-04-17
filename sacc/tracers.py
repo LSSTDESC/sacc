@@ -250,7 +250,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         The name for this specific tracer object.
     ell: array
          Array of multipole values at which the beam is defined.
-    beam_ell: array
+    beam: array
          Beam.
     beam_extra: array
          Other beam-related arrays
@@ -260,13 +260,13 @@ class MapTracer(BaseTracer, tracer_type='Map'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
-    def __init__(self, name, spin, ell, beam_ell,
+    def __init__(self, name, spin, ell, beam,
                  beam_extra=None, map_unit='none', **kwargs):
         super().__init__(name, **kwargs)
         self.spin = spin
         self.map_unit = map_unit
         self.ell = np.array(ell)
-        self.beam_ell = np.array(beam_ell)
+        self.beam = np.array(beam)
         self.beam_extra = {} if beam_extra is None else beam_extra
 
     @classmethod
@@ -274,8 +274,8 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         tables = []
         for tracer in instance_list:
             # Beams
-            names = ['ell', 'beam_ell']
-            cols = [tracer.ell, tracer.beam_ell]
+            names = ['ell', 'beam']
+            cols = [tracer.ell, tracer.beam]
             for beam_id, col in tracer.beam_extra.items():
                 names.append(str(beam_id))
                 cols.append(col)
@@ -320,7 +320,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
             metadata = {}
             map_unit = 'none'
             ell = []
-            beam_ell = []
+            beam = []
             beam_extra = {}
             spin = 0
 
@@ -329,9 +329,9 @@ class MapTracer(BaseTracer, tracer_type='Map'):
                 name = table.meta['SACCNAME']
                 quantity = table.meta['SACCQTTY']
                 ell = table['ell']
-                beam_ell = table['beam_ell']
+                beam = table['beam']
                 for col in table.columns.values():
-                    if col.name not in ['ell', 'beam_ell']:
+                    if col.name not in ['ell', 'beam']:
                         beam_extra[col.name] = col.data
                 map_unit = table.meta['MAP_UNIT']
                 spin = table.meta['SPIN']
@@ -339,7 +339,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
                     if key.startswith("META_"):
                         metadata[key[5:]] = value
 
-            tracers[name] = cls(name, spin, ell, beam_ell,
+            tracers[name] = cls(name, spin, ell, beam,
                                 quantity=quantity, beam_extra=beam_extra,
                                 map_unit=map_unit, metadata=metadata)
         return tracers
@@ -369,7 +369,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
          alternative measurements, whatever).
     ell: array
          Array of multipole values at which the beam is defined.
-    beam_ell: array
+    beam: array
          Beam.
     beam_extra: array
          Other beam-related arrays
@@ -382,7 +382,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
     """
 
     def __init__(self, name, spin, nu, bandpass_nu,
-                 ell, beam_ell, bandpass_extra=None,
+                 ell, beam, bandpass_extra=None,
                  beam_extra=None, nu_unit='GHz',
                  map_unit='none', **kwargs):
         super().__init__(name, **kwargs)
@@ -393,7 +393,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         self.bandpass_nu = np.array(bandpass_nu)
         self.bandpass_extra = {} if bandpass_extra is None else bandpass_extra
         self.ell = np.array(ell)
-        self.beam_ell = np.array(beam_ell)
+        self.beam = np.array(beam)
         self.beam_extra = {} if beam_extra is None else beam_extra
 
     @classmethod
@@ -421,8 +421,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             tables.append(table)
 
             # Beams
-            names = ['ell', 'beam_ell']
-            cols = [tracer.ell, tracer.beam_ell]
+            names = ['ell', 'beam']
+            cols = [tracer.ell, tracer.beam]
             for beam_id, col in tracer.beam_extra.items():
                 names.append(str(beam_id))
                 cols.append(col)
@@ -471,7 +471,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             nu_unit = 'GHz'
             map_unit = 'none'
             ell = []
-            beam_ell = []
+            beam = []
             beam_extra = {}
             spin = 0
 
@@ -495,9 +495,9 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                 name = table.meta['SACCNAME']
                 quantity = table.meta['SACCQTTY']
                 ell = table['ell']
-                beam_ell = table['beam_ell']
+                beam = table['beam']
                 for col in table.columns.values():
-                    if col.name not in ['ell', 'beam_ell']:
+                    if col.name not in ['ell', 'beam']:
                         beam_extra[col.name] = col.data
                 map_unit = table.meta['MAP_UNIT']
                 spin = table.meta['SPIN']
@@ -507,7 +507,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
 
             tracers[name] = cls(name, spin,
                                 nu, bandpass_nu,
-                                ell, beam_ell,
+                                ell, beam,
                                 quantity=quantity,
                                 bandpass_extra=bandpass_extra,
                                 beam_extra=beam_extra,
