@@ -251,7 +251,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
     ell: array
          Array of multipole values at which the beam is defined.
     beam: array
-         Beam.
+         Beam multipoles at each value of ell.
     beam_extra: array
          Other beam-related arrays
          (e.g. uncertainties, principal components,
