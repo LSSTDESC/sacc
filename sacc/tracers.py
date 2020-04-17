@@ -361,9 +361,9 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         or 2 (e.g. polarization).
     nu: array
          Array of frequencies.
-    bpss_nu: array
+    bandpass_nu: array
          Bandpass transmission.
-    bpss_extra: array
+    bandpass_extra: array
          Other bandpass-related arrays
          (e.g. uncertainties, principal components,
          alternative measurements, whatever).
@@ -381,16 +381,17 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
-    def __init__(self, name, spin, nu, bpss_nu,
-                 ell, beam_ell, bpss_extra=None, beam_extra=None,
-                 nu_unit='GHz', map_unit='none', **kwargs):
+    def __init__(self, name, spin, nu, bandpass_nu,
+                 ell, beam_ell, bandpass_extra=None,
+                 beam_extra=None, nu_unit='GHz',
+                 map_unit='none', **kwargs):
         super().__init__(name, **kwargs)
         self.spin = spin
         self.nu = np.array(nu)
         self.nu_unit = nu_unit
         self.map_unit = map_unit
-        self.bpss_nu = np.array(bpss_nu)
-        self.bpss_extra = {} if bpss_extra is None else bpss_extra
+        self.bandpass_nu = np.array(bandpass_nu)
+        self.bandpass_extra = {} if bandpass_extra is None else bandpass_extra
         self.ell = np.array(ell)
         self.beam_ell = np.array(beam_ell)
         self.beam_extra = {} if beam_extra is None else beam_extra
@@ -400,17 +401,17 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         tables = []
         for tracer in instance_list:
             # Bandpasses
-            names = ['nu', 'bpss_nu']
-            cols = [tracer.nu, tracer.bpss_nu]
-            for bpss_id, col in tracer.bpss_extra.items():
-                names.append(str(bpss_id))
+            names = ['nu', 'bandpass_nu']
+            cols = [tracer.nu, tracer.bandpass_nu]
+            for bandpass_id, col in tracer.bandpass_extra.items():
+                names.append(str(bandpass_id))
                 cols.append(col)
             table = Table(data=cols, names=names)
             table.meta['SACCTYPE'] = 'tracer'
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
-            extname = f'tracer:{cls.tracer_type}:{tracer.name}:bpss'
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:bandpass'
             table.meta['EXTNAME'] = extname
             table.meta['NU_UNIT'] = tracer.nu_unit
             table.meta['SPIN'] = tracer.spin
@@ -451,7 +452,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             name = table.meta['SACCNAME']
             quantity = table.meta['SACCQTTY']
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
-            if tabtyp not in ['bpss', 'beam']:
+            if tabtyp not in ['bandpass', 'beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
 
             # If not present yet, create new tracer entry
@@ -465,8 +466,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             quantity = []
             metadata = {}
             nu = []
-            bpss_nu = []
-            bpss_extra = {}
+            bandpass_nu = []
+            bandpass_extra = {}
             nu_unit = 'GHz'
             map_unit = 'none'
             ell = []
@@ -474,15 +475,15 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             beam_extra = {}
             spin = 0
 
-            if 'bpss' in dt:
-                table = dt['bpss']
+            if 'bandpass' in dt:
+                table = dt['bandpass']
                 name = table.meta['SACCNAME']
                 quantity = table.meta['SACCQTTY']
                 nu = table['nu']
-                bpss_nu = table['bpss_nu']
+                bandpass_nu = table['bandpass_nu']
                 for col in table.columns.values():
-                    if col.name not in ['nu', 'bpss_nu']:
-                        bpss_extra[col.name] = col.data
+                    if col.name not in ['nu', 'bandpass_nu']:
+                        bandpass_extra[col.name] = col.data
                 nu_unit = table.meta['NU_UNIT']
                 spin = table.meta['SPIN']
                 for key, value in table.meta.items():
@@ -505,10 +506,10 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
                         metadata[key[5:]] = value
 
             tracers[name] = cls(name, spin,
-                                nu, bpss_nu,
+                                nu, bandpass_nu,
                                 ell, beam_ell,
                                 quantity=quantity,
-                                bpss_extra=bpss_extra,
+                                bandpass_extra=bandpass_extra,
                                 beam_extra=beam_extra,
                                 map_unit=map_unit,
                                 nu_unit=nu_unit,

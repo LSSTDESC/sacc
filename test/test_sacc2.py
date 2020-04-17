@@ -101,20 +101,20 @@ def test_numap_tracer():
     beam = np.exp(-0.1 * ell * (ell + 1))
     beam_extra = {'err1': np.sin(ell * 0.1)}
     nu = np.linspace(30., 60., 100)
-    bpss = np.ones(100)
-    bpss_extra = {'err1': bpss * 0.1,
-                  'err2': bpss * 0.05}
+    bandpass = np.ones(100)
+    bandpass_extra = {'err1': bandpass * 0.1,
+                      'err2': bandpass * 0.05}
 
     T1 = sacc.BaseTracer.make('NuMap', 'band1', 0,
-                              nu, bpss, ell, beam,
+                              nu, bandpass, ell, beam,
                               quantity='cmb_temperature',
-                              bpss_extra=bpss_extra,
+                              bandpass_extra=bandpass_extra,
                               beam_extra=beam_extra,
                               metadata=md2)
     T2 = sacc.BaseTracer.make('NuMap', 'band2', 0,
-                              nu, bpss, ell, beam,
+                              nu, bandpass, ell, beam,
                               quantity='cmb_convergence',
-                              bpss_extra=bpss_extra,
+                              bandpass_extra=bandpass_extra,
                               beam_extra=beam_extra,
                               metadata=md1)
 
@@ -128,7 +128,7 @@ def test_numap_tracer():
     T2a = D['band2']
     assert T1a.metadata == md2
     assert T2a.metadata == md1
-    assert np.all(T1a.bpss_extra['err1'] == 0.1 * bpss)
+    assert np.all(T1a.bandpass_extra['err1'] == 0.1 * bandpass)
 
 
 def test_map_tracer():
