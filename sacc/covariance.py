@@ -21,7 +21,7 @@ class BaseCovariance:
 
     DiagonalCovariance - a covariance where the elements are uncorrelated
 
-    Parameters
+    Attributes
     ----------
     cov_type: string
         The type of the covariance (class variable)
