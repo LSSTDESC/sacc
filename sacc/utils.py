@@ -162,6 +162,7 @@ def invert_spd_matrix(M, strict=True):
 
 
 def camel_case_split_and_lowercase(identifier):
-    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)',
+    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])'
+                          '|(?<=[A-Z])(?=[A-Z][a-z])|$)',
                           identifier)
     return [m.group(0).lower() for m in matches]

@@ -434,7 +434,7 @@ class DataPoint:
                 # Now delete and null values, as indicated by the
                 # sentinel above.
                 if ((hasattr(tags[k], 'dtype')) and
-                    (v == null_values[tags[k].dtype.kind])):
+                        (v == null_values[tags[k].dtype.kind])):
                     del tags[k]
             # Finally convert back to a data point and record
             data_point = cls(data_type, tracers, value, **tags)

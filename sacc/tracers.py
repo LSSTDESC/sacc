@@ -36,9 +36,10 @@ class BaseTracer:
     """
     _tracer_classes = {}
 
-    def __init__(self, name, quantity='generic', **kwargs):
+    def __init__(self, name, **kwargs):
         # We encourage people to use existing quantity names, and issue a
         # warning if they do not to prod them in the right direction.
+        quantity = kwargs.pop('quantity', 'generic')
         if quantity not in standard_quantities:
             warnings.warn(f"Unknown quantity {quantity}. "
                           "If possible use a pre-defined quantity, or "
@@ -52,7 +53,7 @@ class BaseTracer:
         cls.tracer_type = tracer_type
 
     @classmethod
-    def make(cls, tracer_type, name, *args, quantity='generic', **kwargs):
+    def make(cls, tracer_type, name, *args, **kwargs):
         """
         Select a Tracer subclass based on tracer_type
         and instantiate in instance of it with the remaining
@@ -66,18 +67,13 @@ class BaseTracer:
         name: str
             The name for this specific tracer.
 
-        quantity: str
-            String describing the physical quantity described
-            by this tracer (e.g. galaxy_density, cmb_temperature
-            etc.).
-
         Returns
         -------
         instance: Tracer object
             An instance of a Tracer subclass
         """
         subclass = cls._tracer_classes[tracer_type]
-        obj = subclass(name, *args, quantity=quantity, **kwargs)
+        obj = subclass(name, *args, **kwargs)
         return obj
 
     @classmethod
@@ -164,15 +160,10 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
     ----------
     name: str
         The name of the tracer
-
-    quantity: str
-        String describing the physical quantity described
-        by this tracer (e.g. antenna_temperature, Compton_y,
-        galaxy_overdensity, galaxy_size, convergence, etc.).
     """
 
-    def __init__(self, name, quantity='generic', **kwargs):
-        super().__init__(name, quantity=quantity, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
 
     @classmethod
     def to_tables(cls, instance_list):
@@ -257,12 +248,6 @@ class MapTracer(BaseTracer, tracer_type='Map'):
     ----------
     name: str
         The name for this specific tracer object.
-    quantity: str
-        String describing the physical quantity described by this
-        tracer (e.g. compton_y, kSZ, convergence).
-    spin: int
-        Spin for this observable. Either 0 (e.g. intensity)
-        or 2 (e.g. polarization).
     ell: array
          Array of multipole values at which the beam is defined.
     beam_ell: array
@@ -275,9 +260,9 @@ class MapTracer(BaseTracer, tracer_type='Map'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
-    def __init__(self, name, spin, ell, beam_ell, quantity='generic',
+    def __init__(self, name, spin, ell, beam_ell,
                  beam_extra=None, map_unit='none', **kwargs):
-        super().__init__(name, quantity=quantity, **kwargs)
+        super().__init__(name, **kwargs)
         self.spin = spin
         self.map_unit = map_unit
         self.ell = np.array(ell)
@@ -299,7 +284,8 @@ class MapTracer(BaseTracer, tracer_type='Map'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
-            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            table.meta['EXTNAME'] = extname
             table.meta['MAP_UNIT'] = tracer.map_unit
             table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
@@ -370,10 +356,6 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
     name: str
         The name for this specific tracer, e.g. a frequency band
         identifier.
-    quantity: str
-        String describing the physical quantity described by this
-        tracer (e.g. intensity, antenna_temperature, cmb_temperature,
-        HI_temperature).
     spin: int
         Spin for this observable. Either 0 (e.g. intensity)
         or 2 (e.g. polarization).
@@ -400,10 +382,9 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
     """
 
     def __init__(self, name, spin, nu, bpss_nu,
-                 ell, beam_ell, quantity='generic',
-                 bpss_extra=None, beam_extra=None,
+                 ell, beam_ell, bpss_extra=None, beam_extra=None,
                  nu_unit='GHz', map_unit='none', **kwargs):
-        super().__init__(name, quantity=quantity, **kwargs)
+        super().__init__(name, **kwargs)
         self.spin = spin
         self.nu = np.array(nu)
         self.nu_unit = nu_unit
@@ -429,7 +410,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
-            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:bpss'
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:bpss'
+            table.meta['EXTNAME'] = extname
             table.meta['NU_UNIT'] = tracer.nu_unit
             table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
@@ -448,7 +430,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
-            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            table.meta['EXTNAME'] = extname
             table.meta['MAP_UNIT'] = tracer.map_unit
             table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
@@ -545,15 +528,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         The name for this specific tracer, e.g. a
         tomographic bin identifier.
 
-    quantity: str
-        String describing the physical quantity described by this
-        tracer (e.g. galaxy_overdensity, galaxy_shear, galaxy_size,
-        mean_flux).
-
-    spin: int
-        Spin for this observable. Either 0 (e.g. galaxy overdensity)
-        or 2 (e.g. cosmic shear).
-
     z: array
         Redshift sample values
 
@@ -564,8 +538,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         Additional estimates of the same n(z), by name
     """
 
-    def __init__(self, name, spin, z, nz,
-                 quantity='generic', extra_columns=None, **kwargs):
+    def __init__(self, name, z, nz,
+                 extra_columns=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -575,15 +549,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         name: str
             The name for this specific tracer, e.g. a
             tomographic bin identifier.
-
-        quantity: str
-            String describing the physical quantity described by this
-            tracer (e.g. galaxy_overdensity, galaxy_shear, galaxy_size,
-            mean_flux).
-
-        spin: int
-            Spin for this observable. Either 0 (e.g. galaxy overdensity)
-            or 2 (e.g. cosmic shear).
 
         z: array
             Redshift sample values
@@ -600,8 +565,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         instance: NZTracer object
             An instance of this class
         """
-        super().__init__(name, quantity=quantity, **kwargs)
-        self.spin = spin
+        super().__init__(name, **kwargs)
         self.z = np.array(z)
         self.nz = np.array(nz)
         self.extra_columns = {} if extra_columns is None else extra_columns
@@ -636,7 +600,6 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['SACCNAME'] = tracer.name
             table.meta['SACCQTTY'] = tracer.quantity
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
-            table.meta['SPIN'] = tracer.spin
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
             remove_dict_null_values(table.meta)
@@ -673,12 +636,11 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
                 if col.name not in ['z', 'nz']:
                     extra_columns[col.name] = col.data
 
-            spin = table.meta['SPIN']
             metadata = {}
             for key, value in table.meta.items():
                 if key.startswith("META_"):
                     metadata[key[5:]] = value
-            tracers[name] = cls(name, spin, z, nz,
+            tracers[name] = cls(name, z, nz,
                                 quantity=quantity,
                                 extra_columns=extra_columns,
                                 metadata=metadata)

@@ -1207,7 +1207,8 @@ def concatenate_data_sets(*data_sets, labels=None):
                 # For consistency with the tracers we don't include an
                 # underscore
                 orig_label = d.get_tag('label', '')
-                d.tags['label'] = f'{orig_label}_{label}' if orig_label else label
+                d.tags['label'] = (f'{orig_label}_{label}'
+                                   if orig_label else label)
 
             # And build up the combined data vector
             output.data.append(d)

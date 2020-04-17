@@ -175,12 +175,14 @@ def test_nz_tracer():
 
     more_nz = {'v1': Nz3, 'v2': Nz4}
 
-    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 0, z, Nz1,
+    T1 = sacc.BaseTracer.make('NZ', 'tracer1', z, Nz1,
                               quantity='galaxy_density',
                               extra_columns=more_nz,
+                              spin=0,
                               metadata=md1)
-    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 2, z, Nz2,
+    T2 = sacc.BaseTracer.make('NZ', 'tracer2', z, Nz2,
                               quantity='galaxy_shear',
+                              spin=2,
                               metadata=md2)
     assert T1.metadata == md1
     assert T2.metadata == md2
@@ -204,9 +206,9 @@ def test_mixed_tracers():
     z = np.arange(0., 1., 0.01)
     Nz1 = 1*z  # not a sensible N(z)!
     Nz2 = 2*z
-    T1 = sacc.BaseTracer.make('NZ', 'tracer1', 0, z, Nz1,
+    T1 = sacc.BaseTracer.make('NZ', 'tracer1', z, Nz1,
                               quantity='galaxy_convergence')
-    T2 = sacc.BaseTracer.make('NZ', 'tracer2', 2, z, Nz2,
+    T2 = sacc.BaseTracer.make('NZ', 'tracer2', z, Nz2,
                               quantity='galaxy_shear', metadata=md1)
 
     M1 = sacc.BaseTracer.make("Misc", "sample1", metadata=md2)
