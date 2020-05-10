@@ -837,7 +837,7 @@ class Sacc:
                 warnings.warn("You asked for window functions, but no windows "
                               "are associated to these data.")
             else:
-                w_inds = np.array(self._get_tags_by_index(['window_id'],
+                w_inds = np.array(self._get_tags_by_index(['window_index'],
                                                           ind)[0])
                 ws = ws.get_section(w_inds)
 
@@ -942,7 +942,7 @@ class Sacc:
                              'theta', return_windows)
 
     def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name,
-                 window, window_id, tracers_later):
+                 window, window_index, tracers_later):
         """
         Internal method for adding 2pt data points.
         Copes with multiple values for the parameters
@@ -952,7 +952,7 @@ class Sacc:
             t = {tag_name: float(tag_val)}
             if window is not None:
                 t['window'] = window
-                t['window_id'] = window_id
+                t['window_index'] = window_index
             self.add_data_point(data_type, (tracer1, tracer2), x,
                                 tracers_later=tracers_later, **t)
             return
@@ -966,10 +966,10 @@ class Sacc:
             if window is None:
                 for tag_i, x_i in zip(tag_val, x):
                     self._add_2pt(data_type, tracer1, tracer2, x_i,
-                                  tag_i, tag_name, window, window_id,
+                                  tag_i, tag_name, window, window_index,
                                   tracers_later)
             else:
-                for tag_i, x_i, w_i in zip(tag_val, x, window_id):
+                for tag_i, x_i, w_i in zip(tag_val, x, window_index):
                     self._add_2pt(data_type, tracer1, tracer2, x_i,
                                   tag_i, tag_name, window, w_i,
                                   tracers_later)
@@ -991,7 +991,7 @@ class Sacc:
                                                    tracer2,
                                                    tag_val,
                                                    x,
-                                                   window_id):
+                                                   window_index):
                     self._add_2pt(data_type, b1, x_i, tag_i, tag_name,
                                   w_i, tracers_later)
         # multiple data point values
@@ -1018,12 +1018,12 @@ class Sacc:
                                                       tracer2,
                                                       tag_val,
                                                       x,
-                                                      window_id):
+                                                      window_index):
                     self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
                                   w_i, tracers_later)
 
     def add_ell_cl(self, data_type, tracer1, tracer2, ell, x,
-                   window=None, window_id=None, tracers_later=False):
+                   window=None, window_index=None, tracers_later=False):
         """
         Add a series of 2pt Fourier space data points, either
         individually or as a group.
@@ -1049,7 +1049,7 @@ class Sacc:
             Optional window object describing the window function
             of the data point.
 
-        window_id: int or None
+        window_index: int or None
             Indices of the windows to use for each ell.
 
         tracers_later: bool
@@ -1062,10 +1062,10 @@ class Sacc:
 
         """
         self._add_2pt(data_type, tracer1, tracer2, x, ell, 'ell',
-                      window, window_id, tracers_later)
+                      window, window_index, tracers_later)
 
     def add_theta_xi(self, data_type, tracer1, tracer2, theta, x,
-                     window=None, window_id=None, tracers_later=False):
+                     window=None, window_index=None, tracers_later=False):
         """
         Add a series of 2pt real space data points, either
         individually or as a group.
@@ -1091,7 +1091,7 @@ class Sacc:
             Optional window object describing the window function
             of the data point.
 
-        window_id: int or None
+        window_index: int or None
             Indices of the windows to use for each theta.
 
         tracers_later: bool
@@ -1104,7 +1104,7 @@ class Sacc:
 
         """
         self._add_2pt(data_type, tracer1, tracer2, x, theta, 'theta',
-                      window, window_id, tracers_later)
+                      window, window_index, tracers_later)
 
 
 def concatenate_data_sets(*data_sets, labels=None):
