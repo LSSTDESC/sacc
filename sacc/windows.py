@@ -104,8 +104,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
 
     In the case of discrete functions like ell window where it matters, these
     window functions should follow the python convention and
-    the upper limit should be exclusive, so that you can use
-    range(win.min, win.max) to select the right ell values.
+    the upper limit should be exclusive.
 
     Parameters
     ----------
