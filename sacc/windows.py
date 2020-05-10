@@ -179,7 +179,20 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         return {table.meta['SACCNAME']: cls(table['min'], table['max'])}
 
     def get_section(self, indices):
-        return TopHatWindow(self.min[indices], self.max[indices])
+        """Get part of this window function corresponding to the input
+        indices.
+
+        Parameters
+        ----------
+        indices: int or array_like
+            Indices to return.
+
+        Returns
+        -------
+        window: `TopHatWindow`
+            A `TopHatWindow` object.
+        """
+        return self.__class__(self.min[indices], self.max[indices])
 
 
 class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
@@ -189,8 +202,7 @@ class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
     the min and max values it is assumed to be constant in the log of the
     argument.  The difference arises when this object is used elsewhere.
     """
-    def get_section(self, indices):
-        return LogTopHatWindow(self.min[indices], self.max[indices])
+    pass
 
 
 class Window(BaseWindow, window_type='Standard'):
@@ -267,4 +279,17 @@ class Window(BaseWindow, window_type='Standard'):
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
 
     def get_section(self, indices):
-        return Window(self.values, self.weight[:, indices])
+        """Get part of this window function corresponding to the input
+        indices.
+
+        Parameters
+        ----------
+        indices: int or array_like
+            Indices to return.
+
+        Returns
+        -------
+        window: `Window`
+            A `Window object.
+        """
+        return self.__class__(self.values, self.weight[:, indices])
