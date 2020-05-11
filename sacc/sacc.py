@@ -816,7 +816,7 @@ class Sacc:
     #
 
     def _get_2pt(self, data_type, tracer1, tracer2, return_cov,
-                 angle_name):
+                 angle_name, return_ind=False):
         # Internal helper method for get_ell_cl and get_theta_xi
         ind = self.indices(data_type, (tracer1, tracer2))
 
@@ -828,12 +828,18 @@ class Sacc:
                 raise ValueError("This sacc data does not have "
                                  "a covariance attached")
             cov_block = self.covariance.get_block(ind)
-            return angle, mu, cov_block
+            if return_ind:
+                return angle, mu, cov_block, ind
+            else:
+                return angle, mu, cov_block
         else:
-            return angle, mu
+            if return_ind:
+                return angle, mu, ind
+            else:
+                return angle, mu
 
     def get_ell_cl(self, data_type, tracer1, tracer2,
-                   return_cov=False):
+                   return_cov=False, return_ind=False):
         """
         Helper method to extract the ell and C_ell values for a specific
         data type (e.g. 'shear_ee' and pair of tomographic bins)
@@ -853,6 +859,9 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_ind: bool
+            If True, also return the datapoint indices. Default=False
+
         Returns
         -------
         ell: array
@@ -862,12 +871,14 @@ class Sacc:
         cov_block: 2D array
             (Only if return_cov=True) The block of the covariance for
             these points
+        indices: array
+            (Only if return_ind=True) datapoint indices.
         """
         return self._get_2pt(data_type, tracer1, tracer2, return_cov,
-                             'ell')
+                             'ell', return_ind)
 
     def get_theta_xi(self, data_type, tracer1, tracer2,
-                     return_cov=False):
+                     return_cov=False, return_ind=False):
         """
         Helper method to extract the theta and correlation function
         values for a specific data type (e.g. 'shear_xi' and pair of
@@ -889,6 +900,9 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_ind: bool
+            If True, also return the datapoint indices. Default=False
+
         Returns
         -------
         ell: array
@@ -900,12 +914,14 @@ class Sacc:
         cov_block: 2D array
             (Only if return_cov=True) The block of the covariance for
             these points
+        indices: array
+            (Only if return_ind=True) datapoint indices.
         """
         return self._get_2pt(data_type, tracer1, tracer2, return_cov,
-                             'theta')
+                             'theta', return_ind)
 
     def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name,
-                 window):
+                 window, tracers_later):
         """
         Internal method for adding 2pt data points.
         Copes with multiple values for the parameters
@@ -985,7 +1001,7 @@ class Sacc:
                                   w_i, tracers_later)
 
     def add_ell_cl(self, data_type, tracer1, tracer2, ell, x,
-                   tracers_later=False):
+                   window=None, tracers_later=False):
         """
         Add a series of 2pt Fourier space data points, either
         individually or as a group.
