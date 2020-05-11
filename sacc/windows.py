@@ -238,3 +238,90 @@ class Window(BaseWindow, window_type='Standard'):
             Dictionary of id -> Window instances
         """
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
+
+
+class BandpowerWindow(BaseWindow, window_type='Standard'):
+    """The BandpowerWindow class defines a tabulated for power
+    spectrum bandpowers.
+
+    The class contains tabulated values of ell and corresponding weights
+    values for each one. More than one set of weights can be used.
+
+    Parameters
+    ----------
+    values: array
+        An array of dimension (N_ell) containing the ell values at which the
+        weights are defined.
+    weight:
+        An array of dimensions (N_ell, N_weight) containing N_weight sets of
+        weights corresponding to each value.
+
+    """
+    def __init__(self, values, weight):
+        self.values = np.array(values)
+        self.weight = np.array(weight)
+
+    @classmethod
+    def to_tables(cls, window_list):
+        """Convert a list of windows to a list of astropy tables.
+
+        One table is created per window.
+
+        The tables contain an ID column which uniquely identifies the
+        window instance, but only whilst running a given python process -
+        it is not portable.  It should not be used for anythng other than I/O.
+
+        Parameters
+        ----------
+        instance_list: list
+            List of Window instances
+
+        Returns
+        -------
+        table: list
+            List of astropy.table.Table instances
+        """
+        tables = []
+        for w in window_list:
+            cols = [w.values, w.weight]
+            names = ['values', 'weight']
+            t = Table(data=cols, names=names)
+            t.meta['SACCTYPE'] = 'window'
+            t.meta['SACCCLSS'] = cls.window_type
+            t.meta['SACCNAME'] = id(w)
+            t.meta['EXTNAME'] = 'window:' + cls.window_type
+            tables.append(t)
+        return tables
+
+    @classmethod
+    def from_table(cls, table):
+        """Convert an astropy table to a dictionary of Windows
+
+        One window is extracted from the table.
+
+        Parameters
+        ----------
+        table: astropy.table.Table
+
+        Returns
+        -------
+        windows: dict
+            Dictionary of id -> Window instances
+        """
+        return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
+
+    def get_section(self, indices):
+        """Get part of this window function corresponding to the input
+        indices.
+
+        Parameters
+        ----------
+        indices: int or array_like
+            Indices to return.
+
+        Returns
+        -------
+        window: `Window`
+            A `Window object.
+        """
+        return self.__class__(self.values, self.weight[:, indices])
