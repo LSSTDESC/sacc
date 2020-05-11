@@ -78,24 +78,6 @@ class BaseWindow:
             windows.update(subclass.from_table(table))
         return windows
 
-    def get_section(self, indices):
-        """Return the part of this window corresponding to
-        the input indices
-
-        Parameters
-        ----------
-        indices: array_like
-            List of integer indices.
-
-        Returns
-        -------
-        W: Window object
-            Part of the window function corresponding to the
-            input indices
-        """
-        raise NotImplementedError("get_section is not implemented for this "
-                                  " window function class.")
-
 
 class TopHatWindow(BaseWindow, window_type='TopHat'):
     """A window function that is constant between two values.
@@ -104,7 +86,8 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
 
     In the case of discrete functions like ell window where it matters, these
     window functions should follow the python convention and
-    the upper limit should be exclusive.
+    the upper limit should be exclusive, so that you can use
+    range(win.min, win.max) to select the right ell values.
 
     Parameters
     ----------
@@ -119,10 +102,10 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
 
         Parameters
         ----------
-        range_min: array_like
+        range_min: int/float
             The minimum value where the top-hat function equals 1
 
-        range_max: array_like
+        range_max: int/float
             The maximum value where the top-hat function equals 1
 
         """
@@ -149,17 +132,14 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         table: list
             List of astropy.table.Table instances
         """
-        tables = []
-        for w in window_list:
-            cols = [w.min, w.max]
-            names = ['min', 'max']
-            t = Table(data=cols, names=names)
-            t.meta['SACCTYPE'] = 'window'
-            t.meta['SACCCLSS'] = cls.window_type
-            t.meta['SACCNAME'] = id(w)
-            t.meta['EXTNAME'] = 'window:' + cls.window_type
-            tables.append(t)
-        return tables
+        mins = [w.min for w in window_list]
+        maxs = [w.max for w in window_list]
+        ids = [id(w) for w in window_list]
+        t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
+        t.meta['SACCTYPE'] = 'window'
+        t.meta['SACCCLSS'] = cls.window_type
+        t.meta['EXTNAME'] = 'window:' + cls.window_type
+        return [t]
 
     @classmethod
     def from_table(cls, table):
@@ -176,23 +156,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         windows: dict
             Dictionary of id -> TopHatWindow instances
         """
-        return {table.meta['SACCNAME']: cls(table['min'], table['max'])}
-
-    def get_section(self, indices):
-        """Get part of this window function corresponding to the input
-        indices.
-
-        Parameters
-        ----------
-        indices: int or array_like
-            Indices to return.
-
-        Returns
-        -------
-        window: `TopHatWindow`
-            A `TopHatWindow` object.
-        """
-        return self.__class__(self.min[indices], self.max[indices])
+        return {row['id']: cls(row['min'], row['max']) for row in table}
 
 
 class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
@@ -209,8 +173,7 @@ class Window(BaseWindow, window_type='Standard'):
     """The Window class defines a tabulated window function.
 
     The class contains tabulated values of the abscissa (e.g. ell or theta) and
-    corresponding weights values for each one. More than one set of weights can
-    be used.
+    corresponding weights values for each one.
 
     The function could be integrated or summed depending on the
     context.
@@ -218,11 +181,9 @@ class Window(BaseWindow, window_type='Standard'):
     Parameters
     ----------
     values: array
-        An array of dimension (N) containing the points at which the
-        weights are defined.
+        The points at which the weights are defines
     weight:
-        An array of dimensions (N, N_weight) containing N_weight sets of
-        weights corresponding to each value.
+        The weights corresponding to each value
 
     """
     def __init__(self, values, weight):
@@ -277,19 +238,3 @@ class Window(BaseWindow, window_type='Standard'):
             Dictionary of id -> Window instances
         """
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
-
-    def get_section(self, indices):
-        """Get part of this window function corresponding to the input
-        indices.
-
-        Parameters
-        ----------
-        indices: int or array_like
-            Indices to return.
-
-        Returns
-        -------
-        window: `Window`
-            A `Window object.
-        """
-        return self.__class__(self.values, self.weight[:, indices])
