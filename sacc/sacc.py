@@ -838,6 +838,38 @@ class Sacc:
             else:
                 return angle, mu
 
+    def get_bandpower_windows(self, indices):
+        """
+        Returns bandpower window functoins for a given set of datapoints.
+        All datapoints must share the same bandpower window.
+
+        Parameters
+        ----------
+        indices: array
+            indices of the data points you want windows for
+
+        Returns
+        -------
+        windows: BandpowerWindow object containing the bandpower window
+            functions for these indices.
+        """
+        ws = np.unique(self.data[i].tags.get('window') for i in indices)
+        if len(ws) != 1:
+            raise ValueError("You have asked for window functions, "
+                             "however, the points you have selected "
+                             "have different windows associated to them."
+                             "Please narrow down your selection (specify "
+                             "tracers and data type) or get windows "
+                             "later.")
+        ws = ws[0]
+        if not isinstance(ws, BandpowerWindow):
+            warnings.warn("Now bandpower windows associated to these data")
+            return None
+        else:
+            w_inds = np.array(self._get_tags_by_index(['window_ind'],
+                                                      indices)[0])
+            return ws.get_section(w_inds)
+
     def get_ell_cl(self, data_type, tracer1, tracer2,
                    return_cov=False, return_ind=False):
         """

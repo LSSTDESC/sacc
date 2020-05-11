@@ -382,7 +382,7 @@ def test_parse_data_names():
         assert name == name2
 
 
-def test_window():
+def test_bandpower_window():
     nb = 20
     nl = 200
     dl = nl // nb
@@ -391,10 +391,10 @@ def test_window():
     for i in range(nb):
         w[i, i*dl: (i+1)*dl] = 1./dl
 
-    W1 = [sacc.Window(ells, w.T)]
+    W1 = [sacc.BandpowerWindow(ells, w.T)]
 
-    tables = sacc.Window.to_tables(W1)
-    W2 = sacc.Window.from_tables(tables)
+    tables = sacc.BandpowerWindow.to_tables(W1)
+    W2 = sacc.BandpowerWindow.from_tables(tables)
     for w1 in W1:
         w2 = W2[id(w1)]
         assert np.all(w1.values == w2.values)
