@@ -853,7 +853,7 @@ class Sacc:
         windows: BandpowerWindow object containing the bandpower window
             functions for these indices.
         """
-        ws = np.unique(self.data[i].tags.get('window') for i in indices)
+        ws = unique_list(self.data[i].tags.get('window') for i in indices)
         if len(ws) != 1:
             raise ValueError("You have asked for window functions, "
                              "however, the points you have selected "
