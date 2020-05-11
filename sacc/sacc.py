@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from .tracers import BaseTracer
-from .windows import BaseWindow
+from .windows import BaseWindow, BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
@@ -921,7 +921,7 @@ class Sacc:
                              'theta', return_ind)
 
     def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name,
-                 window, tracers_later):
+                 window, tracers_later, tag_extra=None, tag_extra_name=None):
         """
         Internal method for adding 2pt data points.
         Copes with multiple values for the parameters
@@ -929,6 +929,8 @@ class Sacc:
         # single data point case
         if np.isscalar(tag_val):
             t = {tag_name: float(tag_val)}
+            if tag_extra_name is not None:
+                t[tag_extra_name] = tag_extra
             if window is not None:
                 t['window'] = window
             self.add_data_point(data_type, (tracer1, tracer2), x,
@@ -938,40 +940,53 @@ class Sacc:
         elif np.isscalar(tracer1):
             n1 = len(x)
             n2 = len(tag_val)
-            if not n1 == n2:
-                raise ValueError("Length of inputs do not match in "
-                                 f"added 2pt data ({n1},{n2})")
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n3 = n1
+            else:
+                n3 = len(tag_extra)
+            if not (n1 == n2 == n3):
+                raise ValueError("Length of inputs do not match in"
+                                 f"added 2pt data ({n1},{n2},{n3})")
             if window is None:
-                for tag_i, x_i in zip(tag_val, x):
+                for tag_i, x_i, te_i in zip(tag_val, x, tag_extra):
                     self._add_2pt(data_type, tracer1, tracer2, x_i,
                                   tag_i, tag_name, window,
-                                  tracers_later)
+                                  tracers_later, te_i, tag_extra_name)
             else:
-                for tag_i, x_i, w_i in zip(tag_val, x, window):
+                for tag_i, x_i, w_i, te_i in zip(tag_val, x,
+                                                 window, tag_extra):
                     self._add_2pt(data_type, tracer1, tracer2, x_i,
                                   tag_i, tag_name, w_i,
-                                  tracers_later)
+                                  tracers_later, te_i, tag_extra_name)
         # multiple bin values
         elif np.isscalar(data_type):
             n1 = len(x)
             n2 = len(tag_val)
             n3 = len(tracer1)
             n4 = len(tracer2)
-            if not (n1 == n2 == n3 == n4):
-                raise ValueError("Length of inputs do not match in "
-                                 f"added 2pt data ({n1}, {n2}, {n3}, {n4})")
-            if window is None:
-                for b1, b2, tag_i, x_i in zip(tracer1, tracer2, tag_val, x):
-                    self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name,
-                                  window, tracers_later)
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n5 = n1
             else:
-                for b1, b2, tag_i, x_i, w_i in zip(tracer1,
-                                                   tracer2,
-                                                   tag_val,
-                                                   x,
-                                                   window):
+                n5 = len(tag_extra)
+            if not (n1 == n2 == n3 == n4 == n5):
+                raise ValueError("Length of inputs do not match in "
+                                 f"added 2pt data ({n1},{n2},{n3},{n4},{n5})")
+            if window is None:
+                for b1, b2, tag_i, x_i, te_i in zip(tracer1, tracer2, tag_val,
+                                                    x, tag_extra):
+                    self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name,
+                                  window, tracers_later, te_i, tag_extra_name)
+            else:
+                for b1, b2, tag_i, x_i, w_i, te_i in zip(tracer1,
+                                                         tracer2,
+                                                         tag_val,
+                                                         x,
+                                                         window,
+                                                         tag_extra):
                     self._add_2pt(data_type, b1, x_i, tag_i, tag_name,
-                                  w_i, tracers_later)
+                                  w_i, tracers_later, te_i, tag_extra_name)
         # multiple data point values
         else:
             n1 = len(x)
@@ -979,26 +994,35 @@ class Sacc:
             n3 = len(tracer1)
             n4 = len(tracer2)
             n5 = len(data_type)
-            if not (n1 == n2 == n3 == n4 == n5):
-                raise ValueError("Length of inputs do not match in added "
-                                 f"2pt data ({n1}, {n2}, {n3}, {n4}, {n5})")
-            if window is None:
-                for d, b1, b2, tag_i, x_i in zip(data_type,
-                                                 tracer1,
-                                                 tracer2,
-                                                 tag_val,
-                                                 x):
-                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
-                                  window, tracers_later)
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n6 = n1
             else:
-                for d, b1, b2, tag_i, x_i, w_i in zip(data_type,
-                                                      tracer1,
-                                                      tracer2,
-                                                      tag_val,
-                                                      x,
-                                                      window):
+                n6 = len(tag_extra)
+            if not (n1 == n2 == n3 == n4 == n5 == n6):
+                raise ValueError("Length of inputs do not match in added "
+                                 f"2pt data ({n1},{n2},{n3},{n4},{n5},{n6})")
+            if window is None:
+                for d, b1, b2, tag_i, x_i, te_i in zip(data_type,
+                                                       tracer1,
+                                                       tracer2,
+                                                       tag_val,
+                                                       x,
+                                                       tag_extra):
                     self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
-                                  w_i, tracers_later)
+                                  window, tracers_later,
+                                  te_i, tag_extra_name)
+            else:
+                for d, b1, b2, tag_i, x_i, w_i, te_i in zip(data_type,
+                                                            tracer1,
+                                                            tracer2,
+                                                            tag_val,
+                                                            x,
+                                                            window,
+                                                            tag_extra):
+                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
+                                  w_i, tracers_later,
+                                  te_i, tag_extra_name)
 
     def add_ell_cl(self, data_type, tracer1, tracer2, ell, x,
                    window=None, tracers_later=False):
@@ -1036,8 +1060,20 @@ class Sacc:
         None
 
         """
+        if isinstance(window, BandpowerWindow):
+            if len(ell) != window.nv:
+                raise ValueError("Input bandpowers are misshapen")
+            tag_extra = range(window.nv)
+            tag_extra_name = "window_ind"
+            window_use = [window for i in range(window.nv)]
+        else:
+            tag_extra = None
+            tag_extra_name = None
+            window_use = window
+
         self._add_2pt(data_type, tracer1, tracer2, x, ell, 'ell',
-                      window, tracers_later)
+                      window_use, tracers_later,
+                      tag_extra, tag_extra_name)
 
     def add_theta_xi(self, data_type, tracer1, tracer2, theta, x,
                      window=None, tracers_later=False):

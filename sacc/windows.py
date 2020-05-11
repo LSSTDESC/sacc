@@ -258,6 +258,12 @@ class BandpowerWindow(BaseWindow, window_type='Standard'):
 
     """
     def __init__(self, values, weight):
+        nl, nv = weight.shape
+        nell = len(values)
+        if nl != len(values):
+            raise ValueError(f"Wrong input shapes ${nl}!=${nell}")
+        self.nell = nell
+        self.nv = nv
         self.values = np.array(values)
         self.weight = np.array(weight)
 
