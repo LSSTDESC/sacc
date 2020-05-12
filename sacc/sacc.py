@@ -6,10 +6,11 @@ from astropy.io import fits
 from astropy.table import Table
 
 from .tracers import BaseTracer
-from .windows import BaseWindow
+from .windows import BaseWindow, BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
+
 
 class Sacc:
     """
@@ -75,7 +76,8 @@ class Sacc:
                 return (dt, row.tracers, 0.0)
         # This from
         # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
-        indices = [i[0] for i in sorted(enumerate(self.data), key=lambda x:order_key(x[1]))]
+        indices = [i[0] for i in sorted(enumerate(self.data),
+                                        key=lambda x:order_key(x[1]))]
 
         # Assign the new order.
         self.reorder(indices)
@@ -101,7 +103,8 @@ class Sacc:
     # Builder methods for building up Sacc data from scratch in memory
     #
 
-    def add_tracer(self, tracer_type, name, *args, **kwargs):
+    def add_tracer(self, tracer_type, name,
+                   *args, **kwargs):
         """
         Add a new tracer
 
@@ -130,7 +133,8 @@ class Sacc:
         None
 
         """
-        tracer = BaseTracer.make(tracer_type, name, *args, **kwargs)
+        tracer = BaseTracer.make(tracer_type, name,
+                                 *args, **kwargs)
         self.add_tracer_object(tracer)
 
     def add_tracer_object(self, tracer):
@@ -146,7 +150,8 @@ class Sacc:
         """
         self.tracers[tracer.name] = tracer
 
-    def add_data_point(self, data_type, tracers, value, tracers_later=False, **tags):
+    def add_data_point(self, data_type, tracers, value,
+                       tracers_later=False, **tags):
         """
         Add a data point to the set.
 
@@ -155,17 +160,19 @@ class Sacc:
         data_type: str
 
         tracers: tuple of str
-            Strings corresponding to zero or more of the tracers in the data set
-            These should either be already set up using the add_tracer method,
-            or you could set tracers_later=True if you want to add them later.
-            e.g. for 2pt measurements the tracers are the names of the two n(z)
-            samples
+            Strings corresponding to zero or more of the tracers
+            in the data set. These should either be already set up
+            using the add_tracer method, or you could set
+            tracers_later=True if you want to add them later.
+            e.g. for 2pt measurements the tracers are the names of
+            the two n(z) samples.
 
         value: float
             A single value for the data point
 
         tracers_later: bool
-            If True, do not complain if the tracers are not know already
+            If True, do not complain if the tracers are not know
+            already.
 
         **tags:
             Tags to apply to this data point.
@@ -177,12 +184,15 @@ class Sacc:
         None
         """
         if self.has_covariance():
-            raise ValueError("You cannot add a data point after setting the covariance")
+            raise ValueError("You cannot add a data point after "
+                             "setting the covariance")
         tracers = tuple(tracers)
         for tracer in tracers:
             if (tracer not in self.tracers) and (not tracers_later):
-                raise ValueError(f"Tracer named '{tracer}' is not in the known list of tracers."
-                                 "Either put it in before adding data points or set tracers_later=True")
+                raise ValueError(f"Tracer named '{tracer}' is not in the "
+                                 "known list of tracers. "
+                                 "Either put it in before adding data "
+                                 "points or set tracers_later=True")
         d = DataPoint(data_type, tracers, value, **tags)
         self.data.append(d)
 
@@ -208,7 +218,8 @@ class Sacc:
 
         expected_size = len(self)
         if not cov.size == expected_size:
-            raise ValueError(f"Covariance has the wrong size.  Should be {expected_size} but is {cov.size}")
+            raise ValueError("Covariance has the wrong size. "
+                             f"Should be {expected_size} but is {cov.size}")
 
         self.covariance = cov
 
@@ -225,7 +236,8 @@ class Sacc:
     def _indices_to_bool(self, indices):
         # Convert an array of indices into a boolean True mask
         if indices.dtype not in [np.int8, np.int16, np.int32, np.int64]:
-            raise ValueError(f"Wrong indices type ({indices.dtype}) - expected integers or boolean")
+            raise ValueError(f"Wrong indices type ({indices.dtype}) - "
+                             "expected integers or boolean")
         m = np.zeros(len(self), dtype=bool)
         for i in indices:
             m[i] = True
@@ -233,21 +245,23 @@ class Sacc:
 
     def keep_indices(self, indices):
         """
-        Select data points, keeping only values where the mask is True or an index is
-        included in it.
+        Select data points, keeping only values where the mask is True or
+        an index is included in it.
 
-        You can use Sacc.remove_indices to do the opposite operation, keeping points where the mask
-        is False.
+        You can use Sacc.remove_indices to do the opposite operation,
+        keeping points where the mask is False.
 
-        You use the Sacc.keep_selection method to find indices and apply this method automatically,
-        or the Sacc.indices method to manually select indices.
+        You use the Sacc.keep_selection method to find indices and apply
+        this method automatically, or the Sacc.indices method to manually
+        select indices.
 
         Parameters
         ----------
         indices: array or list
-            Mask must be either a boolean array or a list/array of integer indices to remove.
-            if boolean then True means to keep a data point and False means to cut it
-            if integers then values indicate data points to keep
+            Mask must be either a boolean array or a list/array of integer
+            indices to remove. If boolean then True means to keep a data
+            point and False means to cut it if integers then values
+            indicate data points to keep.
         """
         indices = np.array(indices)
 
@@ -261,21 +275,23 @@ class Sacc:
 
     def remove_indices(self, indices):
         """
-        Remove data points, getting rid of points where the mask is True or an index is
-        included in it.
+        Remove data points, getting rid of points where the mask is True
+        or an index is included in it.
 
-        You can use Sacc.keep_indices to do the opposite operation, keeping points where the mask
-        is True.
+        You can use Sacc.keep_indices to do the opposite operation,
+        keeping points where the mask is True.
 
-        You use the Sacc.remove_selection method to find indices and apply this method automatically,
-        or the Sacc.indices method to manually select indices.
+        You use the Sacc.remove_selection method to find indices and
+        apply this method automatically, or the Sacc.indices method to
+        manually select indices.
 
         Parameters
         ----------
         indices: array or list
-            Mask must be either a boolean array or a list/array of integer indices to remove.
-            if boolean then True means to cut data point and False means to keep it
-            if integers then values indicate data points to cut out
+            Mask must be either a boolean array or a list/array of
+            integer indices to remove. If boolean then True means
+            to cut data point and False means to keep it if integers
+            then values indicate data points to cut out
         """
         indices = np.array(indices)
 
@@ -345,21 +361,24 @@ class Sacc:
             # Record this index
             if ok:
                 indices.append(i)
-        if len(indices)==0 and warn_empty:
+        if len(indices) == 0 and warn_empty:
             if tracers is None:
                 warnings.warn("Empty index selected")
             else:
-                warnings.warn("Empty index selected - maybe you should check the tracer order?")
+                warnings.warn("Empty index selected - maybe you "
+                              "should check the tracer order?")
         return np.array(indices, dtype=int)
 
-    def remove_selection(self, data_type=None, tracers=None, warn_empty=True, **select):
+    def remove_selection(self, data_type=None, tracers=None,
+                         warn_empty=True, **select):
         """
         Remove data points, getting rid of points matching the given criteria.
 
-        You can use Sacc.keep_selection to do the opposite operation, keeping points where the
-        criteria are matched.
+        You can use Sacc.keep_selection to do the opposite operation, keeping
+        points where the criteria are matched.
 
-        You can manually remove points using the Sacc.indices and Sacc.remove_indices methods.
+        You can manually remove points using the Sacc.indices and
+        Sacc.remove_indices methods.
 
         Parameters
         ----------
@@ -379,17 +398,20 @@ class Sacc:
             less or greater than a threshold
         """
 
-        indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
+        indices = self.indices(data_type=data_type, tracers=tracers,
+                               warn_empty=warn_empty, **select)
         self.remove_indices(indices)
 
-    def keep_selection(self, data_type=None, tracers=None, warn_empty=True, **select):
+    def keep_selection(self, data_type=None, tracers=None,
+                       warn_empty=True, **select):
         """
         Remove data points, keeping only points matching the given criteria.
 
-        You can use Sacc.remove_selection to do the opposite operation, keeping points where the
-        criteria are not matched.
+        You can use Sacc.remove_selection to do the opposite operation,
+        keeping points where the criteria are not matched.
 
-        You can manually remove points using the Sacc.indices and Sacc.keep_indices methods.
+        You can manually remove points using the Sacc.indices and
+        Sacc.keep_indices methods.
 
         Parameters
         ----------
@@ -408,9 +430,9 @@ class Sacc:
             name__gt=value in the selection to select points
             less or greater than a threshold
         """
-        indices = self.indices(data_type=data_type, tracers=tracers, warn_empty=warn_empty, **select)
+        indices = self.indices(data_type=data_type, tracers=tracers,
+                               warn_empty=warn_empty, **select)
         self.keep_indices(indices)
-
 
     def _get_tags_by_index(self, tags, indices):
         """
@@ -428,13 +450,15 @@ class Sacc:
         Returns
         -------
         values: list of lists
-            For each input tag, a corresponding list of the value of that tag for given
-            selection, in the order the matching data points were added.
+            For each input tag, a corresponding list of the value of that
+            tag for given selection, in the order the matching data points
+            were added.
 
 
         """
         indices = set(indices)
-        values = [[d.get_tag(tag) for i, d in enumerate(self.data) if i in indices]
+        values = [[d.get_tag(tag)
+                   for i, d in enumerate(self.data) if i in indices]
                   for tag in tags]
         return values
 
@@ -466,12 +490,12 @@ class Sacc:
         Returns
         -------
         values: list of lists
-            For each input tag, a corresponding list of the value of that tag for given
-            selection, in the order the matching data points were added.
-
-
+            For each input tag, a corresponding list of the value of
+            that tag for given selection, in the order the matching
+            data points were added.
         """
-        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        indices = self.indices(data_type=data_type,
+                               tracers=tracers, **select)
         return self._get_tags_by_index(tags, indices)
 
     def get_tag(self, tag, data_type=None, tracers=None, **select):
@@ -503,10 +527,9 @@ class Sacc:
         values: list
             A list of the value of the tag for given selection,
             in the order the matching data points were added.
-
-
         """
-        return self.get_tags([tag], data_type=data_type, tracers=tracers, **select)[0]
+        return self.get_tags([tag], data_type=data_type,
+                             tracers=tracers, **select)[0]
 
     def get_data_points(self, data_type=None, tracers=None, **select):
         """
@@ -641,7 +664,8 @@ class Sacc:
         """
         if not len(mu) == len(self.data):
             raise ValueError("Tried to set mean with thing of length {}"
-                             " but data is length {}".format(len(mu), len(self.data)))
+                             " but data is length {}".format(len(mu),
+                                                             len(self.data)))
         for m, d in zip(mu, self.data):
             d.value = m
 
@@ -700,7 +724,8 @@ class Sacc:
         for i, (k, v) in enumerate(S.metadata.items()):
             hdr[f'KEY{i}'] = k
             hdr[f'VAL{i}'] = v
-        hdus = [fits.PrimaryHDU(header=hdr)] + [fits.table_to_hdu(table) for table in tables]
+        hdus = [fits.PrimaryHDU(header=hdr)] + \
+               [fits.table_to_hdu(table) for table in tables]
 
         # Covariance, if needed.
         # All the other data elements become astropy tables first,
@@ -729,9 +754,14 @@ class Sacc:
         hdu_list = fits.open(filename, "readonly")
 
         # Split the HDU's into the different sacc types
-        tracer_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'tracer']
-        window_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'window']
-        data_tables = [Table.read(hdu) for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'data']
+        tracer_tables = [Table.read(hdu)
+                         for hdu in hdu_list
+                         if hdu.header.get('SACCTYPE') == 'tracer']
+        window_tables = [Table.read(hdu)
+                         for hdu in hdu_list
+                         if hdu.header.get('SACCTYPE') == 'window']
+        data_tables = [Table.read(hdu) for hdu in hdu_list
+                       if hdu.header.get('SACCTYPE') == 'data']
         cov = [hdu for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'cov']
 
         # Pull out the classes for these components.
@@ -785,7 +815,8 @@ class Sacc:
     #
     #
 
-    def _get_2pt(self, data_type, tracer1, tracer2, return_cov, angle_name):
+    def _get_2pt(self, data_type, tracer1, tracer2, return_cov,
+                 angle_name, return_ind=False):
         # Internal helper method for get_ell_cl and get_theta_xi
         ind = self.indices(data_type, (tracer1, tracer2))
 
@@ -794,13 +825,53 @@ class Sacc:
 
         if return_cov:
             if not self.has_covariance():
-                raise ValueError("This sacc data does not have a covariance attached")
+                raise ValueError("This sacc data does not have "
+                                 "a covariance attached")
             cov_block = self.covariance.get_block(ind)
-            return angle, mu, cov_block
+            if return_ind:
+                return angle, mu, cov_block, ind
+            else:
+                return angle, mu, cov_block
         else:
-            return angle, mu
+            if return_ind:
+                return angle, mu, ind
+            else:
+                return angle, mu
 
-    def get_ell_cl(self, data_type, tracer1, tracer2, return_cov=False):
+    def get_bandpower_windows(self, indices):
+        """
+        Returns bandpower window functoins for a given set of datapoints.
+        All datapoints must share the same bandpower window.
+
+        Parameters
+        ----------
+        indices: array
+            indices of the data points you want windows for
+
+        Returns
+        -------
+        windows: BandpowerWindow object containing the bandpower window
+            functions for these indices.
+        """
+        ws = unique_list(self.data[i].tags.get('window') for i in indices)
+        if len(ws) != 1:
+            raise ValueError("You have asked for window functions, "
+                             "however, the points you have selected "
+                             "have different windows associated to them."
+                             "Please narrow down your selection (specify "
+                             "tracers and data type) or get windows "
+                             "later.")
+        ws = ws[0]
+        if not isinstance(ws, BandpowerWindow):
+            warnings.warn("No bandpower windows associated to these data")
+            return None
+        else:
+            w_inds = np.array(self._get_tags_by_index(['window_ind'],
+                                                      indices)[0])
+            return ws.get_section(w_inds)
+
+    def get_ell_cl(self, data_type, tracer1, tracer2,
+                   return_cov=False, return_ind=False):
         """
         Helper method to extract the ell and C_ell values for a specific
         data type (e.g. 'shear_ee' and pair of tomographic bins)
@@ -820,22 +891,30 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_ind: bool
+            If True, also return the datapoint indices. Default=False
+
         Returns
         -------
         ell: array
             Ell values for this tracer pair
         mu: array
             Mean values for this tracer pair
-        cov_block: 2x2 array
+        cov_block: 2D array
             (Only if return_cov=True) The block of the covariance for
             these points
+        indices: array
+            (Only if return_ind=True) datapoint indices.
         """
-        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'ell')
+        return self._get_2pt(data_type, tracer1, tracer2, return_cov,
+                             'ell', return_ind)
 
-    def get_theta_xi(self, data_type, tracer1, tracer2, return_cov=False):
+    def get_theta_xi(self, data_type, tracer1, tracer2,
+                     return_cov=False, return_ind=False):
         """
-        Helper method to extract the theta and correlation function values for a specific
-        data type (e.g. 'shear_xi' and pair of tomographic bins)
+        Helper method to extract the theta and correlation function
+        values for a specific data type (e.g. 'shear_xi' and pair of
+        tomographic bins).
 
         Parameters
         ----------
@@ -853,6 +932,9 @@ class Sacc:
             If True, also return the block of the covariance
             corresponding to these points.  Default=False
 
+        return_ind: bool
+            If True, also return the datapoint indices. Default=False
+
         Returns
         -------
         ell: array
@@ -861,13 +943,17 @@ class Sacc:
         mu: array
             Mean values for this tracer pair
 
-        cov_block: 2x2 array
+        cov_block: 2D array
             (Only if return_cov=True) The block of the covariance for
             these points
+        indices: array
+            (Only if return_ind=True) datapoint indices.
         """
-        return self._get_2pt(data_type, tracer1, tracer2, return_cov, 'theta')
+        return self._get_2pt(data_type, tracer1, tracer2, return_cov,
+                             'theta', return_ind)
 
-    def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name, window, tracers_later):
+    def _add_2pt(self, data_type, tracer1, tracer2, x, tag_val, tag_name,
+                 window, tracers_later, tag_extra=None, tag_extra_name=None):
         """
         Internal method for adding 2pt data points.
         Copes with multiple values for the parameters
@@ -875,36 +961,64 @@ class Sacc:
         # single data point case
         if np.isscalar(tag_val):
             t = {tag_name: float(tag_val)}
+            if tag_extra_name is not None:
+                t[tag_extra_name] = tag_extra
             if window is not None:
                 t['window'] = window
-            self.add_data_point(data_type, (tracer1, tracer2), x, tracers_later=tracers_later, **t)
+            self.add_data_point(data_type, (tracer1, tracer2), x,
+                                tracers_later=tracers_later, **t)
             return
         # multiple ell/theta values but same bin
         elif np.isscalar(tracer1):
             n1 = len(x)
             n2 = len(tag_val)
-            if not n1 == n2:
-                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1},{n2})")
-            if window is None:
-                for tag_i, x_i in zip(tag_val, x):
-                    self._add_2pt(data_type, tracer1, tracer2, x_i, tag_i, tag_name, window, tracers_later)
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n3 = n1
             else:
-                for tag_i, x_i, w_i in zip(tag_val, x, window):
-                    self._add_2pt(data_type, tracer1, tracer2, x_i, tag_i, tag_name, w_i, tracers_later)
+                n3 = len(tag_extra)
+            if not (n1 == n2 == n3):
+                raise ValueError("Length of inputs do not match in"
+                                 f"added 2pt data ({n1},{n2},{n3})")
+            if window is None:
+                for tag_i, x_i, te_i in zip(tag_val, x, tag_extra):
+                    self._add_2pt(data_type, tracer1, tracer2, x_i,
+                                  tag_i, tag_name, window,
+                                  tracers_later, te_i, tag_extra_name)
+            else:
+                for tag_i, x_i, w_i, te_i in zip(tag_val, x,
+                                                 window, tag_extra):
+                    self._add_2pt(data_type, tracer1, tracer2, x_i,
+                                  tag_i, tag_name, w_i,
+                                  tracers_later, te_i, tag_extra_name)
         # multiple bin values
         elif np.isscalar(data_type):
             n1 = len(x)
             n2 = len(tag_val)
             n3 = len(tracer1)
             n4 = len(tracer2)
-            if not (n1 == n2 == n3 == n4):
-                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4})")
-            if window is None:
-                for b1, b2, tag_i, x_i in zip(tracer1, tracer2, tag_val, x):
-                    self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name, window, tracers_later)
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n5 = n1
             else:
-                for b1, b2, tag_i, x_i, w_i in zip(tracer1, tracer2, tag_val, x, window):
-                    self._add_2pt(data_type, b1, x_i, tag_i, tag_name, w_i, tracers_later)
+                n5 = len(tag_extra)
+            if not (n1 == n2 == n3 == n4 == n5):
+                raise ValueError("Length of inputs do not match in "
+                                 f"added 2pt data ({n1},{n2},{n3},{n4},{n5})")
+            if window is None:
+                for b1, b2, tag_i, x_i, te_i in zip(tracer1, tracer2, tag_val,
+                                                    x, tag_extra):
+                    self._add_2pt(data_type, b1, b2, x_i, tag_i, tag_name,
+                                  window, tracers_later, te_i, tag_extra_name)
+            else:
+                for b1, b2, tag_i, x_i, w_i, te_i in zip(tracer1,
+                                                         tracer2,
+                                                         tag_val,
+                                                         x,
+                                                         window,
+                                                         tag_extra):
+                    self._add_2pt(data_type, b1, x_i, tag_i, tag_name,
+                                  w_i, tracers_later, te_i, tag_extra_name)
         # multiple data point values
         else:
             n1 = len(x)
@@ -912,16 +1026,38 @@ class Sacc:
             n3 = len(tracer1)
             n4 = len(tracer2)
             n5 = len(data_type)
-            if not (n1 == n2 == n3 == n4 == n5):
-                raise ValueError(f"Length of inputs do not match in added 2pt data ({n1}, {n2}, {n3}, {n4}, {n5})")
-            if window is None:
-                for d, b1, b2, tag_i, x_i in zip(data_type, tracer1, tracer2, tag_val, x):
-                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, window, tracers_later)
+            if tag_extra_name is None:
+                tag_extra = np.zeros(n1)
+                n6 = n1
             else:
-                for d, b1, b2, tag_i, x_i, w_i in zip(data_type, tracer1, tracer2, tag_val, x, window):
-                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name, w_i, tracers_later)
+                n6 = len(tag_extra)
+            if not (n1 == n2 == n3 == n4 == n5 == n6):
+                raise ValueError("Length of inputs do not match in added "
+                                 f"2pt data ({n1},{n2},{n3},{n4},{n5},{n6})")
+            if window is None:
+                for d, b1, b2, tag_i, x_i, te_i in zip(data_type,
+                                                       tracer1,
+                                                       tracer2,
+                                                       tag_val,
+                                                       x,
+                                                       tag_extra):
+                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
+                                  window, tracers_later,
+                                  te_i, tag_extra_name)
+            else:
+                for d, b1, b2, tag_i, x_i, w_i, te_i in zip(data_type,
+                                                            tracer1,
+                                                            tracer2,
+                                                            tag_val,
+                                                            x,
+                                                            window,
+                                                            tag_extra):
+                    self._add_2pt(d, b1, b2, x_i, tag_i, tag_name,
+                                  w_i, tracers_later,
+                                  te_i, tag_extra_name)
 
-    def add_ell_cl(self, data_type, tracer1, tracer2, ell, x, window=None, tracers_later=False):
+    def add_ell_cl(self, data_type, tracer1, tracer2, ell, x,
+                   window=None, tracers_later=False):
         """
         Add a series of 2pt Fourier space data points, either
         individually or as a group.
@@ -948,7 +1084,7 @@ class Sacc:
             of the data point.
 
         tracers_later: bool
-            Optional.  If False (the default), complain if n(z) tracers have 
+            Optional.  If False (the default), complain if n(z) tracers have
             not yet been defined. Otherwise, suppress this warning
 
         Returns
@@ -956,9 +1092,23 @@ class Sacc:
         None
 
         """
-        self._add_2pt(data_type, tracer1, tracer2, x, ell, 'ell', window, tracers_later)
+        if isinstance(window, BandpowerWindow):
+            if len(ell) != window.nv:
+                raise ValueError("Input bandpowers are misshapen")
+            tag_extra = range(window.nv)
+            tag_extra_name = "window_ind"
+            window_use = [window for i in range(window.nv)]
+        else:
+            tag_extra = None
+            tag_extra_name = None
+            window_use = window
 
-    def add_theta_xi(self, data_type, tracer1, tracer2, theta, x, window=None, tracers_later=False):
+        self._add_2pt(data_type, tracer1, tracer2, x, ell, 'ell',
+                      window_use, tracers_later,
+                      tag_extra, tag_extra_name)
+
+    def add_theta_xi(self, data_type, tracer1, tracer2, theta, x,
+                     window=None, tracers_later=False):
         """
         Add a series of 2pt real space data points, either
         individually or as a group.
@@ -985,7 +1135,7 @@ class Sacc:
             of the data point.
 
         tracers_later: bool
-            Optional.  If False (the default), complain if n(z) tracers have 
+            Optional.  If False (the default), complain if n(z) tracers have
             not yet been defined. Otherwise, suppress this warning
 
         Returns
@@ -993,8 +1143,8 @@ class Sacc:
         None
 
         """
-        self._add_2pt(data_type, tracer1, tracer2, x, theta, 'theta', window, tracers_later)
-
+        self._add_2pt(data_type, tracer1, tracer2, x, theta, 'theta',
+                      window, tracers_later)
 
 
 def concatenate_data_sets(*data_sets, labels=None):
@@ -1014,7 +1164,8 @@ def concatenate_data_sets(*data_sets, labels=None):
         The data sets to combined
 
     labels: List[str]
-        Optional list of strings to append to tracer and metadata names, in case of a clash.
+        Optional list of strings to append to tracer and metadata names, in
+        case of a clash.
 
     Returns
     -------
@@ -1028,25 +1179,30 @@ def concatenate_data_sets(*data_sets, labels=None):
 
     # check for wrong number of labels
     if labels is not None:
-        if len(labels)!=len(data_sets):
-            raise ValueError("Wrong number of labels supplied when concatenating data sets")
+        if len(labels) != len(data_sets):
+            raise ValueError("Wrong number of labels supplied when "
+                             "concatenating data sets")
 
     data_0 = data_sets[0]
 
-    # Either all the data sets should have covariances or none of them should.  Concatenating
-    # covariances should be straightforward and should always result in a block-diagonal covariance
+    # Either all the data sets should have covariances or none of
+    # them should.  Concatenating covariances should be
+    # straightforward and should always result in a block-diagonal
+    # covariance
     if data_0.has_covariance():
-        if not all(data_set.has_covariance() for data_set in data_sets):
-            raise ValueError("Either all concatenated data sets must have covariances, "
-                             "or none of them")
+        if not all(data_set.has_covariance()
+                   for data_set in data_sets):
+            raise ValueError("Either all concatenated data sets must "
+                             "have covariances, or none of them")
     else:
-        if any(data_set.has_covariance() for data_set in data_sets):
-            raise ValueError("Either all concatenated data sets must have covariances, "
-                             "or none of them")
+        if any(data_set.has_covariance()
+               for data_set in data_sets):
+            raise ValueError("Either all concatenated data sets must "
+                             "have covariances, or none of them")
 
     output = Sacc()
 
-    # Copy the tracers to the new 
+    # Copy the tracers to the new
     for i, data_set in enumerate(data_sets):
         for tracer in data_set.tracers.values():
 
@@ -1063,12 +1219,15 @@ def concatenate_data_sets(*data_sets, labels=None):
             # happen if they have chosen really really bad labels
             if tracer.name in output.tracers:
                 if labels is None:
-                    raise ValueError("There is a name clash between tracers in the data sets."
-                                     "Use the labels option to give new names to them")
+                    raise ValueError("There is a name clash between "
+                                     "tracers in the data sets. "
+                                     "Use the labels option to give "
+                                     "new names to them")
                 else:
-                    raise ValueError("After applying your labels there is still a name "
-                                     "clash between tracers in your concatenation.  Try "
-                                     "different labels?")
+                    raise ValueError("After applying your labels "
+                                     "there is still a name clash "
+                                     "between tracers in your concatenation."
+                                     " Try different labels?")
             # Build up the combined tracer collection
             output.add_tracer_object(tracer)
 
@@ -1088,7 +1247,8 @@ def concatenate_data_sets(*data_sets, labels=None):
                 # For consistency with the tracers we don't include an
                 # underscore
                 orig_label = d.get_tag('label', '')
-                d.tags['label'] = f'{orig_label}_{label}' if orig_label else label
+                d.tags['label'] = (f'{orig_label}_{label}'
+                                   if orig_label else label)
 
             # And build up the combined data vector
             output.data.append(d)
@@ -1110,9 +1270,9 @@ def concatenate_data_sets(*data_sets, labels=None):
 
             # Check for clashing metadata
             if key in output.metadata:
-                raise ValueError("Metadata in concatenated Saccs have same name. "
-                    "Set the labels parameter to fix this.")
-
-            output.metadata[key] = value
+                raise ValueError("Metadata in concatenated Saccs have "
+                                 "same name. Set the labels parameter "
+                                 "to fix this.")
+            output.metadata[key] = val
 
     return output

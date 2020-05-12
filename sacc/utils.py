@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import re
 
 from astropy.table import Column
@@ -33,6 +32,7 @@ def hide_null_values(table):
             good_col = np.array([null if x is None else x for x in col])
             table[name] = Column(good_col)
 
+
 def remove_dict_null_values(dictionary):
     """Remove values in a dictionary that
     correspond to the null values above.
@@ -53,7 +53,6 @@ def remove_dict_null_values(dictionary):
             continue
     for d in deletes:
         del dictionary[d]
-
 
 
 def unique_list(seq):
@@ -80,7 +79,6 @@ def unique_list(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 
-
 class Namespace:
     """
     This helper class implements a very simple namespace object
@@ -90,9 +88,9 @@ class Namespace:
     N = Namespace('a', 'b', 'c')
 
     assert N.a=='a'
-    
+
     assert N['a']=='a'
-    
+
     assert N.index('b')==1
     """
     def __init__(self, *strings):
@@ -100,11 +98,11 @@ class Namespace:
         Create the object from a list of strings, which will become attributes
         """
         self._index = {}
-        n=0
+        n = 0
         for s in strings:
             self.__dict__[s] = s
             self._index[s] = n
-            n+=1
+            n += 1
 
     def __contains__(self, s):
         return hasattr(self, s)
@@ -119,13 +117,12 @@ class Namespace:
         return self._index[s]
 
 
-
-
 def invert_spd_matrix(M, strict=True):
     """
     Invert a symmetric positive definite matrix.
 
-    SPD matrices (for example, covariance matrices) have only positive eigenvalues.
+    SPD matrices (for example, covariance matrices) have only
+    positive eigenvalues.
 
     Based on:
     https://stackoverflow.com/questions/40703042/more-efficient-way-to-invert-a-matrix-knowing-it-is-symmetric-and-positive-semi
@@ -165,5 +162,7 @@ def invert_spd_matrix(M, strict=True):
 
 
 def camel_case_split_and_lowercase(identifier):
-    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
+    matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])'
+                          '|(?<=[A-Z])(?=[A-Z][a-z])|$)',
+                          identifier)
     return [m.group(0).lower() for m in matches]

@@ -1,6 +1,23 @@
 import numpy as np
 from astropy.table import Table
-from .utils import Namespace, hide_null_values, remove_dict_null_values, unique_list
+from .utils import (Namespace, hide_null_values,
+                    remove_dict_null_values, unique_list)
+import warnings
+
+standard_quantities = Namespace('galaxy_shear',
+                                'galaxy_density',
+                                'galaxy_convergence',
+                                'cluster_density',
+                                'cmb_temperature',
+                                'cmb_polarization',
+                                'cmb_convergence',
+                                'cmb_tSZ',
+                                'cmb_kSZ',
+                                'cluster_mass_count_wl',
+                                'cluster_mass_count_xray',
+                                'cluster_mass_count_tSZ',
+                                'generic')
+
 
 class BaseTracer:
     """
@@ -20,7 +37,15 @@ class BaseTracer:
     _tracer_classes = {}
 
     def __init__(self, name, **kwargs):
+        # We encourage people to use existing quantity names, and issue a
+        # warning if they do not to prod them in the right direction.
+        quantity = kwargs.pop('quantity', 'generic')
+        if quantity not in standard_quantities:
+            warnings.warn(f"Unknown quantity {quantity}. "
+                          "If possible use a pre-defined quantity, or "
+                          "add to the list.")
         self.name = name
+        self.quantity = quantity
         self.metadata = kwargs.pop('metadata', {})
 
     def __init_subclass__(cls, tracer_type):
@@ -40,8 +65,7 @@ class BaseTracer:
             Must correspond to the tracer_type of a subclass
 
         name: str
-            The name for this specific tracer, e.g. a
-            tomographic bin identifier.
+            The name for this specific tracer.
 
         Returns
         -------
@@ -65,7 +89,7 @@ class BaseTracer:
         Some tracers generate a single table for all of the
         different instances, and others generate one table per
         instance.
-    
+
         Parameters
         ----------
         instance_list: list
@@ -94,8 +118,8 @@ class BaseTracer:
         It is not quite the inverse of the to_tables method, since it
         returns a dict instead of a list.
 
-        Subclasses overrides of this method do the actual work, but should *NOT* call
-        this parent base method.
+        Subclasses overrides of this method do the actual work, but
+        should *NOT* call this parent base method.
 
         Parameters
         ----------
@@ -109,28 +133,30 @@ class BaseTracer:
         """
         tracers = {}
         # Figure out the different subclasses that are present
-        subclass_names = unique_list(table.meta['SACCCLSS'] for table in table_list)
-        subclasses = [cls._tracer_classes[name] for name in subclass_names]
+        subclass_names = unique_list(table.meta['SACCCLSS']
+                                     for table in table_list)
+        subclasses = [cls._tracer_classes[name]
+                      for name in subclass_names]
 
         # For each subclass find the tables representing that subclass.
         # We do it like this because we might want to represent one tracer with
-        # multiple tables, or one table can have multiple tracers - it depends on
-        # the tracers class and how complicated it is.
+        # multiple tables, or one table can have multiple tracers -
+        # it depends on the tracers class and how complicated it is.
         for name, subcls in zip(subclass_names, subclasses):
-            subcls_table_list = [table for table in table_list if table.meta['SACCCLSS']==name]
+            subcls_table_list = [table for table in table_list
+                                 if table.meta['SACCCLSS'] == name]
             # and ask the subclass to read from those tables.
             tracers.update(subcls.from_tables(subcls_table_list))
         return tracers
 
 
-
-class MiscTracer(BaseTracer, tracer_type='misc'):
+class MiscTracer(BaseTracer, tracer_type='Misc'):
     """A Tracer type for miscellaneous other data points.
 
     MiscTracers do not have any attributes except for their
     name, so can be used for tagging external data, for example.
 
-    Attributes
+    Parameters
     ----------
     name: str
         The name of the tracer
@@ -169,11 +195,13 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
             metadata_cols.update(obj.metadata.keys())
         metadata_cols = list(metadata_cols)
 
-        cols = [[obj.name for obj in instance_list]]
+        cols = [[obj.name for obj in instance_list],
+                [obj.quantity for obj in instance_list]]
         for name in metadata_cols:
             cols.append([obj.metadata.get(name) for obj in instance_list])
 
-        table = Table(data=cols, names=['name']+ metadata_cols)
+        table = Table(data=cols,
+                      names=['name', 'quantity'] + metadata_cols)
         table.meta['SACCTYPE'] = 'tracer'
         table.meta['SACCCLSS'] = cls.tracer_type
         table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}'
@@ -184,7 +212,7 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
     def from_tables(cls, table_list):
         """Convert a list of astropy table into a dictionary of MiscTracer instances.
 
-        In general table_list should have a single element in, since all the 
+        In general table_list should have a single element in, since all the
         MiscTracers are stored in a single table during to_tables
 
         Parameters
@@ -198,13 +226,294 @@ class MiscTracer(BaseTracer, tracer_type='misc'):
         tracers = {}
 
         for table in table_list:
-            metadata_cols = [col for col in table.colnames if col != 'name']
-            
+            metadata_cols = [col for col in table.colnames
+                             if col not in ['name', 'quantity']]
+
             for row in table:
                 name = row['name']
+                quantity = row['quantity']
                 metadata = {key: row[key] for key in metadata_cols}
                 remove_dict_null_values(metadata)
-                tracers[name] = cls(name, metadata=metadata)
+                tracers[name] = cls(name, quantity=quantity, metadata=metadata)
+        return tracers
+
+
+class MapTracer(BaseTracer, tracer_type='Map'):
+    """
+    A Tracer type for a sky map.
+
+    Takes at least two arguments, defining the map beam.
+
+    Parameters
+    ----------
+    name: str
+        The name for this specific tracer object.
+    ell: array
+         Array of multipole values at which the beam is defined.
+    beam: array
+         Beam multipoles at each value of ell.
+    beam_extra: array
+         Other beam-related arrays
+         (e.g. uncertainties, principal components,
+         alternative measurements, whatever).
+    map_unit: str
+         Map units (e.g. 'uK_CMB'). 'none' by default.
+    """
+
+    def __init__(self, name, spin, ell, beam,
+                 beam_extra=None, map_unit='none', **kwargs):
+        super().__init__(name, **kwargs)
+        self.spin = spin
+        self.map_unit = map_unit
+        self.ell = np.array(ell)
+        self.beam = np.array(beam)
+        self.beam_extra = {} if beam_extra is None else beam_extra
+
+    @classmethod
+    def to_tables(cls, instance_list):
+        tables = []
+        for tracer in instance_list:
+            # Beams
+            names = ['ell', 'beam']
+            cols = [tracer.ell, tracer.beam]
+            for beam_id, col in tracer.beam_extra.items():
+                names.append(str(beam_id))
+                cols.append(col)
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['SACCQTTY'] = tracer.quantity
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            table.meta['EXTNAME'] = extname
+            table.meta['MAP_UNIT'] = tracer.map_unit
+            table.meta['SPIN'] = tracer.spin
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
+            tables.append(table)
+        return tables
+
+    @classmethod
+    def from_tables(cls, table_list):
+        tracers = {}
+
+        # Collect beam and bandpass tables describing the same tracer
+        tr_tables = {}
+        for table in table_list:
+            # Read name and table type
+            name = table.meta['SACCNAME']
+            quantity = table.meta['SACCQTTY']
+            tabtyp = table.meta['EXTNAME'].split(':')[-1]
+            if tabtyp not in ['beam']:
+                raise KeyError("Unknown table type " + table.meta['EXTNAME'])
+
+            # If not present yet, create new tracer entry
+            if name not in tr_tables:
+                tr_tables[name] = {}
+            # Add table
+            tr_tables[name][tabtyp] = table
+
+        # Now loop through different tracers and build them from their tables
+        for n, dt in tr_tables.items():
+            quantity = []
+            metadata = {}
+            map_unit = 'none'
+            ell = []
+            beam = []
+            beam_extra = {}
+            spin = 0
+
+            if 'beam' in dt:
+                table = dt['beam']
+                name = table.meta['SACCNAME']
+                quantity = table.meta['SACCQTTY']
+                ell = table['ell']
+                beam = table['beam']
+                for col in table.columns.values():
+                    if col.name not in ['ell', 'beam']:
+                        beam_extra[col.name] = col.data
+                map_unit = table.meta['MAP_UNIT']
+                spin = table.meta['SPIN']
+                for key, value in table.meta.items():
+                    if key.startswith("META_"):
+                        metadata[key[5:]] = value
+
+            tracers[name] = cls(name, spin, ell, beam,
+                                quantity=quantity, beam_extra=beam_extra,
+                                map_unit=map_unit, metadata=metadata)
+        return tracers
+
+
+class NuMapTracer(BaseTracer, tracer_type='NuMap'):
+    """
+    A Tracer type for a sky map at a given frequency.
+
+    Takes at least four arguments, defining the bandpass and beam.
+
+    Parameters
+    ----------
+    name: str
+        The name for this specific tracer, e.g. a frequency band
+        identifier.
+    spin: int
+        Spin for this observable. Either 0 (e.g. intensity)
+        or 2 (e.g. polarization).
+    nu: array
+         Array of frequencies.
+    bandpass: array
+         Bandpass transmission.
+    bandpass_extra: array
+         Other bandpass-related arrays
+         (e.g. uncertainties, principal components,
+         alternative measurements, whatever).
+    ell: array
+         Array of multipole values at which the beam is defined.
+    beam: array
+         Beam.
+    beam_extra: array
+         Other beam-related arrays
+         (e.g. uncertainties, principal components,
+         alternative measurements, whatever).
+    nu_unit: str
+         Frequency units ('GHz' by default).
+    map_unit: str
+         Map units (e.g. 'uK_CMB'). 'none' by default.
+    """
+
+    def __init__(self, name, spin, nu, bandpass,
+                 ell, beam, bandpass_extra=None,
+                 beam_extra=None, nu_unit='GHz',
+                 map_unit='none', **kwargs):
+        super().__init__(name, **kwargs)
+        self.spin = spin
+        self.nu = np.array(nu)
+        self.nu_unit = nu_unit
+        self.map_unit = map_unit
+        self.bandpass = np.array(bandpass)
+        self.bandpass_extra = {} if bandpass_extra is None else bandpass_extra
+        self.ell = np.array(ell)
+        self.beam = np.array(beam)
+        self.beam_extra = {} if beam_extra is None else beam_extra
+
+    @classmethod
+    def to_tables(cls, instance_list):
+        tables = []
+        for tracer in instance_list:
+            # Bandpasses
+            names = ['nu', 'bandpass']
+            cols = [tracer.nu, tracer.bandpass]
+            for bandpass_id, col in tracer.bandpass_extra.items():
+                names.append(str(bandpass_id))
+                cols.append(col)
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['SACCQTTY'] = tracer.quantity
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:bandpass'
+            table.meta['EXTNAME'] = extname
+            table.meta['NU_UNIT'] = tracer.nu_unit
+            table.meta['SPIN'] = tracer.spin
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
+            tables.append(table)
+
+            # Beams
+            names = ['ell', 'beam']
+            cols = [tracer.ell, tracer.beam]
+            for beam_id, col in tracer.beam_extra.items():
+                names.append(str(beam_id))
+                cols.append(col)
+            table = Table(data=cols, names=names)
+            table.meta['SACCTYPE'] = 'tracer'
+            table.meta['SACCCLSS'] = cls.tracer_type
+            table.meta['SACCNAME'] = tracer.name
+            table.meta['SACCQTTY'] = tracer.quantity
+            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
+            table.meta['EXTNAME'] = extname
+            table.meta['MAP_UNIT'] = tracer.map_unit
+            table.meta['SPIN'] = tracer.spin
+            for key, value in tracer.metadata.items():
+                table.meta['META_'+key] = value
+            remove_dict_null_values(table.meta)
+            tables.append(table)
+        return tables
+
+    @classmethod
+    def from_tables(cls, table_list):
+        tracers = {}
+
+        # Collect beam and bandpass tables describing the same tracer
+        tr_tables = {}
+        for table in table_list:
+            # Read name and table type
+            name = table.meta['SACCNAME']
+            quantity = table.meta['SACCQTTY']
+            tabtyp = table.meta['EXTNAME'].split(':')[-1]
+            if tabtyp not in ['bandpass', 'beam']:
+                raise KeyError("Unknown table type " + table.meta['EXTNAME'])
+
+            # If not present yet, create new tracer entry
+            if name not in tr_tables:
+                tr_tables[name] = {}
+            # Add table
+            tr_tables[name][tabtyp] = table
+
+        # Now loop through different tracers and build them from their tables
+        for n, dt in tr_tables.items():
+            quantity = []
+            metadata = {}
+            nu = []
+            bandpass = []
+            bandpass_extra = {}
+            nu_unit = 'GHz'
+            map_unit = 'none'
+            ell = []
+            beam = []
+            beam_extra = {}
+            spin = 0
+
+            if 'bandpass' in dt:
+                table = dt['bandpass']
+                name = table.meta['SACCNAME']
+                quantity = table.meta['SACCQTTY']
+                nu = table['nu']
+                bandpass = table['bandpass']
+                for col in table.columns.values():
+                    if col.name not in ['nu', 'bandpass']:
+                        bandpass_extra[col.name] = col.data
+                nu_unit = table.meta['NU_UNIT']
+                spin = table.meta['SPIN']
+                for key, value in table.meta.items():
+                    if key.startswith("META_"):
+                        metadata[key[5:]] = value
+
+            if 'beam' in dt:
+                table = dt['beam']
+                name = table.meta['SACCNAME']
+                quantity = table.meta['SACCQTTY']
+                ell = table['ell']
+                beam = table['beam']
+                for col in table.columns.values():
+                    if col.name not in ['ell', 'beam']:
+                        beam_extra[col.name] = col.data
+                map_unit = table.meta['MAP_UNIT']
+                spin = table.meta['SPIN']
+                for key, value in table.meta.items():
+                    if key.startswith("META_"):
+                        metadata[key[5:]] = value
+
+            tracers[name] = cls(name, spin,
+                                nu, bandpass,
+                                ell, beam,
+                                quantity=quantity,
+                                bandpass_extra=bandpass_extra,
+                                beam_extra=beam_extra,
+                                map_unit=map_unit,
+                                nu_unit=nu_unit,
+                                metadata=metadata)
         return tracers
 
 
@@ -214,19 +523,24 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
     Takes two arguments arrays of z and n(z)
 
-    Attributes
+    Parameters
     ----------
+    name: str
+        The name for this specific tracer, e.g. a
+        tomographic bin identifier.
+
     z: array
         Redshift sample values
 
     nz: array
         Number density n(z) at redshift sample points.
 
-    extra_columns: dict[str: array] or dict[int:array]
+    extra_columns: dict[str: array] or dict[int: array]
         Additional estimates of the same n(z), by name
     """
 
-    def __init__(self, name, z, nz, extra_columns=None, **kwargs):
+    def __init__(self, name, z, nz,
+                 extra_columns=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -285,6 +599,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             table.meta['SACCTYPE'] = 'tracer'
             table.meta['SACCCLSS'] = cls.tracer_type
             table.meta['SACCNAME'] = tracer.name
+            table.meta['SACCQTTY'] = tracer.quantity
             table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
             for key, value in tracer.metadata.items():
                 table.meta['META_'+key] = value
@@ -314,6 +629,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         tracers = {}
         for table in table_list:
             name = table.meta['SACCNAME']
+            quantity = table.meta['SACCQTTY']
             z = table['z']
             nz = table['nz']
             extra_columns = {}
@@ -325,5 +641,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             for key, value in table.meta.items():
                 if key.startswith("META_"):
                     metadata[key[5:]] = value
-            tracers[name] = cls(name, z, nz, extra_columns=extra_columns, metadata=metadata)
+            tracers[name] = cls(name, z, nz,
+                                quantity=quantity,
+                                extra_columns=extra_columns,
+                                metadata=metadata)
         return tracers
