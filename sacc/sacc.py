@@ -863,7 +863,7 @@ class Sacc:
                              "later.")
         ws = ws[0]
         if not isinstance(ws, BandpowerWindow):
-            warnings.warn("Now bandpower windows associated to these data")
+            warnings.warn("No bandpower windows associated to these data")
             return None
         else:
             w_inds = np.array(self._get_tags_by_index(['window_ind'],

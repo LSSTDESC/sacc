@@ -1,7 +1,9 @@
+import tempfile
 import sacc
 import sacc.data_types
 import numpy as np
 import pytest
+import os
 
 
 def test_quantity_warning():
@@ -25,7 +27,7 @@ def test_construct():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s.add_tracer('NZ', 'source_0', 0, z, nz,
+    s.add_tracer('NZ', 'source_0', z, nz,
                  quantity='galaxy_density')
 
     for i in range(20):
@@ -275,11 +277,10 @@ def test_keep_remove():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s.add_tracer('NZ', 'source_0', 0, z, nz,
-                 quantity='galaxy_density')
-    s.add_tracer('NZ', 'source_1', 2, z, nz,
-                 quantity='galaxy_shear')
-    s.add_tracer('NZ', 'source_2', 0, z, nz,
+    s.add_tracer('NZ', 'source_0', z, nz)
+    s.add_tracer('NZ', 'source_1', z, nz,
+                 quantity='galaxy_shear', spin=2)
+    s.add_tracer('NZ', 'source_2', z, nz,
                  quantity='cluster_density')
 
     for i in range(20):
@@ -470,7 +471,7 @@ def test_concatenate_data():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s1.add_tracer('NZ', 'source_0', 2, z, nz, quantity='galaxy_shear')
+    s1.add_tracer('NZ', 'source_0', z, nz)
 
     for i in range(20):
         ee = 0.1 * i
@@ -483,7 +484,8 @@ def test_concatenate_data():
     # Tracer
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
-    s2.add_tracer('NZ', 'source_0', 2, z, nz, quantity='galaxy_shear')
+    s2.add_tracer('NZ', 'source_0', z, nz,
+                  quantity='galaxy_shear', spin=2)
 
     for i in range(20):
         ee = 0.1 * i
@@ -512,3 +514,71 @@ def test_concatenate_data():
         assert t2 == 'source_0_2'
         s3.get_tracer(t1)
         s3.get_tracer(t2)
+
+
+def test_io():
+    s = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s.add_tracer('NZ', 'source_0', z, nz)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, ee, ell=10.0*i)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2) == 20
+    mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
+    for i in range(20):
+        assert mu[i] == 0.1 * i
+
+
+def test_io_maps_bpws():
+    s = sacc.Sacc()
+
+    n_ell = 10
+    d_ell = 100
+    n_ell_large = n_ell * d_ell
+    ell = np.linspace(2, 1000, n_ell)
+    c_ell = 1./(ell+1)**3
+    beam = np.exp(-0.1 * ell * (ell+1))
+    nu = np.linspace(30., 60., 100)
+    bandpass = np.ones(100)
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+
+    # Tracer
+    s.add_tracer('NZ', 'gc', z, nz)
+    s.add_tracer('NuMap', 'cmbp', 2, nu, bandpass, ell, beam)
+    s.add_tracer('Map', 'sz', 0, ell, beam)
+
+    # Window
+    ells_large = np.arange(n_ell_large)
+    window_single = np.zeros([n_ell, n_ell_large])
+    for i in range(n_ell):
+        window_single[i, i * d_ell: (i + 1) * d_ell] = 1.
+    wins = sacc.BandpowerWindow(ells_large, window_single.T)
+
+    s.add_ell_cl('cl_00', 'gc', 'gc', ell, c_ell, window=wins)
+    s.add_ell_cl('cl_0e', 'gc', 'cmbp', ell, c_ell, window=wins)
+    s.add_ell_cl('cl_00', 'gc', 'sz', ell, c_ell, window=wins)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2) == 30
+    l, cl, ind = s2.get_ell_cl('cl_00', 'gc', 'sz',
+                               return_ind=True)
+    w = s2.get_bandpower_windows(ind)
+    assert np.all(cl == c_ell)
+    assert w.weight.shape == (n_ell_large, n_ell)
