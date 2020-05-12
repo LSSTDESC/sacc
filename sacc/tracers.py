@@ -50,6 +50,7 @@ class BaseTracer:
 
     def __init_subclass__(cls, tracer_type):
         cls._tracer_classes[tracer_type] = cls
+        cls._tracer_classes[tracer_type.lower()] = cls
         cls.tracer_type = tracer_type
 
     @classmethod
@@ -303,7 +304,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta['SACCQTTY']
+            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -327,7 +328,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
             if 'beam' in dt:
                 table = dt['beam']
                 name = table.meta['SACCNAME']
-                quantity = table.meta['SACCQTTY']
+                quantity = table.meta.get('SACCQTTY', 'generic')
                 ell = table['ell']
                 beam = table['beam']
                 for col in table.columns.values():
@@ -450,7 +451,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta['SACCQTTY']
+            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['bandpass', 'beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -478,7 +479,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             if 'bandpass' in dt:
                 table = dt['bandpass']
                 name = table.meta['SACCNAME']
-                quantity = table.meta['SACCQTTY']
+                quantity = table.meta.get('SACCQTTY', 'generic')
                 nu = table['nu']
                 bandpass = table['bandpass']
                 for col in table.columns.values():
@@ -493,7 +494,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             if 'beam' in dt:
                 table = dt['beam']
                 name = table.meta['SACCNAME']
-                quantity = table.meta['SACCQTTY']
+                quantity = table.meta.get('SACCQTTY', 'generic')
                 ell = table['ell']
                 beam = table['beam']
                 for col in table.columns.values():
@@ -629,7 +630,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         tracers = {}
         for table in table_list:
             name = table.meta['SACCNAME']
-            quantity = table.meta['SACCQTTY']
+            quantity = table.meta.get('SACCQTTY', 'generic')
             z = table['z']
             nz = table['nz']
             extra_columns = {}
