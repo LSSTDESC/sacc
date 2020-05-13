@@ -240,7 +240,7 @@ class Window(BaseWindow, window_type='Standard'):
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
 
 
-class BandpowerWindow(BaseWindow, window_type='Standard'):
+class BandpowerWindow(BaseWindow, window_type='Bandpower'):
     """The BandpowerWindow class defines a tabulated for power
     spectrum bandpowers.
 
