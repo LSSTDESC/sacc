@@ -4,6 +4,21 @@ import sacc.data_types
 import numpy as np
 import pytest
 import os
+import pathlib
+import urllib
+
+test_dir = pathlib.Path(__file__).resolve().parent
+test_data_dir = test_dir / 'data'
+
+
+# idea based on TreeCorr tests
+def get_from_wiki(url):
+    file_name = url.split('/')[-1]
+    local_file_name = test_data_dir / file_name
+    if not local_file_name.exists():
+        print(f"Downlading {url} to data dir")
+        urllib.request.urlretrieve(url, local_file_name)
+    return local_file_name
 
 
 def test_quantity_warning():
@@ -590,6 +605,8 @@ def test_io_maps_bpws():
                           ('0.4.2', 6, 5)])
 def test_legacy_format(vv, ncl, ntr):
     print(vv, ncl, ntr)
-    s = sacc.Sacc.load_fits(f'./test/legacy_files/dummy_v{vv}.fits')
+    local_file_name = get_from_wiki(
+        f'https://github.com/LSSTDESC/sacc/wiki/legacy_files/dummy_v{vv}.fits')
+    s = sacc.Sacc.load_fits(local_file_name)
     assert len(s.mean) == ncl * 100
     assert len(s.tracers) == ntr
