@@ -23,7 +23,8 @@ nvec = 2
 
 if version.parse(sacc.__version__) > version.parse('0.2.0'):
     wlth = sacc.LogTopHatWindow(-2., 0.)
-    s.add_ell_cl('galaxy_density_cl', 'nz_b', 'nz_b', x, y, window=[wlth] * vecsize)
+    s.add_ell_cl('galaxy_density_cl', 'nz_b', 'nz_b', x, y,
+                 window=[wlth] * vecsize)
     nvec += 1
 
 if version.parse(sacc.__version__) > version.parse('0.4.0'):

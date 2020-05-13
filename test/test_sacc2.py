@@ -582,3 +582,14 @@ def test_io_maps_bpws():
     w = s2.get_bandpower_windows(ind)
     assert np.all(cl == c_ell)
     assert w.weight.shape == (n_ell_large, n_ell)
+
+
+@pytest.mark.parametrize("vv,ncl,ntr",
+                         [('0.2.0', 2, 2),
+                          ('0.3.0', 3, 2),
+                          ('0.4.2', 6, 5)])
+def test_legacy_format(vv, ncl, ntr):
+    print(vv, ncl, ntr)
+    s = sacc.Sacc.load_fits(f'./test/legacy_files/dummy_v{vv}.fits')
+    assert len(s.mean) == ncl * 100
+    assert len(s.tracers) == ntr
