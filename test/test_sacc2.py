@@ -6,6 +6,7 @@ import pytest
 import os
 import pathlib
 import urllib
+import time
 
 test_dir = pathlib.Path(__file__).resolve().parent
 test_data_dir = test_dir / 'data'
@@ -17,7 +18,15 @@ def get_from_wiki(url):
     local_file_name = test_data_dir / file_name
     if not local_file_name.exists():
         print(f"Downlading {url} to data dir")
-        urllib.request.urlretrieve(url, local_file_name)
+        try:
+            urllib.request.urlretrieve(url, local_file_name)
+        except urllib.request.HTTPError as err:
+            if err.code == 429:
+                print("Rate limit download - waiting 10 seconds to try again")
+                time.sleep(10)
+                urllib.request.urlretrieve(url, local_file_name)
+            else:
+                raise
     return local_file_name
 
 
