@@ -358,7 +358,7 @@ class DataPoint:
         return tracers, tags
 
     @classmethod
-    def to_table(cls, data, lookups={}):
+    def to_table(cls, data, lookups=None):
         """
         Convert a list of data points to a single homogenous table
 
@@ -379,6 +379,8 @@ class DataPoint:
         table: astropy.table.Table
             table object containing data points
         """
+        if lookups is None:
+            lookups = {}
         # Get the names of the columns to generate
         tracers, tags = cls._choose_fields(data)
         names = tracers + ['value'] + tags
@@ -393,7 +395,7 @@ class DataPoint:
         return table
 
     @classmethod
-    def from_table(cls, table, lookups={}):
+    def from_table(cls, table, lookups=None):
         """Convert a table back into a list of data points.
 
         This method removes null values from the tags.
@@ -412,6 +414,8 @@ class DataPoint:
         data: list
             list of DataPoint objects
         """
+        if lookups is None:
+            lookups = {}
         # Get out required table metadata
         nt = table.meta['NTRACER']
         data_type = table.meta['SACCNAME']
