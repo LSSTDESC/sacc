@@ -745,8 +745,9 @@ class Sacc:
         # a buffer first and then save that.
 
         # First we have to manually check for overwritten files
+        # We raise the same error as astropy
         if os.path.exists(filename) and not overwrite:
-            raise ValueError(f"File {filename} already exists and overwrite=False")
+            raise OSError(f"File {filename} already exists and overwrite=False")
 
         # Create the buffer and write the data to it
         buf = BytesIO()
