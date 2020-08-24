@@ -1,5 +1,7 @@
 import copy
 import warnings
+import os
+from io import BytesIO
 
 import numpy as np
 from astropy.io import fits
@@ -736,7 +738,28 @@ class Sacc:
 
         # Make and save the final FITS data
         hdu_list = fits.HDUList(hdus)
-        hdu_list.writeto(filename, overwrite=overwrite)
+
+        # The astropy writeto shows very poor performance
+        # when writing lots of small metadata strings on
+        # the NERSC Lustre file system.  So we write to
+        # a buffer first and then save that.
+
+        # First we have to manually check for overwritten files
+        # We raise the same error as astropy
+        if os.path.exists(filename) and not overwrite:
+            raise OSError(f"File {filename} already exists and overwrite=False")
+
+        # Create the buffer and write the data to it
+        buf = BytesIO()
+        hdu_list.writeto(buf)
+
+        # Rewind and read the binary data we just wrote
+        buf.seek(0)
+        output_data = buf.read()
+
+        # Write the binary data to the target file
+        with open(filename, "wb") as f:
+            f.write(output_data)
 
     @classmethod
     def load_fits(cls, filename):
