@@ -382,6 +382,16 @@ def test_cutting_block_cov():
     assert C2.size == len(ind)
     assert np.allclose(C2.get_block(ind), covmat[0])
 
+def test_cutting_block_cov2():
+    covmat = [np.random.uniform(size=(50, 50)),
+              np.random.uniform(size=(100, 100)),
+              np.random.uniform(size=(150, 150))]
+    C = sacc.covariance.BaseCovariance.make(covmat)
+    ind = list(range(50,150))
+    C2 = C.keeping_indices(np.arange(50,150))
+    assert C2.size == len(ind)
+    assert np.allclose(C2.get_block(range(100)), covmat[1])
+
 
 def test_cutting_full_cov():
     covmat = np.random.uniform(size=(100, 100))
