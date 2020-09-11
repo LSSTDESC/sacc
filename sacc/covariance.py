@@ -382,7 +382,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             sub_blocks = []
             for block, sz in zip(self.blocks, self.block_sizes):
                 e = s + sz
-                m = indices[(indices >= s) & (indices < e)]
+                m = indices[(indices >= s) & (indices < e)] - s
                 sub_blocks.append(block[m][:, m])
                 s += sz
             return self.__class__(sub_blocks)
