@@ -36,8 +36,8 @@ If you are using a sacc file, for exampe in an MCMC, or for plotting:
 
 - load the sacc data into memory with :code:`s = sacc.Sacc.load_fits(filename)`
 - find what data types are in the file with :code:`dts = s.get_data_types()`
-- for each data type, find what tracer combinations (e.g. tomographic bin pairs) are available with :code:`tracers = s.get_tracer_combinations(dt)`
-- for each data pair, get the mean values with :code:`data = s.get_mean(dt, tracers)`, and, for example, window functions using :code:`windows = s.get_tag(dt, tracers, "window")` or similar for other binning information
+- for each data type, find what tracer combinations (e.g. tomographic bin pairs) are available with :code:`tracer_sets = s.get_tracer_combinations(dt)`
+- for each pair of tracers, get the mean values with :code:`data = s.get_mean(dt, tracers)`, and, for example, window functions using :code:`windows = s.get_tag(dt, tracers, "window")` or similar for other binning information
 
 You can also select pieces of the data and covariance with various different API methods.
 
