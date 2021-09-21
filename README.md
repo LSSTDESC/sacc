@@ -30,7 +30,7 @@ If you have a problem you've not been able to debug, or a feature request/sugges
 Versions
 --------
 
-The current release is [version 0.4.2](https://github.com/LSSTDESC/sacc/releases/tag/0.4.2).
+The current release is [version 0.4.5](https://github.com/LSSTDESC/sacc/releases/tag/0.4.5).
 
 You can find a list of [previous releases here](https://github.com/LSSTDESC/sacc/releases).  The releases above 0.2 are all compatible; 0.1 is a previous version of the format.
 
