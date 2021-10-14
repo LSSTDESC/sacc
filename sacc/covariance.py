@@ -375,7 +375,8 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         if indices.dtype == bool:
             breaks = np.cumsum(self.block_sizes)[:-1]
             block_masks = np.split(indices, breaks)
-            blocks = [self.blocks[m][:, m] for m in block_masks]
+            blocks = [self.blocks[i][m][:, m] for i, m in
+                      enumerate(block_masks)]
             return self.__class__(blocks)
         elif (np.diff(indices) > 0).all():
             s = 0
