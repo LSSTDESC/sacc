@@ -10,7 +10,7 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(name="sacc", 
-      version="0.4.5",
+      version="0.4.7",
       description=description,
       long_description=long_description,
       long_description_content_type='text/markdown',
