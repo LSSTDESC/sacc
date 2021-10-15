@@ -20,6 +20,9 @@ jobs:
         pip install .
         V1=$(python -c 'import sacc;print(sacc.__version__)')
         V2=$(grep 'version=' setup.py |  cut -d'"' -f 2)
+        echo Version from sacc.__version is $V1
+        echo Version from setup.py is $V2
+        echo Version from release tag is $GITHUB_REF
         [[ $V1 == $V2 && $V1 == $GITHUB_REF ]]
 
     - name: Build wheel and source tarball
