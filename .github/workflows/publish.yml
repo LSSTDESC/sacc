@@ -35,3 +35,8 @@ jobs:
       with:
         password: ${{ secrets.PYPI_SACC_UPLOAD_TEST }}
         repository_url: https://test.pypi.org/legacy/        
+
+    - name: Publish to Real PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_SACC_UPLOAD }}
