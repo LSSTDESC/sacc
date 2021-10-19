@@ -1211,6 +1211,10 @@ def concatenate_data_sets(*data_sets, labels=None, same_tracers=None):
             raise ValueError("Wrong number of labels supplied when "
                              "concatenating data sets")
 
+    # Make same_tracers an empty list for easy comparison
+    if same_tracers is None:
+        same_tracers = []
+
     data_0 = data_sets[0]
 
     # Either all the data sets should have covariances or none of
