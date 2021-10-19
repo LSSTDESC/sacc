@@ -541,7 +541,8 @@ def test_concatenate_data():
         t2 = s3.data[i+20].tracers[0]
         assert t1 == 'source_0'
         assert t1 == t2
-        s3.get_tracer(t1)
+        # To make sure the first 'source_0' tracer is used and not rewritten
+        s3.get_tracer(t1).quantity == 'generic'
 
     # name clash
     with pytest.raises(ValueError):
