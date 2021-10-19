@@ -1301,9 +1301,11 @@ def concatenate_data_sets(*data_sets, labels=None, same_tracers=None):
 
             # Check for clashing metadata
             if key in output.metadata:
-                raise ValueError("Metadata in concatenated Saccs have "
-                                 "same name. Set the labels parameter "
-                                 "to fix this.")
-            output.metadata[key] = val
+                if key not in same_tracers:
+                    raise ValueError("Metadata in concatenated Saccs have "
+                                     "same name. Set the labels parameter "
+                                     "to fix this.")
+            else:
+                output.metadata[key] = val
 
     return output
