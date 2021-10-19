@@ -566,6 +566,12 @@ def test_concatenate_data():
         s3.get_tracer(t1)
         s3.get_tracer(t2)
 
+    # labels + same_tracers
+    s4 = sacc.concatenate_data_sets(s3, s3, labels=['x', 'y'],
+                                    same_tracers=['source_0_1'])
+    trs = ['source_0_1', 'source_0_2_x', 'source_0_2_y']
+    assert trs == list(s4.tracers.keys())
+    assert s4.mean.size == 2 * s3.mean.size
 
 
 def test_io():
