@@ -1192,8 +1192,8 @@ def concatenate_data_sets(*data_sets, labels=None, same_tracers=None):
 
     same_tracers: List[str]
         Optional list of tracers that are assumed to be the same in the
-        different data_sets but with no correlation between the data points in
-        each of them.
+        different data_sets but with no correlation between the data points
+        involving them.
 
     Returns
     -------
