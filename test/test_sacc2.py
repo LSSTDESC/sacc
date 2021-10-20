@@ -527,6 +527,23 @@ def test_concatenate_data():
         s2.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
                           tracers, ee, ell=10.0*i, label='xxx')
 
+    # same tracer
+    s3 = sacc.concatenate_data_sets(s1, s2, same_tracers=['source_0'])
+    assert ['source_0'] == list(s3.tracers.keys())
+
+    # check data points in right order
+    for i in range(20):
+        assert s3.data[i].get_tag('ell') == 10.0*i
+        assert s3.data[i+20].get_tag('ell') == 10.0*i
+        assert s3.data[i].get_tag('label') is None
+        assert s3.data[i+20].get_tag('label') == 'xxx'
+        t1 = s3.data[i].tracers[0]
+        t2 = s3.data[i+20].tracers[0]
+        assert t1 == 'source_0'
+        assert t1 == t2
+        # To make sure the first 'source_0' tracer is used and not rewritten
+        s3.get_tracer(t1).quantity == 'generic'
+
     # name clash
     with pytest.raises(ValueError):
         sacc.concatenate_data_sets(s1, s2)
@@ -548,6 +565,13 @@ def test_concatenate_data():
         assert t2 == 'source_0_2'
         s3.get_tracer(t1)
         s3.get_tracer(t2)
+
+    # labels + same_tracers
+    s4 = sacc.concatenate_data_sets(s3, s3, labels=['x', 'y'],
+                                    same_tracers=['source_0_1'])
+    trs = ['source_0_1', 'source_0_2_x', 'source_0_2_y']
+    assert trs == list(s4.tracers.keys())
+    assert s4.mean.size == 2 * s3.mean.size
 
 
 def test_io():

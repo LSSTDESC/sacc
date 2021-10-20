@@ -1170,7 +1170,7 @@ class Sacc:
                       window, tracers_later)
 
 
-def concatenate_data_sets(*data_sets, labels=None):
+def concatenate_data_sets(*data_sets, labels=None, same_tracers=None):
     """Combine multiple sacc data sets together into one.
 
     In case of two tracers or metadata items with the same name,
@@ -1190,6 +1190,12 @@ def concatenate_data_sets(*data_sets, labels=None):
         Optional list of strings to append to tracer and metadata names, in
         case of a clash.
 
+    same_tracers: List[str]
+        Optional list of tracers that are assumed to be the same in the
+        different data_sets but with no correlation between the data points
+        involving them. Only the first occurance of each tracer will be added
+        to the combined data set.
+
     Returns
     -------
     output: Sacc object
@@ -1205,6 +1211,10 @@ def concatenate_data_sets(*data_sets, labels=None):
         if len(labels) != len(data_sets):
             raise ValueError("Wrong number of labels supplied when "
                              "concatenating data sets")
+
+    # Make same_tracers an empty list for easy comparison
+    if same_tracers is None:
+        same_tracers = []
 
     data_0 = data_sets[0]
 
@@ -1233,7 +1243,7 @@ def concatenate_data_sets(*data_sets, labels=None):
             tracer = copy.deepcopy(tracer)
 
             # Optionally add a suffix label to avoid name clashes.
-            if labels is not None:
+            if (labels is not None) and (tracer.name not in same_tracers):
                 tracer.name = f'{tracer.name}_{labels[i]}'
 
             # Check for duplicate tracer names.
@@ -1241,7 +1251,9 @@ def concatenate_data_sets(*data_sets, labels=None):
             # any labels to use as tracer suffices.  But it could also
             # happen if they have chosen really really bad labels
             if tracer.name in output.tracers:
-                if labels is None:
+                if tracer.name in same_tracers:
+                    pass
+                elif labels is None:
                     raise ValueError("There is a name clash between "
                                      "tracers in the data sets. "
                                      "Use the labels option to give "
@@ -1251,8 +1263,9 @@ def concatenate_data_sets(*data_sets, labels=None):
                                      "there is still a name clash "
                                      "between tracers in your concatenation."
                                      " Try different labels?")
-            # Build up the combined tracer collection
-            output.add_tracer_object(tracer)
+            else:
+                # Build up the combined tracer collection
+                output.add_tracer_object(tracer)
 
         for d in data_set.data:
             # Shallow copy because we do not want to clone Window functions,
