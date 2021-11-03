@@ -38,8 +38,6 @@ def get_filled_sacc():
     nz = (z-0.5)**2/0.1**2
     s.add_tracer('NZ', 'source_0', z, nz)
     s.add_tracer('NZ', 'source_1', z, nz,
-                 quantity='galaxy_shear', spin=2)
-    s.add_tracer('NZ', 'source_2', z, nz,
                  quantity='cluster_density')
 
     for i in range(20):
@@ -49,12 +47,12 @@ def get_filled_sacc():
                          tracers, ee, ell=10.0*i)
     for i in range(20):
         bb = 0.2 * i
-        tracers = ('source_1', 'source_1')
+        tracers = ('source_0', 'source_1')
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb,
                          tracers, bb, ell=10.0*i)
     for i in range(20):
         ee = 0.3 * i
-        tracers = ('source_2', 'source_2')
+        tracers = ('source_1', 'source_1')
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
                          tracers, ee, ell=10.0*i)
 
