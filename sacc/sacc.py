@@ -641,6 +641,22 @@ class Sacc:
         indices = self.indices(data_type=data_type)
         return unique_list(self.data[i].tracers for i in indices)
 
+    def remove_tracer(self, name):
+        """
+        Remove the tracer object and its associated data points
+
+        Parameters
+        -----------
+        name: str
+            A string name of a tracer
+
+        """
+        for trs in self.get_tracer_combinations():
+            if (name in trs[0]) or (name in trs[1]):
+                self.remove_selection(tracers=trs)
+
+        del self.tracers[name]
+
     @property
     def mean(self):
         """
