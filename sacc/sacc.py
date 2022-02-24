@@ -268,7 +268,7 @@ class Sacc:
         indices = np.array(indices)
 
         # Convert integer masks to booleans
-        if indices.dtype != np.bool:
+        if indices.dtype != bool:
             indices = self._indices_to_bool(indices)
 
         self.data = [d for i, d in enumerate(self.data) if indices[i]]
