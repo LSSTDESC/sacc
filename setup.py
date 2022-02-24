@@ -10,13 +10,14 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(name="sacc", 
-      version="0.4.9",
       description=description,
       long_description=long_description,
       long_description_content_type='text/markdown',
       url="https://github.com/LSSTDESC/sacc",
       author="LSST DESC",
       author_email="joezuntz@googlemail.com",
+      use_scm_version=True,
+      setup_requires=["setuptools_scm"],
       install_requires=requirements,
       packages=['sacc'],
 )
