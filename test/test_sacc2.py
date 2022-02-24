@@ -30,6 +30,35 @@ def get_from_wiki(url):
     return local_file_name
 
 
+def get_filled_sacc():
+    s = sacc.Sacc()
+
+    # Tracer
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    s.add_tracer('NZ', 'source_0', z, nz)
+    s.add_tracer('NZ', 'source_1', z, nz,
+                 quantity='cluster_density')
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0',)
+        s.add_data_point(sacc.standard_types.count,
+                         tracers, ee, ell=10.0*i)
+    for i in range(20):
+        bb = 0.2 * i
+        tracers = ('source_0', 'source_1')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb,
+                         tracers, bb, ell=10.0*i)
+    for i in range(20):
+        ee = 0.3 * i
+        tracers = ('source_1', 'source_1', 'source_0')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, ee, ell=10.0*i)
+
+    return s
+
+
 def test_quantity_warning():
     s = sacc.Sacc()
     with pytest.warns(UserWarning):
@@ -640,6 +669,47 @@ def test_io_maps_bpws():
     w = s2.get_bandpower_windows(ind)
     assert np.all(cl == c_ell)
     assert w.weight.shape == (n_ell_large, n_ell)
+
+
+def test_rename_tracer():
+    s = get_filled_sacc()
+
+    tracer_comb = s.get_tracer_combinations()
+
+    s.rename_tracer('source_0', 'src_0')
+
+    # Check that the name attribute of the tracer has changed
+    tr = s.get_tracer('src_0')
+    assert tr.name == 'src_0'
+
+    # Check that the data tracer combinations have been updated
+    tracer_comb_new = s.get_tracer_combinations()
+    for trs, trs_new in zip(tracer_comb, tracer_comb_new):
+        trs_n = []
+        for tri in trs:
+            if 'source_0' == tri:
+                tri = 'src_0'
+            trs_n.append(tri)
+
+        assert tuple(trs_n) == trs_new
+
+    # Check it is permanent
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert ('source_0' not in s2.tracers) and ('src_0' in s2.tracers)
+    assert sorted(tracer_comb_new) == sorted(s2.get_tracer_combinations())
+    # Make sure the tracers are ordered the same way when comparing the data
+    # points
+    s.to_canonical_order()
+    s2.to_canonical_order()
+    assert np.all(s.mean == s2.mean)
+    assert np.all(s.indices(tracers=('src_0', 'source_1')) ==
+                  s2.indices(tracers=('src_0', 'source_1')))
+    assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
+                  s2.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
 @pytest.mark.parametrize("vv,ncl,ntr",

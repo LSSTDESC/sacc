@@ -641,6 +641,33 @@ class Sacc:
         indices = self.indices(data_type=data_type)
         return unique_list(self.data[i].tracers for i in indices)
 
+    def rename_tracer(self, name, new_name):
+        """
+        Get the tracer object with the given name
+
+        Parameters
+        -----------
+        name: str
+            A string name of a tracer to be changed the name
+        new_name: str
+            A string with the new name of the tracer
+
+        """
+
+        tr = self.tracers.pop(name)
+        tr.name = new_name
+        self.tracers[new_name] = tr
+
+        for d in self.data:
+            new_trs = []
+            for tri in d.tracers:
+                if tri == name:
+                    tri = new_name
+
+                new_trs.append(tri)
+
+            d.tracers = tuple(new_trs)
+
     @property
     def mean(self):
         """
