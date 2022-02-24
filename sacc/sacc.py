@@ -641,23 +641,44 @@ class Sacc:
         indices = self.indices(data_type=data_type)
         return unique_list(self.data[i].tracers for i in indices)
 
-    def remove_tracer(self, name):
+    def remove_tracers(self, names):
         """
-        Remove the tracer object and its associated data points
+        Remove the tracer objects and their associated data points
 
         Parameters
         -----------
-        name: str
-            A string name of a tracer
+        names: list
+            A list of string names of the tracers to be removed
 
         """
 
         for trs in self.get_tracer_combinations():
             for tri in trs:
-                if tri == name:
+                if tri in names:
                     self.remove_selection(tracers=trs)
 
-        del self.tracers[name]
+        for name in names:
+            del self.tracers[name]
+
+    def keep_tracers(self, names):
+        """
+        Keep only the tracer objects and their associated data points.
+
+        Parameters
+        -----------
+        names: list
+            A list of string names of the tracers to be kept
+
+        """
+
+        for trs in self.get_tracer_combinations():
+            for tri in trs:
+                if tri not in names:
+                    self.remove_selection(tracers=trs)
+
+        for name in self.tracers:
+            if name not in names:
+                del self.tracers[name]
 
     def rename_tracer(self, name, new_name):
         """
