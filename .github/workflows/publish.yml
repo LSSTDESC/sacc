@@ -15,26 +15,9 @@ jobs:
     - name: Setup python
       uses: actions/setup-python@v2
 
-    - name: Check versions match
-      run: |
-        pip install .
-        V1=$(python -c 'import sacc;print(sacc.__version__)')
-        V2=$(grep 'version=' setup.py |  cut -d'"' -f 2)
-        V3=$(echo $GITHUB_REF | cut -d / -f 3)
-        echo Version from sacc.__version is $V1
-        echo Version from setup.py is $V2
-        echo Version from release tag is $V3
-        [[ $V1 == $V2 && $V1 == $V3 ]]
-
     - name: Build wheel and source tarball
       run: |
         python setup.py sdist
-
-    - name: Publish to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_SACC_UPLOAD_TEST }}
-        repository_url: https://test.pypi.org/legacy/        
 
     - name: Publish to Real PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
