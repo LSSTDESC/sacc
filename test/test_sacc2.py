@@ -42,8 +42,8 @@ def get_filled_sacc():
 
     for i in range(20):
         ee = 0.1 * i
-        tracers = ('source_0', 'source_0')
-        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+        tracers = ('source_0',)
+        s.add_data_point(sacc.standard_types.count,
                          tracers, ee, ell=10.0*i)
     for i in range(20):
         bb = 0.2 * i
@@ -52,7 +52,7 @@ def get_filled_sacc():
                          tracers, bb, ell=10.0*i)
     for i in range(20):
         ee = 0.3 * i
-        tracers = ('source_1', 'source_1')
+        tracers = ('source_1', 'source_1', 'source_0')
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
                          tracers, ee, ell=10.0*i)
 
@@ -685,13 +685,13 @@ def test_rename_tracer():
     # Check that the data tracer combinations have been updated
     tracer_comb_new = s.get_tracer_combinations()
     for trs, trs_new in zip(tracer_comb, tracer_comb_new):
-        tr1, tr2 = trs
-        if 'source_0' in trs[0]:
-            tr1 = 'src_0'
-        if 'source_0' in trs[1]:
-            tr2 = 'src_0'
+        trs_n = []
+        for tri in trs:
+            if 'source_0' == tri:
+                tri = 'src_0'
+            trs_n.append(tri)
 
-        assert (tr1, tr2) == trs_new
+        assert tuple(trs_n) == trs_new
 
     # Check it is permanent
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -706,8 +706,10 @@ def test_rename_tracer():
     s.to_canonical_order()
     s2.to_canonical_order()
     assert np.all(s.mean == s2.mean)
-    assert np.all(s.indices(tracers=('src_0', 'src_0')) ==
-                  s2.indices(tracers=('src_0', 'src_0')))
+    assert np.all(s.indices(tracers=('src_0', 'source_1')) ==
+                  s2.indices(tracers=('src_0', 'source_1')))
+    assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
+                  s2.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
 @pytest.mark.parametrize("vv,ncl,ntr",

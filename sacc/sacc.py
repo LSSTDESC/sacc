@@ -662,9 +662,9 @@ class Sacc:
             new_trs = []
             for tri in d.tracers:
                 if tri == name:
-                    new_trs.append(new_name)
-                else:
-                    new_trs.append(tri)
+                    tri = new_name
+
+                new_trs.append(tri)
 
             d.tracers = tuple(new_trs)
 
