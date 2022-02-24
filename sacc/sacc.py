@@ -659,15 +659,14 @@ class Sacc:
         self.tracers[new_name] = tr
 
         for d in self.data:
-            tr1, tr2 = d.tracers
+            new_trs = []
+            for tri in d.tracers:
+                if tri == name:
+                    new_trs.append(new_name)
+                else:
+                    new_trs.append(tri)
 
-            if tr1 == name:
-                tr1 = new_name
-
-            if tr2 == name:
-                tr2 = new_name
-
-            d.tracers = (tr1, tr2)
+            d.tracers = tuple(new_trs)
 
     @property
     def mean(self):
