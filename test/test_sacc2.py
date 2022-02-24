@@ -39,6 +39,8 @@ def get_filled_sacc():
     s.add_tracer('NZ', 'source_0', z, nz)
     s.add_tracer('NZ', 'source_1', z, nz,
                  quantity='cluster_density')
+    s.add_tracer('NZ', 'source_2', z, nz,
+                 quantity='cluster_density')
 
     for i in range(20):
         ee = 0.1 * i
@@ -55,6 +57,11 @@ def get_filled_sacc():
         tracers = ('source_1', 'source_1', 'source_0')
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
                          tracers, ee, ell=10.0*i)
+    for i in range(20):
+        bb = 0.4 * i
+        tracers = ('source_2', 'source_2')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb,
+                         tracers, bb, ell=10.0*i)
 
     return s
 
@@ -400,6 +407,18 @@ def test_keep_remove():
     ind = s2.indices(tracers=('source_2', 'source_2'), ell__lt=45)
     assert len(ind) == 5
 
+def test_remove_keep_tracers():
+    s = get_filled_sacc()
+
+    s.remove_tracers(['source_0'])
+
+    assert ['source_1', 'source_2'] == list(s.tracers.keys())
+    assert [('source_2', 'source_2')] == s.get_tracer_combinations()
+
+    s = get_filled_sacc()
+    s.keep_tracers(['source_0'])
+    assert ['source_0'] == list(s.tracers.keys())
+    assert [('source_0',)] == s.get_tracer_combinations()
 
 def test_cutting_block_cov():
     covmat = [np.random.uniform(size=(50, 50)),
