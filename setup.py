@@ -17,7 +17,7 @@ setup(name="sacc",
       author="LSST DESC",
       author_email="joezuntz@googlemail.com",
       use_scm_version=True,
-      setup_requires=["setuptools_scm"],
+      setup_requires=["setuptools_scm", "setuptools_scm_git_archive"],
       install_requires=requirements,
       packages=['sacc'],
 )
