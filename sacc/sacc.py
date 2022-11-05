@@ -595,16 +595,31 @@ class Sacc:
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self.mean[indices]
 
-    def get_data_types(self):
+    def get_data_types(self, tracers=None):
         """
         Get a list of the different data types stored in the Sacc
+
+        Parameters
+        ----------
+        tracers: tuple
+            Select only data types which match this tracer combination.
+            If None (the default) then match any tracer combinations.
 
         Returns
         --------
         data_types: list of strings
             A list of the string data types in the data set
         """
-        return unique_list(d.data_type for d in self.data)
+        data_types = unique_list(d.data_type for d in self.data)
+
+        if tracers is not None:
+            output = []
+            for dt in data_types:
+                if len(self.indices(data_type=dt, tracers=tracers)) != 0:
+                    output.append(dt)
+            data_types = output
+
+        return data_types
 
     def get_tracer(self, name):
         """

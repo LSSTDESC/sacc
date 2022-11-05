@@ -81,6 +81,17 @@ def test_data_type_warning():
                          0.1, ell=10.)
 
 
+def test_get_data_types():
+    s = get_filled_sacc()
+    dt1 = [sacc.standard_types.count, sacc.standard_types.galaxy_shear_cl_bb,
+            sacc.standard_types.galaxy_shear_cl_ee]
+    dt2 = s.get_data_types()
+    assert sorted(dt1) == sorted(dt2)
+
+    dt2 = s.get_data_types(tracers=('source_0', 'source_1'))
+    assert [sacc.standard_types.galaxy_shear_cl_bb] == dt2
+
+
 def test_construct():
     s = sacc.Sacc()
 
