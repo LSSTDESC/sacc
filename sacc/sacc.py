@@ -610,14 +610,8 @@ class Sacc:
         data_types: list of strings
             A list of the string data types in the data set
         """
-        data_types = unique_list(d.data_type for d in self.data)
-
-        if tracers is not None:
-            output = []
-            for dt in data_types:
-                if len(self.indices(data_type=dt, tracers=tracers)) != 0:
-                    output.append(dt)
-            data_types = output
+        data_types = unique_list(d.data_type for d in self.data if
+                                 ((tracers is None) or (d.tracers == tracers)))
 
         return data_types
 
