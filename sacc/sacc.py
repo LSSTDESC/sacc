@@ -673,6 +673,7 @@ class Sacc:
             for tri in trs:
                 if tri in names:
                     self.remove_selection(tracers=trs)
+                    break
 
         for name in names:
             del self.tracers[name]
