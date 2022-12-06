@@ -198,7 +198,7 @@ class Sacc:
         d = DataPoint(data_type, tracers, value, **tags)
         self.data.append(d)
 
-    def add_covariance(self, covariance):
+    def add_covariance(self, covariance, overwrite=False):
         """
         Once you have finished adding data points, add a covariance
         for the entire set.
@@ -208,11 +208,19 @@ class Sacc:
         covariance: array or list
             2x2 numpy array containing the covariance of the added data points
             OR a list of blocks
+        overwrite: bool
+            If True, it overwrites the stored covariance matrix with the given
+            one.
 
         Returns
         -------
         None
         """
+        if self.has_covariance() and (overwrite is False):
+            raise RuntimeError("This sacc file already contains a covariance"
+                               "matrix. Use overwrite=True if you want to "
+                               "replace it for the new one")
+
         if isinstance(covariance, BaseCovariance):
             cov = covariance
         else:
@@ -224,7 +232,6 @@ class Sacc:
                              f"Should be {expected_size} but is {cov.size}")
 
         self.covariance = cov
-
     def has_covariance(self):
         """ Return whether or not this data set has a covariance attached to it
 

@@ -66,6 +66,18 @@ def get_filled_sacc():
     return s
 
 
+def test_add_covariance():
+    s = get_filled_sacc()
+    cov = np.ones((s.mean.size, s.mean.size))
+    s.add_covariance(cov)
+
+    with pytest.raises(RuntimeError):
+        s.add_covariance(cov)
+
+    s.add_covariance(0 * cov, overwrite=True)
+    assert np.all(s.covariance.covmat == 0 * cov)
+
+
 def test_quantity_warning():
     s = sacc.Sacc()
     with pytest.warns(UserWarning):
