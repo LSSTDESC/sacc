@@ -216,7 +216,7 @@ class Sacc:
         -------
         None
         """
-        if self.has_covariance() and (overwrite is False):
+        if self.has_covariance() and not overwrite:
             raise RuntimeError("This sacc file already contains a covariance"
                                "matrix. Use overwrite=True if you want to "
                                "replace it for the new one")
@@ -232,6 +232,7 @@ class Sacc:
                              f"Should be {expected_size} but is {cov.size}")
 
         self.covariance = cov
+
     def has_covariance(self):
         """ Return whether or not this data set has a covariance attached to it
 
