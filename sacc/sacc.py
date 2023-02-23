@@ -970,13 +970,8 @@ class Sacc:
                              "tracers and data type) or get windows "
                              "later.")
         ws = ws[0]
-        if not isinstance(ws, BandpowerWindow):
-            warnings.warn("No bandpower windows associated to these data")
-            return None
-        else:
-            w_inds = np.array(self._get_tags_by_index(['window_ind'],
-                                                      indices)[0])
-            return ws.get_section(w_inds)
+        w_inds = np.array(self._get_tags_by_index(['window_ind'], indices)[0])
+        return ws.get_section(w_inds)
 
     def get_ell_cl(self, data_type, tracer1, tracer2,
                    return_cov=False, return_ind=False):
@@ -1200,12 +1195,13 @@ class Sacc:
         None
 
         """
-        if isinstance(window, BandpowerWindow):
-            if len(ell) != window.nv:
+        if isinstance(window, (BandpowerWindow, TopHatWindow)):
+            nv = window.nv if isinstance(window, BandpowerWindow) else len(window.min)
+            if len(ell) != nv:
                 raise ValueError("Input bandpowers are misshapen")
-            tag_extra = range(window.nv)
+            tag_extra = range(nv)
             tag_extra_name = "window_ind"
-            window_use = [window for i in range(window.nv)]
+            window_use = [window for i in range(nv)]
         else:
             tag_extra = None
             tag_extra_name = None
