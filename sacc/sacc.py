@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from .tracers import BaseTracer
-from .windows import BaseWindow, BandpowerWindow
+from .windows import BaseWindow, BandpowerWindow, TopHatWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
