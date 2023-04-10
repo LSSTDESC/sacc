@@ -1,5 +1,7 @@
 import numpy as np
+import qp
 from astropy.table import Table
+from tables_io.convUtils import convertToApTables
 from .utils import (Namespace, hide_null_values,
                     remove_dict_null_values, unique_list)
 import warnings
@@ -646,5 +648,140 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             tracers[name] = cls(name, z, nz,
                                 quantity=quantity,
                                 extra_columns=extra_columns,
+                                metadata=metadata)
+        return tracers
+
+
+class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
+    """
+    A Tracer type for tomographic n(z) data preresented as a `qp.Ensemble`
+
+    Takes a `qp.Ensemble`
+
+    Parameters
+    ----------
+    name: str
+        The name for this specific tracer, e.g. a
+        tomographic bin identifier.
+
+    ensemble: qp.Ensemble
+        The qp.ensemble in questions
+    """
+
+    def __init__(self, name, ens, **kwargs):
+        """
+        Create a tracer corresponding to a distribution in redshift n(z),
+        for example of galaxies.
+
+        Parameters
+        ----------
+        name: str
+            The name for this specific tracer, e.g. a
+            tomographic bin identifier.
+
+        ensemble: qp.Ensemble
+            The qp.ensemble in questions
+
+        Returns
+        -------
+        instance: NZTracer object
+            An instance of this class
+        """
+        super().__init__(name, **kwargs)
+        self.ensemble = ens
+
+    @classmethod
+    def to_tables(cls, instance_list):
+        """Convert a list of NZTracers to a list of astropy tables
+
+        This is used when saving data to a file.
+        Two or three tables are generated per tracer.
+
+        Parameters
+        ----------
+        instance_list: list
+            List of tracer instances
+
+        Returns
+        -------
+        tables: list
+            List of astropy tables
+        """
+        tables = []
+        
+        for tracer in instance_list:
+            table_dict = tracer.ensemble.build_tables()
+            ap_tables = convertToApTables(table_dict)
+            data_table = ap_tables['data']
+            meta_table = ap_tables['meta']
+            ancil_table = ap_tables.get('ancil', None)
+            meta_table.meta['SACCTYPE'] = 'tracer'
+            meta_table.meta['SACCCLSS'] = cls.tracer_type
+            meta_table.meta['SACCNAME'] = tracer.name
+            meta_table.meta['SACCQTTY'] = tracer.quantity            
+            meta_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:meta'
+
+            data_table.meta['SACCTYPE'] = 'tracer'
+            data_table.meta['SACCCLSS'] = cls.tracer_type
+            data_table.meta['SACCNAME'] = tracer.name
+            data_table.meta['SACCQTTY'] = tracer.quantity            
+            data_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:data'
+
+            for kk, vv in tracer.metadata.items():
+                meta_table.meta['META_'+kk] = vv
+            tables.append(data_table)
+            tables.append(meta_table)
+            if ancil_table:
+                ancil_table.meta['SACCTYPE'] = 'tracer'
+                ancil_table.meta['SACCCLSS'] = cls.tracer_type
+                ancil_table.meta['SACCNAME'] = tracer.name
+                ancil_table.meta['SACCQTTY'] = tracer.quantity            
+                ancil_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:ancil'
+
+                tables.append(ancil_table)
+        return tables
+
+    @classmethod
+    def from_tables(cls, table_list):
+        """Convert an astropy table into a dictionary of tracers
+
+        This is used when loading data from a file.
+        A single tracer object is read from the table.
+
+        Parameters
+        ----------
+        table_list: list[astropy.table.Table]
+            Must contain the appropriate data, for example as saved
+            by to_table.
+
+        Returns
+        -------
+        tracers: dict
+            Dict mapping string names to tracer objects.
+            Only contains one key/value pair for the one tracer.
+        """
+        tracers = {}
+        sorted_dict = {}
+        for table_ in table_list:
+            tokens = table_.meta['EXTNAME'].split(':')
+            table_key = f'{tokens[0]}:{tokens[1]}:{tokens[2]}'
+            table_type = f'{tokens[3]}'
+            if table_key not in sorted_dict:
+                sorted_dict[table_key] = {table_type:table_}
+            else:
+                sorted_dict[table_key][table_type] = table_
+
+        for key, val in sorted_dict.items():
+            meta_table = val['meta']
+            ensemble = qp.from_tables(val)
+            name = meta_table.meta['SACCNAME']
+            quantity = meta_table.meta.get('SACCQTTY', 'generic')
+            ensemble = qp.from_tables(val)
+            metadata = {}
+            for key, value in meta_table.meta.items():
+                if key.startswith("META_"):
+                    metadata[key[5:]] = value
+            tracers[name] = cls(name, ensemble,
+                                quantity=quantity,
                                 metadata=metadata)
         return tracers
