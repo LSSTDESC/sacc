@@ -1,5 +1,4 @@
 import numpy as np
-import qp
 from astropy.table import Table
 from tables_io.convUtils import convertToApTables
 from .utils import (Namespace, hide_null_values,
@@ -708,7 +707,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             List of astropy tables
         """
         tables = []
-        
+
         for tracer in instance_list:
             table_dict = tracer.ensemble.build_tables()
             ap_tables = convertToApTables(table_dict)
@@ -760,6 +759,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             Dict mapping string names to tracer objects.
             Only contains one key/value pair for the one tracer.
         """
+        import qp
         tracers = {}
         sorted_dict = {}
         for table_ in table_list:
