@@ -50,7 +50,6 @@ class BaseTracer:
 
     def __init_subclass__(cls, tracer_type):
         cls._tracer_classes[tracer_type] = cls
-        cls._tracer_classes[tracer_type.lower()] = cls
         cls.tracer_type = tracer_type
 
     @classmethod
@@ -104,7 +103,9 @@ class BaseTracer:
         tables = []
         for name, subcls in cls._tracer_classes.items():
             tracers = [t for t in instance_list if type(t) == subcls]
-            tables += subcls.to_tables(tracers)
+            # If the list is empty, we don't want to append any tables.
+            if tracers:
+                tables += subcls.to_tables(tracers)
         return tables
 
     @classmethod
