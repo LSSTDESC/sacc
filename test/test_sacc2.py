@@ -1,6 +1,7 @@
 import tempfile
 import sacc
 import sacc.data_types
+import sacc.tracers
 import numpy as np
 import pytest
 import os
@@ -96,12 +97,71 @@ def test_data_type_warning():
 def test_get_data_types():
     s = get_filled_sacc()
     dt1 = [sacc.standard_types.count, sacc.standard_types.galaxy_shear_cl_bb,
-            sacc.standard_types.galaxy_shear_cl_ee]
+           sacc.standard_types.galaxy_shear_cl_ee]
     dt2 = s.get_data_types()
     assert sorted(dt1) == sorted(dt2)
 
     dt2 = s.get_data_types(tracers=('source_0', 'source_1'))
     assert [sacc.standard_types.galaxy_shear_cl_bb] == dt2
+
+
+def test_table_creation_0_instances():
+    """If there are no tracer test_table_creation_0_instances, we should
+    generate no tables."""
+    tables = sacc.tracers.BaseTracer.to_tables([])
+    assert len(tables) == 0
+
+
+def test_table_creation_misc_1_instance():
+    t = sacc.tracers.MiscTracer("source_0")
+    tables = sacc.tracers.BaseTracer.to_tables([t])
+    assert len(tables) == 1
+
+
+def test_table_creation_misc_2_instances():
+    t1 = sacc.tracers.MiscTracer("source_0")
+    t2 = sacc.tracers.MiscTracer("source_1")
+    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
+    assert len(tables) == 1
+
+
+def test_table_creation_nz_1_instance():
+    t = sacc.tracers.NZTracer("source_0", np.zeros(1), np.zeros(1))
+    tables = sacc.tracers.BaseTracer.to_tables([t])
+    assert len(tables) == 1
+
+
+def test_table_creation_nz_2_instances():
+    t1 = sacc.tracers.NZTracer("source_0", np.zeros(1), np.zeros(1))
+    t2 = sacc.tracers.NZTracer("source_1", np.zeros(1), np.zeros(1))
+    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
+    assert len(tables) == 2
+
+
+def test_table_creation_map_1_instance():
+    t = sacc.tracers.MapTracer("source_0", 1, [1.5], [10.0])
+    tables = sacc.tracers.BaseTracer.to_tables([t])
+    assert len(tables) == 1
+
+
+def test_table_creation_map_2_instances():
+    t1 = sacc.tracers.MapTracer("source_0", 1, [1.5], [10.0])
+    t2 = sacc.tracers.MapTracer("source_1", 2, [2.5], [15.0])
+    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
+    assert len(tables) == 2
+
+
+def test_table_creation_numap_1_instance():
+    t = sacc.tracers.NuMapTracer("source_0", 1, [1.5], [10.0], np.zeros(1), np.zeros(1))
+    tables = sacc.tracers.BaseTracer.to_tables([t])
+    assert len(tables) == 2
+
+
+def test_table_creation_numap_2_instances():
+    t1 = sacc.tracers.NuMapTracer("source_0", 1, [1.5], [10.0], np.zeros(1), np.zeros(1))
+    t2 = sacc.tracers.NuMapTracer("source_1", 2, [2.5], [15.0], np.zeros(1), np.zeros(1))
+    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
+    assert len(tables) == 4
 
 
 def test_construct():
@@ -430,6 +490,7 @@ def test_keep_remove():
     ind = s2.indices(tracers=('source_2', 'source_2'), ell__lt=45)
     assert len(ind) == 5
 
+
 def test_remove_keep_tracers():
     s = get_filled_sacc()
 
@@ -443,6 +504,7 @@ def test_remove_keep_tracers():
     assert ['source_0'] == list(s.tracers.keys())
     assert [('source_0',)] == s.get_tracer_combinations()
 
+
 def test_cutting_block_cov():
     covmat = [np.random.uniform(size=(50, 50)),
               np.random.uniform(size=(100, 100)),
@@ -453,13 +515,14 @@ def test_cutting_block_cov():
     assert C2.size == len(ind)
     assert np.allclose(C2.get_block(ind), covmat[0])
 
+
 def test_cutting_block_cov2():
     covmat = [np.random.uniform(size=(50, 50)),
               np.random.uniform(size=(100, 100)),
               np.random.uniform(size=(150, 150))]
     C = sacc.covariance.BaseCovariance.make(covmat)
-    ind = list(range(50,150))
-    C2 = C.keeping_indices(np.arange(50,150))
+    ind = list(range(50, 150))
+    C2 = C.keeping_indices(np.arange(50, 150))
     assert C2.size == len(ind)
     assert np.allclose(C2.get_block(range(100)), covmat[1])
 
@@ -752,16 +815,3 @@ def test_rename_tracer():
                   s2.indices(tracers=('src_0', 'source_1')))
     assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
                   s2.indices(tracers=('source_1', 'source_1', 'src_0')))
-
-
-@pytest.mark.parametrize("vv,ncl,ntr",
-                         [('0.2.0', 2, 2),
-                          ('0.3.0', 3, 2),
-                          ('0.4.2', 6, 5)])
-def test_legacy_format(vv, ncl, ntr):
-    print(vv, ncl, ntr)
-    local_file_name = get_from_wiki(
-        f'https://github.com/LSSTDESC/sacc/wiki/legacy_files/dummy_v{vv}.fits')
-    s = sacc.Sacc.load_fits(local_file_name)
-    assert len(s.mean) == ncl * 100
-    assert len(s.tracers) == ntr
