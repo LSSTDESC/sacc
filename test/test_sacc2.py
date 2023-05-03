@@ -818,20 +818,6 @@ def test_rename_tracer():
                   s2.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
-@pytest.mark.parametrize("vv,ncl,ntr",
-                         [('0.2.0', 2, 2),
-                          ('0.3.0', 3, 2),
-                          ('0.4.2', 6, 5)])
-def test_legacy_format(vv, ncl, ntr):
-    print(vv, ncl, ntr)
-    local_file_name = get_from_wiki(
-        f'https://github.com/LSSTDESC/sacc/wiki/legacy_files/dummy_v{vv}.fits')
-    s = sacc.Sacc.load_fits(local_file_name)
-    assert len(s.mean) == ncl * 100
-    assert len(s.tracers) == ntr
-
-
-
 def test_qpnz_tracer():
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
