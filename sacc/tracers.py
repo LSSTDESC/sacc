@@ -1,6 +1,5 @@
 import numpy as np
 from astropy.table import Table
-from tables_io.convUtils import convertToApTables
 from .utils import (Namespace, hide_null_values,
                     remove_dict_null_values, unique_list)
 import warnings
