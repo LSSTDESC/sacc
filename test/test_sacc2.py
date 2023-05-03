@@ -8,6 +8,7 @@ import os
 import pathlib
 import urllib
 import time
+import qp
 
 test_dir = pathlib.Path(__file__).resolve().parent
 test_data_dir = test_dir / 'data'
@@ -815,3 +816,56 @@ def test_rename_tracer():
                   s2.indices(tracers=('src_0', 'source_1')))
     assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
                   s2.indices(tracers=('source_1', 'source_1', 'src_0')))
+
+
+def test_qpnz_tracer():
+    md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
+    md2 = {'potato': 'never'}
+    z = np.linspace(0., 1., 101)
+
+    nz_qp_interp = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=np.ones(shape=(1, 101))))
+    nz_qp_hist = qp.Ensemble(qp.hist, data=dict(bins=z, pdfs=np.ones(shape=(1, 100))))
+
+    T1 = sacc.BaseTracer.make('QPNZ', 'tracer1', nz_qp_interp,
+                              quantity='galaxy_density',
+                              metadata=md1)
+    T2 = sacc.BaseTracer.make('QPNZ', 'tracer2', nz_qp_hist,
+                              quantity='galaxy_shear',
+                              metadata=md2)
+    assert T1.metadata == md1
+    assert T2.metadata == md2
+
+    tables = sacc.BaseTracer.to_tables([T1, T2])
+    D = sacc.BaseTracer.from_tables(tables)
+
+    T1a = D['tracer1']
+    T2a = D['tracer2']
+    assert T1a.metadata == md1
+    assert T2a.metadata == md2
+
+
+def test_io_qp():
+    s = sacc.Sacc()
+
+    # Tracer
+    z = np.linspace(0., 1.0, 101)
+    nz = np.expand_dims((z-0.5)**2/0.1**2, 0)
+    ens = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=nz))
+    ens.set_ancil(dict(modes = ens.mode(z)))
+    s.add_tracer('QPNZ', 'source_0', ens)
+
+    for i in range(20):
+        ee = 0.1 * i
+        tracers = ('source_0', 'source_0')
+        s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         tracers, ee, ell=10.0*i)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2) == 20
+    mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
+    for i in range(20):
+        assert mu[i] == 0.1 * i
