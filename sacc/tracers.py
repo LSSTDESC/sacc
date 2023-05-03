@@ -706,8 +706,10 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         tables: list
             List of astropy tables
         """
-        tables = []
+        from tables_io.convUtils import convertToApTables
 
+        tables = []
+        
         for tracer in instance_list:
             table_dict = tracer.ensemble.build_tables()
             ap_tables = convertToApTables(table_dict)
