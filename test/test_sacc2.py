@@ -333,6 +333,13 @@ def test_nz_tracer():
     assert T1.metadata == md1
     assert T2.metadata == md2
 
+    # check that we can make a tracer using lower case
+    T3 = sacc.BaseTracer.make('nz', 'tracer2', z, Nz2,
+                              quantity='galaxy_shear',
+                              spin=2,
+                              metadata=md2)
+    assert T3.metadata == md2
+
     tables = sacc.BaseTracer.to_tables([T1, T2])
     D = sacc.BaseTracer.from_tables(tables)
 
@@ -358,7 +365,7 @@ def test_mixed_tracers():
                               quantity='galaxy_shear', metadata=md1)
 
     M1 = sacc.BaseTracer.make("Misc", "sample1", metadata=md2)
-    M2 = sacc.BaseTracer.make("Misc", "sample2", metadata=md3)
+    M2 = sacc.BaseTracer.make("mISC", "sample2", metadata=md3)
 
     tables = sacc.BaseTracer.to_tables([T1, M1, T2, M2])
     recovered = sacc.BaseTracer.from_tables(tables)
@@ -422,9 +429,9 @@ def test_keep_remove():
     z = np.arange(0., 1.0, 0.01)
     nz = (z-0.5)**2/0.1**2
     s.add_tracer('NZ', 'source_0', z, nz)
-    s.add_tracer('NZ', 'source_1', z, nz,
+    s.add_tracer('nZ', 'source_1', z, nz,
                  quantity='galaxy_shear', spin=2)
-    s.add_tracer('NZ', 'source_2', z, nz,
+    s.add_tracer('nz', 'source_2', z, nz,
                  quantity='cluster_density')
 
     for i in range(20):
@@ -751,7 +758,7 @@ def test_io_maps_bpws():
     # Tracer
     s.add_tracer('NZ', 'gc', z, nz)
     s.add_tracer('NuMap', 'cmbp', 2, nu, bandpass, ell, beam)
-    s.add_tracer('Map', 'sz', 0, ell, beam)
+    s.add_tracer('maP', 'sz', 0, ell, beam)
 
     # Window
     ells_large = np.arange(n_ell_large)
@@ -852,7 +859,7 @@ def test_io_qp():
     nz = np.expand_dims((z-0.5)**2/0.1**2, 0)
     ens = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=nz))
     ens.set_ancil(dict(modes = ens.mode(z)))
-    s.add_tracer('QPNZ', 'source_0', ens)
+    s.add_tracer('QpnZ', 'source_0', ens)
 
     for i in range(20):
         ee = 0.1 * i
