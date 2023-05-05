@@ -49,7 +49,7 @@ class BaseTracer:
         self.metadata = kwargs.pop('metadata', {})
 
     def __init_subclass__(cls, tracer_type):
-        cls._tracer_classes[tracer_type] = cls
+        cls._tracer_classes[tracer_type.lower()] = cls
         cls.tracer_type = tracer_type
 
     @classmethod
@@ -72,7 +72,7 @@ class BaseTracer:
         instance: Tracer object
             An instance of a Tracer subclass
         """
-        subclass = cls._tracer_classes[tracer_type]
+        subclass = cls._tracer_classes[tracer_type.lower()]
         obj = subclass(name, *args, **kwargs)
         return obj
 
@@ -135,7 +135,7 @@ class BaseTracer:
         """
         tracers = {}
         # Figure out the different subclasses that are present
-        subclass_names = unique_list(table.meta['SACCCLSS']
+        subclass_names = unique_list(table.meta['SACCCLSS'].lower()
                                      for table in table_list)
         subclasses = [cls._tracer_classes[name]
                       for name in subclass_names]
@@ -146,7 +146,7 @@ class BaseTracer:
         # it depends on the tracers class and how complicated it is.
         for name, subcls in zip(subclass_names, subclasses):
             subcls_table_list = [table for table in table_list
-                                 if table.meta['SACCCLSS'] == name]
+                                 if table.meta['SACCCLSS'].lower() == name]
             # and ask the subclass to read from those tables.
             tracers.update(subcls.from_tables(subcls_table_list))
         return tracers
