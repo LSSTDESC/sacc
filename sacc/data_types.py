@@ -32,7 +32,10 @@ required_tags_concise = {
     "xi_plus_im": ['theta'],
     "xi_minus_re": ['theta'],
     "xi_minus_im": ['theta'],
-    "count": []
+    "count": [],
+    "cluster_counts": [],
+    "cluster_meanlogmass": [],
+    "cluster_shear": [],
 }
 
 required_tags_verbose = {
@@ -48,9 +51,6 @@ required_tags_verbose = {
     "cluster_density_xi": ['theta'],
     "cluster_mass_count_wl": [],
     "cluster_mass_count_xray": [],
-    "cluster_counts": [],
-    "cluster_mean_log_mass": [],
-    "cluster_shear": [],
     "cmbCluster_polarizationDensity_cl_b": ['ell'],
     "cmbCluster_polarizationDensity_cl_e": ['ell'],
     "cmbCluster_polarizationDensity_xi_t": ['theta'],
