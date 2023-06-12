@@ -34,7 +34,7 @@ required_tags_concise = {
     "xi_minus_im": ['theta'],
     "count": [],
     "cluster_counts": [],
-    "cluster_meanlogmass": [],
+    "cluster_mean_log_mass": [],
     "cluster_shear": [],
 }
 
