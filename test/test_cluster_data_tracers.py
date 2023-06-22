@@ -5,7 +5,7 @@ Tests for function supporting SACC.
 
 from sacc.tracers import (
     BinZTracer,
-    BinLogMTracer
+    BinLogMTracer,
     BinRichnessTracer,
     BinRadiusTracer,
     SurveyTracer,
