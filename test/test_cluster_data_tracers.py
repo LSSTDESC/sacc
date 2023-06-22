@@ -5,9 +5,10 @@ Tests for function supporting SACC.
 
 from sacc.tracers import (
     BinZTracer,
+    BinLogMTracer
     BinRichnessTracer,
     BinRadiusTracer,
-    ClusterSurveyTracer,
+    SurveyTracer,
 )
 
 
@@ -41,6 +42,40 @@ def test_binztracer_tables():
 
     d = BinZTracer.from_tables(tables)
     assert len(d) == 2  # this list of tables recovers both BinZTracers
+    assert d["fred"] == a
+    assert d["wilma"] == b
+
+
+def test_make_binlogmtracer():
+    tracer = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.0)
+    assert isinstance(tracer, BinLogMTracer)
+    assert tracer.quantity == "generic"
+    assert tracer.name == "fred"
+    assert tracer.lower == 13.0
+    assert tracer.upper == 15.0
+
+
+def test_binlogmtracer_equality():
+    a = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.0)
+    b = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.0)
+    c = BinLogMTracer.make("bin_logm", name="wilma", lower=13.0, upper=15.0)
+    d = BinLogMTracer.make("bin_logm", name="fred", lower=14.0, upper=15.0)
+    e = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.1)
+    assert a == b
+    assert a != "fred"
+    assert a != c
+    assert a != d
+    assert a != e
+
+
+def test_binlogmtracer_tables():
+    a = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.0)
+    b = BinLogMTracer.make("bin_logm", name="wilma", lower=14.0, upper=15.5)
+    tables = BinLogMTracer.to_tables([a, b])
+    assert len(tables) == 1
+
+    d = BinLogMTracer.from_tables(tables)
+    assert len(d) == 2
     assert d["fred"] == a
     assert d["wilma"] == b
 
@@ -137,19 +172,19 @@ def test_binradiustracer_tables():
     assert d["bambam"] == b
 
 
-def test_make_clustersurveytracer():
-    tracer = ClusterSurveyTracer.make("cluster_survey", name="bullwinkle", sky_area=1.0)
-    assert isinstance(tracer, ClusterSurveyTracer)
+def test_make_surveytracer():
+    tracer = SurveyTracer.make("survey", name="bullwinkle", sky_area=1.0)
+    assert isinstance(tracer, SurveyTracer)
     assert tracer.quantity == "generic"
     assert tracer.name == "bullwinkle"
     assert tracer.sky_area == 1.0
 
 
-def test_clustersurveytracer_equality():
-    a = ClusterSurveyTracer.make("cluster_survey", name="bullwinkle", sky_area=1.0)
-    b = ClusterSurveyTracer.make("cluster_survey", name="bullwinkle", sky_area=1.0)
-    c = ClusterSurveyTracer.make("cluster_survey", name="rocky", sky_area=1.0)
-    d = ClusterSurveyTracer.make("cluster_survey", name="boris", sky_area=2.0)
+def test_surveytracer_equality():
+    a = SurveyTracer.make("survey", name="bullwinkle", sky_area=1.0)
+    b = SurveyTracer.make("survey", name="bullwinkle", sky_area=1.0)
+    c = SurveyTracer.make("survey", name="rocky", sky_area=1.0)
+    d = SurveyTracer.make("survey", name="boris", sky_area=2.0)
 
     assert a == b
     assert a != "bullwinkle"
@@ -157,12 +192,12 @@ def test_clustersurveytracer_equality():
     assert a != d
 
 
-def test_clustersurveytracer_tables():
-    a = ClusterSurveyTracer.make("cluster_survey", name="bullwinkle", sky_area=1.0)
-    b = ClusterSurveyTracer.make("cluster_survey", name="rocky", sky_area=2.0)
-    tables = ClusterSurveyTracer.to_tables([a, b])
+def test_surveytracer_tables():
+    a = SurveyTracer.make("survey", name="bullwinkle", sky_area=1.0)
+    b = SurveyTracer.make("survey", name="rocky", sky_area=2.0)
+    tables = SurveyTracer.to_tables([a, b])
     assert len(tables) == 1
-    d = ClusterSurveyTracer.from_tables(tables)
+    d = SurveyTracer.from_tables(tables)
     assert len(d) == 2
     assert d["bullwinkle"] == a
     assert d["rocky"] == b
