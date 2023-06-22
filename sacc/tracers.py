@@ -1115,7 +1115,7 @@ class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
         """Test for equality. If :python:`other` is not a
         :python:`SurveyTracer`, then it is not equal to :python:`self`.
         Otherwise, they are equal if names and the sky-areas are equal."""
-        if not isinstance(other, ClusterSurveyTracer):
+        if not isinstance(other, SurveyTracer):
             return False
         return self.name == other.name and self.sky_area == other.sky_area
 
