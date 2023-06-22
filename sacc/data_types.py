@@ -35,7 +35,7 @@ required_tags_concise = {
     "count": [],
     "cluster_counts": [],
     "cluster_mean_log_mass": [],
-    "cluster_shear": [],
+    "cluster_shear": []
 }
 
 required_tags_verbose = {
@@ -140,6 +140,10 @@ required_tags_verbose = {
     "galaxy_shear_xi_plus": ['theta'],
     "galaxy_shear_xi_imagMinus": ['theta'],
     "galaxy_shear_xi_imagPlus": ['theta'],
+    "count": [],
+    "cluster_counts": [],
+    "cluster_mean_log_mass": [],
+    "cluster_shear": [],
 }
 
 required_tags = {**required_tags_concise, **required_tags_verbose}
