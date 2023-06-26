@@ -7,7 +7,6 @@ from sacc.tracers import (
     BinZTracer,
     BinLogMTracer,
     BinRichnessTracer,
-    BinRadiusTracer,
     SurveyTracer,
 )
 
