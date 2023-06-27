@@ -32,7 +32,10 @@ required_tags_concise = {
     "xi_plus_im": ['theta'],
     "xi_minus_re": ['theta'],
     "xi_minus_im": ['theta'],
-    "count": []
+    "count": [],
+    "cluster_counts": [],
+    "cluster_mean_log_mass": [],
+    "cluster_shear": ["radius_bin"]
 }
 
 required_tags_verbose = {
