@@ -1028,7 +1028,9 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
 
 
 class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
-    """A tracer for the survey definition."""
+    """A tracer for the survey definition. It shall 
+    be used to filter data related to a given survey
+    and to provide the survey sky-area of analysis."""
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
