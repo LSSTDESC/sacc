@@ -3,4 +3,4 @@ from .windows import Window, BandpowerWindow, TopHatWindow, LogTopHatWindow  # n
 from .data_types import standard_types, parse_data_type_name, build_data_type_name  # noqa
 from .tracers import BaseTracer  # noqa
 from .covariance import BaseCovariance  # noqa
-__version__ = '0.8.1' #noqa
+__version__ = '0.9' #noqa
