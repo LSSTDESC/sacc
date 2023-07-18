@@ -1027,6 +1027,56 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
         return tracers
 
 
+class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
+    """A tracer for a single radial bin, e.g. when dealing with cluster shear profiles.
+    It gives the bin edges and the value of the bin "center". The latter would typically
+    be returned by CLMM and correspond to the average radius of the galaxies in that
+    radial bin. """
+
+    def __eq__(self, other) -> bool:
+        """Test for equality. If :python:`other` is not a
+        :python:`BinRadiusTracer`, then it is not equal to :python:`self`.
+        Otherwise, they are equal if names and the r-range and centers of the
+        bins, are equal."""
+        if not isinstance(other, BinRadiusTracer):
+            return False
+        return (
+            self.name == other.name
+            and self.lower == other.lower
+            and self.center == other.center
+            and self.upper == other.upper
+        )
+
+    def __init__(self, name: str, lower: float, upper: float, center: float, **kwargs):
+        """
+        Create a tracer corresponding to a single radial bin.
+
+        :param name: The name of the tracer
+        :param lower: The lower bound of the radius bin
+        :param upper: The upper bound of the radius bin
+        :param center: The value to use if a single point-estimate is needed.
+
+        Note that :python:`center` need not be the midpoint between
+        :python:`lower` and :python:`upper`'.
+        """
+        super().__init__(name, **kwargs)
+        self.lower = lower
+        self.upper = upper
+        self.center = center
+
+    @classmethod
+    def to_tables(cls, instance_list):
+        """Convert a list of BinRadiusTracers to a single astropy table
+
+        This is used when saving data to a file.
+        One table is generated with the information for all the tracers.
+
+        :param instance_list: List of tracer instances
+        :return: List with a single astropy table
+        """
+
+        names = ["name", "quantity", "lower", "upper", "center"]
+
 class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
     """A tracer for the survey definition. It shall 
     be used to filter data related to a given survey
