@@ -7,6 +7,7 @@ from sacc.tracers import (
     BinZTracer,
     BinLogMTracer,
     BinRichnessTracer,
+    BinRadiusTracer,
     SurveyTracer,
 )
 
@@ -115,6 +116,59 @@ def test_binrichnesstracer_tables():
     assert len(d) == 2  # this list of tables recovers both BinRichnessTracers
     assert d["barney"] == a
     assert d["betty"] == b
+
+
+def test_make_binradiustracer():
+    tracer = BinRadiusTracer.make(
+        "bin_radius", name="pebbles", lower=1.0, center=2.0, upper=3.0
+    )
+    assert isinstance(tracer, BinRadiusTracer)
+    assert tracer.quantity == "generic"
+    assert tracer.name == "pebbles"
+    assert tracer.lower == 1.0
+    assert tracer.center == 2.0
+    assert tracer.upper == 3.0
+
+def test_binradiustracer_equality():
+    a = BinRadiusTracer.make(
+        "bin_radius", name="fred", lower=0.5, center=0.75, upper=1.0
+    )
+    b = BinRadiusTracer.make(
+        "bin_radius", name="fred", lower=0.5, center=0.75, upper=1.0
+    )
+    c = BinRadiusTracer.make(
+        "bin_radius", name="wilma", lower=0.5, center=0.75, upper=1.0
+    )
+    d = BinRadiusTracer.make(
+        "bin_radius", name="fred", lower=0.6, center=0.75, upper=1.0
+    )
+    e = BinRadiusTracer.make(
+        "bin_radius", name="fred", lower=0.5, center=0.8, upper=1.0
+    )
+    f = BinRadiusTracer.make(
+        "bin_radius", name="fred", lower=0.5, center=0.75, upper=1.1
+    )
+    assert a == b
+    assert a != "fred"
+    assert a != c
+    assert a != d
+    assert a != e
+    assert a != f
+
+
+def test_binradiustracer_tables():
+    a = BinRadiusTracer.make(
+        "bin_radius", name="pebbles", lower=1.0, center=2.0, upper=3.0
+    )
+    b = BinRadiusTracer.make(
+        "bin_radius", name="bambam", lower=3.0, center=4.0, upper=5.0
+    )
+    tables = BinRadiusTracer.to_tables([a, b])
+    assert len(tables) == 1
+    d = BinRadiusTracer.from_tables(tables)
+    assert len(d) == 2
+    assert d["pebbles"] == a
+    assert d["bambam"] == b
 
 
 def test_make_surveytracer():

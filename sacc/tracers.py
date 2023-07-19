@@ -1077,6 +1077,48 @@ class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
 
         names = ["name", "quantity", "lower", "upper", "center"]
 
+        cols = [
+            [obj.name for obj in instance_list],
+            [obj.quantity for obj in instance_list],
+            [obj.lower for obj in instance_list],
+            [obj.upper for obj in instance_list],
+            [obj.center for obj in instance_list],
+        ]
+
+        table = Table(data=cols, names=names)
+        table.meta["SACCTYPE"] = "tracer"
+        table.meta["SACCCLSS"] = cls.tracer_type
+        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
+        return [table]
+
+    @classmethod
+    def from_tables(cls, table_list):
+        """Convert an astropy table into a dictionary of tracers
+
+        This is used when loading data from a file.
+        One tracer object is created for each "row" in each table.
+
+        :param table_list: List of astropy tables
+        :return: Dictionary of tracers
+        """
+        tracers = {}
+
+        for table in table_list:
+            for row in table:
+                name = row["name"]
+                quantity = row["quantity"]
+                lower = row["lower"]
+                upper = row["upper"]
+                center = row["center"]
+                tracers[name] = cls(
+                    name,
+                    quantity=quantity,
+                    lower=lower,
+                    upper=upper,
+                    center=center,
+                )
+        return tracers
+
 class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
     """A tracer for the survey definition. It shall 
     be used to filter data related to a given survey
