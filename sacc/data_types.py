@@ -35,7 +35,7 @@ required_tags_concise = {
     "count": [],
     "cluster_counts": [],
     "cluster_mean_log_mass": [],
-    "cluster_shear": ["radius_bin"]
+    "cluster_shear": []
 }
 
 required_tags_verbose = {
