@@ -623,6 +623,21 @@ class Sacc:
 
         return data_types
 
+    def has_tracer(self, name):
+        """
+        Determine whether a tracer object with the given name is present
+
+        Parameters
+        ----------
+        name: str
+            A string name of a tracer
+
+        Returns
+        -------
+        value: True if the tracer exists, else False
+        """
+        return name in self.tracers
+
     def get_tracer(self, name):
         """
         Get the tracer object with the given name
