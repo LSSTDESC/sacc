@@ -876,3 +876,9 @@ def test_io_qp():
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
     for i in range(20):
         assert mu[i] == 0.1 * i
+
+def test_sacc_has_tracer():
+    s = get_filled_sacc()
+    assert not s.has_tracer("this_is_not_a_tracer")
+    for tracer_name in ['source_0', 'source_1', 'source_2']:
+        assert s.has_tracer(tracer_name)
