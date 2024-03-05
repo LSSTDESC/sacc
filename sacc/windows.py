@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from astropy.table import Table
 
@@ -77,6 +79,23 @@ class BaseWindow:
             # Different subclasses can handle this differently.
             windows.update(subclass.from_table(table))
         return windows
+
+    def get_section(self, indices):
+        """Get part of this window function corresponding to the input
+        indices.
+
+        Parameters
+        ----------
+        indices: int or array_like
+            Indices to return.
+
+        Returns
+        -------
+        window: `Window`
+            A `Window object.
+        """
+        warnings.warn("No bandpower windows associated to these data")
+        return None
 
 
 class TopHatWindow(BaseWindow, window_type='TopHat'):
@@ -158,6 +177,8 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         """
         return {row['id']: cls(row['min'], row['max']) for row in table}
 
+    def get_section(self, indices):
+        return self.__class__(self.min[indices], self.max[indices])
 
 class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
     """A window function that is log-constant between two values.
@@ -317,17 +338,4 @@ class BandpowerWindow(BaseWindow, window_type='Bandpower'):
         return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
 
     def get_section(self, indices):
-        """Get part of this window function corresponding to the input
-        indices.
-
-        Parameters
-        ----------
-        indices: int or array_like
-            Indices to return.
-
-        Returns
-        -------
-        window: `Window`
-            A `Window object.
-        """
         return self.__class__(self.values, self.weight[:, indices])
