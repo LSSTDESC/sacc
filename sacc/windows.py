@@ -51,7 +51,8 @@ class BaseWindow:
             # Pull out the relevant objects for this subclass.
             # Note that we can't use isinstance here.
             windows = [w for w in instance_list if type(w) == subcls]
-            tables += subcls.to_tables(windows)
+            if len(windows) > 0:
+                tables += subcls.to_tables(windows)
         return tables
 
     @classmethod
