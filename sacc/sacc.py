@@ -6,6 +6,7 @@ from io import BytesIO
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import yaml
 
 from .tracers import BaseTracer
 from .windows import BaseWindow, BandpowerWindow
@@ -845,6 +846,70 @@ class Sacc:
         # Write the binary data to the target file
         with open(filename, "wb") as f:
             f.write(output_data)
+
+    def save_yaml(self, filename, overwrite=False):
+        """
+        
+        """
+        # Since we don't want to re-order the file as a side effect
+        # we first make a copy of ourself and re-order that.
+        S = self.copy()
+        S.to_canonical_order()
+
+        # Tables for the windows
+        tables, window_ids = S._make_window_tables()
+        lookup = {'window': window_ids}
+
+        # Tables for the tracers
+        tables += BaseTracer.to_tables(S.tracers.values())
+
+        # Tables for the data sets
+        for dt in S.get_data_types():
+            data = S.get_data_points(dt)
+            table = DataPoint.to_table(data, lookup)
+            # Could move this inside to_table?
+            table.meta['SACCTYPE'] = 'data'
+            table.meta['SACCNAME'] = dt
+            table.meta['EXTNAME'] = f'data:{dt}'
+            tables.append(table)
+
+
+        output = {}
+        for t in tables:
+            d = {name: t[name].tolist() for name in t.colnames}
+            d['sacc_meta'] = dict(t.meta)
+            output[t.meta['EXTNAME']] = d
+
+        output['saccmeta'] = S.metadata
+
+        if self.has_covariance():
+            output['covariance'] = self.covariance.to_dict()
+
+        # Write the yaml file
+        with open(filename, "w") as f:
+            yaml.dump(output, f)
+    
+    @classmethod
+    def load_yaml(cls, filename):
+        with open(filename) as f:
+            data = yaml.safe_load(f)
+        
+        for name, d in data.items():
+            if name == 'saccmeta':
+                meta = d
+                continue
+            m = d['saccmeta']
+            if m['SACCTYPE'] == 'tracer':
+                ...
+            elif m['SACCTYPE'] == 'data':
+                ...
+            elif m['SACCTYPE'] == 'window':
+                ...
+            elif m['SACCTYPE'] == 'cov':
+                ...
+        
+                   
+        
 
     @classmethod
     def load_fits(cls, filename):

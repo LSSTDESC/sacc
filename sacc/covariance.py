@@ -67,6 +67,10 @@ class BaseCovariance:
         subclass_name = hdu.header['saccclss']
         subclass = cls._covariance_classes[subclass_name]
         return subclass.from_hdu(hdu)
+    
+    @classmethod
+    def from_dict(cls, d):
+        
 
     @classmethod
     def make(cls, cov):
@@ -178,6 +182,25 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         hdu.header['SACCCLSS'] = self.cov_type
         hdu.header['SIZE'] = self.size
         return hdu
+
+    def to_dict(self):
+        """
+        Make a dictionary representation of the covariance.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        cov: dict
+            Dictionary representation of the covariance
+        """
+        return {
+            'saccmeta': {'SACCTYPE': 'cov', 'SACCLSS': self.cov_type},
+            'covariance': self.covmat.tolist()
+        }
+
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -295,6 +318,25 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         for i, s in enumerate(self.block_sizes):
             hdu.header[f'size_{i}'] = s
         return hdu
+
+    def to_dict(self):
+        """
+        Make a dictionary representation of the covariance.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        cov: dict
+            Dictionary representation of the covariance
+        """
+        return {
+            'saccmeta': {'SACCTYPE': 'cov', 'SACCLSS': self.cov_type},
+            'covariance': [b.tolist() for b in self.blocks]
+        }
+
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -451,6 +493,24 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         hdu.header['sacctype'] = 'cov'
         hdu.header['saccclss'] = self.cov_type
         return hdu
+
+    def to_dict(self):
+        """
+        Make a dictionary representation of the covariance.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        cov: dict
+            Dictionary representation of the covariance
+        """
+        return {
+            'saccmeta': {'SACCTYPE': 'cov', 'SACCLSS': self.cov_type},
+            'covariance': self.diag.tolist()
+        }
 
     def keeping_indices(self, indices):
         """

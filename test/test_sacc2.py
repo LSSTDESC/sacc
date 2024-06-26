@@ -65,6 +65,11 @@ def get_filled_sacc():
         s.add_data_point(sacc.standard_types.galaxy_shear_cl_bb,
                          tracers, bb, ell=10.0*i)
 
+    # add a dense covariance
+    n = len(s)
+    covmat = np.random.uniform(size=(n, n))
+    s.add_covariance(covmat)
+
     return s
 
 
@@ -876,3 +881,7 @@ def test_io_qp():
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
     for i in range(20):
         assert mu[i] == 0.1 * i
+
+def test_yaml():
+    s = get_filled_sacc()
+    s.save_yaml('test.yaml')
