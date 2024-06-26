@@ -26,6 +26,6 @@ setup(name="sacc",
         'all':  ["qp-prob", "numpydoc"],
         'doc': ["numpydoc"],
         'qp':  ["qp-prob"],
-      }
+      },
       packages=['sacc'],
 )
