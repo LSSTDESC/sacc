@@ -23,9 +23,9 @@ setup(name="sacc",
       setup_requires=["setuptools_scm<7.0", "setuptools_scm_git_archive"],
       install_requires=requirements,
       extras_require = {
-        'all':  ["qp-prob", "numpydoc"],
+        'all':  ["qp-prob[all]", "numpydoc"],
         'doc': ["numpydoc"],
-        'qp':  ["qp-prob"],
+        'qp':  ["qp-prob[all]"],
       },
       packages=['sacc'],
 )
