@@ -2,4 +2,3 @@ scipy
 numpy>=1.20
 numpydoc
 astropy
-qp-prob
