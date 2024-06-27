@@ -652,9 +652,11 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
 class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
     """
-    A Tracer type for tomographic n(z) data preresented as a `qp.Ensemble`
+    A Tracer type for tomographic n(z) data represented as a `qp.Ensemble`
 
     Takes a `qp.Ensemble`
+
+    Requires the `qp` and `tables_io` packages to be installed.
 
     Parameters
     ----------
@@ -761,6 +763,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             Only contains one key/value pair for the one tracer.
         """
         import qp
+
         tracers = {}
         sorted_dict = {}
         for table_ in table_list:
@@ -772,9 +775,8 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             else:
                 sorted_dict[table_key][table_type] = table_
 
-        for key, val in sorted_dict.items():
+        for val in sorted_dict.values():
             meta_table = val['meta']
-            ensemble = qp.from_tables(val)
             name = meta_table.meta['SACCNAME']
             quantity = meta_table.meta.get('SACCQTTY', 'generic')
             ensemble = qp.from_tables(val)

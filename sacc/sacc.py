@@ -1220,7 +1220,7 @@ class Sacc:
                 raise ValueError("Input bandpowers are misshapen")
             tag_extra = range(window.nv)
             tag_extra_name = "window_ind"
-            window_use = [window for i in range(window.nv)]
+            window_use = [window for _ in range(window.nv)]
         else:
             tag_extra = None
             tag_extra_name = None
