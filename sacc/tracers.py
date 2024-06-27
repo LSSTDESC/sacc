@@ -305,7 +305,6 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -317,7 +316,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
             tr_tables[name][tabtyp] = table
 
         # Now loop through different tracers and build them from their tables
-        for n, dt in tr_tables.items():
+        for dt in tr_tables.values():
             quantity = []
             metadata = {}
             map_unit = 'none'
@@ -452,7 +451,6 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['bandpass', 'beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -464,7 +462,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             tr_tables[name][tabtyp] = table
 
         # Now loop through different tracers and build them from their tables
-        for n, dt in tr_tables.items():
+        for dt in tr_tables.values():
             quantity = []
             metadata = {}
             nu = []
