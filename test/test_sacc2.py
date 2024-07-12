@@ -833,10 +833,10 @@ def test_qpnz_tracer():
     nz_qp_interp = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=np.ones(shape=(1, 101))))
     nz_qp_hist = qp.Ensemble(qp.hist, data=dict(bins=z, pdfs=np.ones(shape=(1, 100))))
 
-    T1 = sacc.BaseTracer.make('QPNZ', 'tracer1', nz_qp_interp,
+    T1 = sacc.BaseTracer.make('QPNZ', 'tracer1', nz_qp_interp, z,
                               quantity='galaxy_density',
                               metadata=md1)
-    T2 = sacc.BaseTracer.make('QPNZ', 'tracer2', nz_qp_hist,
+    T2 = sacc.BaseTracer.make('QPNZ', 'tracer2', nz_qp_hist, z,
                               quantity='galaxy_shear',
                               metadata=md2)
     assert T1.metadata == md1
