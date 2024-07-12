@@ -692,7 +692,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         """
         super().__init__(name, **kwargs)
         self.ensemble = ens
-        self.nz = ens.pdf(z)
+        self.nz = np.mean(ens.pdf(z),axis=0)
         self.z = z
 
     @classmethod
