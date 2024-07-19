@@ -305,7 +305,6 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -317,7 +316,7 @@ class MapTracer(BaseTracer, tracer_type='Map'):
             tr_tables[name][tabtyp] = table
 
         # Now loop through different tracers and build them from their tables
-        for n, dt in tr_tables.items():
+        for dt in tr_tables.values():
             quantity = []
             metadata = {}
             map_unit = 'none'
@@ -452,7 +451,6 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         for table in table_list:
             # Read name and table type
             name = table.meta['SACCNAME']
-            quantity = table.meta.get('SACCQTTY', 'generic')
             tabtyp = table.meta['EXTNAME'].split(':')[-1]
             if tabtyp not in ['bandpass', 'beam']:
                 raise KeyError("Unknown table type " + table.meta['EXTNAME'])
@@ -464,7 +462,7 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
             tr_tables[name][tabtyp] = table
 
         # Now loop through different tracers and build them from their tables
-        for n, dt in tr_tables.items():
+        for dt in tr_tables.values():
             quantity = []
             metadata = {}
             nu = []
@@ -652,9 +650,11 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
 
 class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
     """
-    A Tracer type for tomographic n(z) data preresented as a `qp.Ensemble`
+    A Tracer type for tomographic n(z) data represented as a `qp.Ensemble`
 
     Takes a `qp.Ensemble`
+
+    Requires the `qp` and `tables_io` packages to be installed.
 
     Parameters
     ----------
@@ -761,6 +761,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             Only contains one key/value pair for the one tracer.
         """
         import qp
+
         tracers = {}
         sorted_dict = {}
         for table_ in table_list:
@@ -772,9 +773,8 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             else:
                 sorted_dict[table_key][table_type] = table_
 
-        for key, val in sorted_dict.items():
+        for val in sorted_dict.values():
             meta_table = val['meta']
-            ensemble = qp.from_tables(val)
             name = meta_table.meta['SACCNAME']
             quantity = meta_table.meta.get('SACCQTTY', 'generic')
             ensemble = qp.from_tables(val)
