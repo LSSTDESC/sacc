@@ -690,7 +690,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         if z is None:
             ens_meta = ens.metadata()
             if 'bins' in list(ens_meta.keys()):
-                z = ens_meta['bins']
+                z = ens_meta['bins'][0]
             else:
                 raise ValueError("No redshift bins provided or found in ensemble metadata")
         self.nz = np.mean(ens.pdf(z),axis=0)
