@@ -689,7 +689,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         self.ensemble = ens
         if z is None:
             ens_meta = ens.metadata()
-            if 'bins' is in list(ens_meta.keys()):
+            if 'bins' in list(ens_meta.keys()):
                 z = ens_meta['bins']
             else:
                 raise ValueError("No redshift bins provided or found in ensemble metadata")
