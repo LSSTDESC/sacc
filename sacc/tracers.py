@@ -666,7 +666,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         The qp.ensemble in questions
     """
 
-    def __init__(self, name, ens, z, **kwargs):
+    def __init__(self, name, ens, z=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -679,11 +679,6 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
 
         ensemble: qp.Ensemble
             The qp.ensemble in questions
-        
-        z: array 
-            A suggested array of redshifts to evaluate the 
-            ensemble. Note that the QP ensemble does not assume
-            this grid.
 
         Returns
         -------
@@ -692,6 +687,12 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         """
         super().__init__(name, **kwargs)
         self.ensemble = ens
+        if z is None:
+            ens_meta = ens.metadata()
+            if 'bins' is in list(ens_meta.keys()):
+                z = ens_meta['bins']
+            else:
+                raise ValueError("No redshift bins provided or found in ensemble metadata")
         self.nz = np.mean(ens.pdf(z),axis=0)
         self.z = z
 
