@@ -859,7 +859,7 @@ def test_io_qp():
     nz = np.expand_dims((z-0.5)**2/0.1**2, 0)
     ens = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=nz))
     ens.set_ancil(dict(modes = ens.mode(z)))
-    s.add_tracer('QpnZ', 'source_0', ens, z)
+    s.add_tracer('QpnZ', 'source_0', ens)
 
     for i in range(20):
         ee = 0.1 * i
