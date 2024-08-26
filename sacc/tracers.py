@@ -689,19 +689,13 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         self.ensemble = ens
         ens_meta = ens.metadata()
         if z is None:
-            if 'bins' in ens_meta.keys():
-                # Find z in the QP ensemble metadata
-                # Only true if the QP ensemble is a histogram
-                self.z = ens_meta['bins'][0]
-                self.nz = np.mean(ens.pdf(self.z), axis=0)
+            ens_meta = ens.metadata()
+            if 'bins' in list(ens_meta.keys()):
+                z = ens_meta['bins']
+                z = ens_meta['bins'][0]
             else:
-                # Set both to None if z cannot be found
-                self.z = z
-                self.nz = None
-        else:
-            # Normal mode
-            self.z = z
-            self.nz = np.mean(ens.pdf(self.z), axis=0)
+                raise ValueError("No redshift bins provided or found in ensemble metadata")
+        self.nz = np.mean(ens.pdf(z), axis=0)
 
     @classmethod
     def to_tables(cls, instance_list):
