@@ -652,7 +652,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
     """
     A Tracer type for tomographic n(z) data represented as a `qp.Ensemble`
 
-    Takes a `qp.Ensemble`
+    Takes a `qp.Ensemble` and a redshift array.
 
     Requires the `qp` and `tables_io` packages to be installed.
 
@@ -687,15 +687,15 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         """
         super().__init__(name, **kwargs)
         self.ensemble = ens
-        ens_meta = ens.metadata()
         if z is None:
+            ens_meta = ens.metadata()
             if 'bins' in list(ens_meta.keys()):
                 z = ens_meta['bins'][0]
             else:
                 raise ValueError("No redshift bins provided or found in ensemble metadata")
         self.z = z
-        self.nz = np.mean(ens.pdf(self.z), axis=0)
-
+        self.nz = np.mean(ens.pdf(self.z),axis=0)
+        
     @classmethod
     def to_tables(cls, instance_list):
         """Convert a list of NZTracers to a list of astropy tables
@@ -718,6 +718,15 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         tables = []
 
         for tracer in instance_list:
+            names = ['z', 'nz']
+            cols = [tracer.z, tracer.nz]
+            fid_table = Table(data=cols, names=names)
+            fid_table.meta['SACCTYPE'] = 'tracer'
+            fid_table.meta['SACCCLSS'] = cls.tracer_type
+            fid_table.meta['SACCNAME'] = tracer.name
+            fid_table.meta['SACCQTTY'] = tracer.quantity
+            fid_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:fid'
+
             table_dict = tracer.ensemble.build_tables()
             ap_tables = convertToApTables(table_dict)
             data_table = ap_tables['data']
@@ -739,6 +748,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 meta_table.meta['META_'+kk] = vv
             tables.append(data_table)
             tables.append(meta_table)
+            tables.append(fid_table)
             if ancil_table:
                 ancil_table.meta['SACCTYPE'] = 'tracer'
                 ancil_table.meta['SACCCLSS'] = cls.tracer_type
@@ -783,6 +793,8 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
 
         for val in sorted_dict.values():
             meta_table = val['meta']
+            fid_table = val['fid']
+            z = fid_table['z']
             ensemble = qp.from_tables(val)
             name = meta_table.meta['SACCNAME']
             quantity = meta_table.meta.get('SACCQTTY', 'generic')
@@ -791,7 +803,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             for key, value in meta_table.meta.items():
                 if key.startswith("META_"):
                     metadata[key[5:]] = value
-            tracers[name] = cls(name, ensemble,
+            tracers[name] = cls(name, ensemble, z,
                                 quantity=quantity,
                                 metadata=metadata)
         return tracers
