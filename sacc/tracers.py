@@ -688,11 +688,15 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         super().__init__(name, **kwargs)
         self.ensemble = ens
         ens_meta = ens.metadata()
-        if (z is None) and ('bins' in ens_meta.keys()):
-            self.z = ens_meta['bins'][0]
-        else:
-            self.z = z
-        self.nz = np.mean(ens.pdf(z),axis=0)
+        if z is None:
+            if 'bins' in ens_meta.keys():
+                # Only true if QP ensemble is a histogram
+                self.z = ens_meta['bins'][0]
+            else:
+                # Default grid. Might be sub-optimal or 
+                # not needed at all depending on the analysis.
+                self.z = np.linspace(0, 3, 100)
+        self.nz = np.mean(ens.pdf(self.z),axis=0)
 
     @classmethod
     def to_tables(cls, instance_list):
