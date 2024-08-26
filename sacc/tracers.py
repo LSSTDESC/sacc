@@ -690,15 +690,18 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         ens_meta = ens.metadata()
         if z is None:
             if 'bins' in ens_meta.keys():
-                # Only true if QP ensemble is a histogram
+                # Find z in the QP ensemble metadata
+                # Only true if the QP ensemble is a histogram
                 self.z = ens_meta['bins'][0]
+                self.nz = np.mean(ens.pdf(self.z), axis=0)
             else:
-                # Default grid. Might be sub-optimal or 
-                # not needed at all depending on the analysis.
-                self.z = np.linspace(0, 3, 100)
+                # Set both to None if z cannot be found
+                self.z = z
+                self.nz = None
         else:
+            # Normal mode
             self.z = z
-        self.nz = np.mean(ens.pdf(self.z), axis=0)
+            self.nz = np.mean(ens.pdf(self.z), axis=0)
 
     @classmethod
     def to_tables(cls, instance_list):
