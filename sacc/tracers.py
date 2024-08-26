@@ -696,7 +696,9 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 # Default grid. Might be sub-optimal or 
                 # not needed at all depending on the analysis.
                 self.z = np.linspace(0, 3, 100)
-        self.nz = np.mean(ens.pdf(self.z),axis=0)
+        else:
+            self.z = z
+        self.nz = np.mean(ens.pdf(self.z), axis=0)
 
     @classmethod
     def to_tables(cls, instance_list):
