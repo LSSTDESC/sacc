@@ -687,14 +687,12 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         """
         super().__init__(name, **kwargs)
         self.ensemble = ens
-        if z is None:
-            ens_meta = ens.metadata()
-            if 'bins' in list(ens_meta.keys()):
-                z = ens_meta['bins'][0]
-            else:
-                raise ValueError("No redshift bins provided or found in ensemble metadata")
+        ens_meta = ens.metadata()
+        if (z is None) and ('bins' in ens_meta.keys()):
+            self.z = ens_meta['bins'][0]
+        else:
+            self.z = z
         self.nz = np.mean(ens.pdf(z),axis=0)
-        self.z = z
 
     @classmethod
     def to_tables(cls, instance_list):
