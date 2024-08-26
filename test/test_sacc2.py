@@ -833,12 +833,10 @@ def test_qpnz_tracer():
     nz_qp_interp = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=np.ones(shape=(1, 101))))
     nz_qp_hist = qp.Ensemble(qp.hist, data=dict(bins=z, pdfs=np.ones(shape=(1, 100))))
 
-    T1 = sacc.BaseTracer.make('QPNZ', 'tracer1', nz_qp_interp,
-                              z=z,
+    T1 = sacc.BaseTracer.make('QPNZ', 'tracer1', nz_qp_interp, z,
                               quantity='galaxy_density',
                               metadata=md1)
-    T2 = sacc.BaseTracer.make('QPNZ', 'tracer2', nz_qp_hist,
-                              z=z,
+    T2 = sacc.BaseTracer.make('QPNZ', 'tracer2', nz_qp_hist, z,
                               quantity='galaxy_shear',
                               metadata=md2)
     assert T1.metadata == md1
@@ -861,7 +859,7 @@ def test_io_qp():
     nz = np.expand_dims((z-0.5)**2/0.1**2, 0)
     ens = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=nz))
     ens.set_ancil(dict(modes = ens.mode(z)))
-    s.add_tracer('QPNZ', 'source_0', ens, z=z)
+    s.add_tracer('QPNZ', 'source_0', ens, z)
 
     for i in range(20):
         ee = 0.1 * i
