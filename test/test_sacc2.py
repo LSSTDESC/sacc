@@ -850,6 +850,15 @@ def test_qpnz_tracer():
     assert T1a.metadata == md1
     assert T2a.metadata == md2
 
+    # test version without saved z
+    T3 = sacc.BaseTracer.make('QPNZ', 'tracer3', nz_qp_interp, 
+                              quantity='galaxy_density',
+                              metadata=md1)
+    tables = sacc.BaseTracer.to_tables([T3])
+    D = sacc.BaseTracer.from_tables(tables)
+    assert D['tracer3'].z is None
+
+
 
 def test_io_qp():
     s = sacc.Sacc()
