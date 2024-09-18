@@ -652,7 +652,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
     """
     A Tracer type for tomographic n(z) data represented as a `qp.Ensemble`
 
-    Takes a `qp.Ensemble` and a redshift array.
+    Takes a `qp.Ensemble` and optionally a redshift array.
 
     Requires the `qp` and `tables_io` packages to be installed.
 
@@ -679,6 +679,11 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
 
         ensemble: qp.Ensemble
             The qp.ensemble in questions
+
+        z: array
+            Optional grid of redshift values at which to evaluate the ensemble.
+            If left as None then the ensemble metadata is checked for a grid.
+            If that is not present then no redshift grid is saved.
 
         Returns
         -------
