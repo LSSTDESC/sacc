@@ -8,7 +8,10 @@ import os
 import pathlib
 import urllib
 import time
-import qp
+try:
+    import qp
+except:
+    pass
 
 test_dir = pathlib.Path(__file__).resolve().parent
 test_data_dir = test_dir / 'data'
@@ -78,6 +81,58 @@ def test_add_covariance():
 
     s.add_covariance(0 * cov, overwrite=True)
     assert np.all(s.covariance.covmat == 0 * cov)
+
+def test_get_sigma():
+    s_base = get_filled_sacc()
+    n = len(s_base)
+
+    # first check it works with a diagonal cov
+    # for the full matrix
+    s = s_base.copy()
+    variance = np.random.uniform(size=n)
+    s.add_covariance(variance)
+    assert isinstance(s.covariance, sacc.covariance.DiagonalCovariance)
+    sigma = s.get_standard_deviation()
+    assert np.allclose(sigma, variance ** 0.5)
+
+    # Now check the last 20 data points work
+    tracers = ('source_2', 'source_2')
+    dt = sacc.standard_types.galaxy_shear_cl_bb
+    sigma = s.get_standard_deviation(tracers=tracers, data_type=dt)
+    assert len(sigma) == 20
+    assert np.allclose(sigma, variance[-20:] ** 0.5)
+
+    # Now check with a dense covariance
+    s = s_base.copy()
+    cov = np.random.uniform(size=(n, n))
+    # make symmetric out of habit
+    cov = (cov + cov.T) / 2
+    s.add_covariance(cov)
+    assert isinstance(s.covariance, sacc.covariance.FullCovariance)
+
+    sigma = s.get_standard_deviation()
+    assert np.allclose(sigma, np.sqrt(np.diagonal(cov)))
+
+    tracers = ('source_2', 'source_2')
+    dt = sacc.standard_types.galaxy_shear_cl_bb
+    sigma = s.get_standard_deviation(tracers=tracers, data_type=dt)
+    assert len(sigma) == 20
+    assert np.allclose(sigma, np.sqrt(np.diagonal(cov))[-20:])
+
+    # now block-diagonal
+    s = s_base.copy()
+    cov = [
+        np.random.uniform(size=(n//4, n//4))
+        for i in range(4)
+    ]
+    s.add_covariance(cov)
+    assert isinstance(s.covariance, sacc.covariance.BlockDiagonalCovariance)
+    sigma = s.get_standard_deviation()
+    expected = np.concatenate([
+        np.sqrt(np.diagonal(c))
+        for c in cov
+    ])
+    assert np.allclose(sigma, expected)
 
 
 def test_quantity_warning():
