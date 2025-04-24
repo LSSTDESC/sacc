@@ -796,20 +796,19 @@ class Sacc:
 
         # Since we don't want to re-order the file as a side effect
         # we first make a copy of ourself and re-order that.
-        S = self.copy()
-        S.to_canonical_order()
-
         # Tables for the windows
-        tables, window_ids = S._make_window_tables()
+        tables, window_ids = self._make_window_tables()
         lookup = {'window': window_ids}
 
         # Tables for the tracers
-        tables += BaseTracer.to_tables(S.tracers.values())
+        tables += BaseTracer.to_tables(self.tracers.values())
 
         # Tables for the data sets
-        for dt in S.get_data_types():
-            data = S.get_data_points(dt)
+        for dt in self.get_data_types():
+            indices = self.indices(dt)
+            data = [self.data[i] for i in indices]
             table = DataPoint.to_table(data, lookup)
+            table.add_column(indices, name='sacc_ordering')
             # Could move this inside to_table?
             table.meta['SACCTYPE'] = 'data'
             table.meta['SACCNAME'] = dt
@@ -822,8 +821,8 @@ class Sacc:
         # save any global metadata in the header.
         # We save the keys and values as separate header cards,
         # because otherwise the keys are all forced to upper case
-        hdr['NMETA'] = len(S.metadata)
-        for i, (k, v) in enumerate(S.metadata.items()):
+        hdr['NMETA'] = len(self.metadata)
+        for i, (k, v) in enumerate(self.metadata.items()):
             hdr[f'KEY{i}'] = k
             hdr[f'VAL{i}'] = v
         hdus = [fits.PrimaryHDU(header=hdr)] + \
@@ -833,8 +832,8 @@ class Sacc:
         # All the other data elements become astropy tables first,
         # But covariances are a bit more complicated and dense, so we
         # allow them to convert straight to
-        if S.covariance is not None:
-            hdus.append(S.covariance.to_hdu())
+        if self.covariance is not None:
+            hdus.append(self.covariance.to_hdu())
 
         # Make and save the final FITS data
         hdu_list = fits.HDUList(hdus)
@@ -896,9 +895,18 @@ class Sacc:
         lookup = {'window': windows}
 
         # Collect together all the data points from the different sections
-        data = []
+        data_unordered = []
+        index = []
         for table in data_tables:
-            data += DataPoint.from_table(table, lookup)
+            index += table["sacc_ordering"].tolist()
+            table.remove_column('sacc_ordering')
+            data_unordered += DataPoint.from_table(table, lookup)
+
+        # Put the data back in its original order, matching the
+        # covariance.
+        data = [None for i in range(len(data))]
+        for i, d in zip(index, data_unordered):
+            data[i] = d
 
         # Finally, take all the pieces that we have collected
         # and add them all into this data set.
