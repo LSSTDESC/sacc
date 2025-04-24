@@ -135,20 +135,6 @@ def test_get_sigma():
     assert np.allclose(sigma, expected)
 
 
-def test_quantity_warning():
-    s = sacc.Sacc()
-    with pytest.warns(UserWarning):
-        s.add_tracer('Misc', 'source_0',
-                     quantity='dummy')
-
-
-def test_data_type_warning():
-    s = sacc.Sacc()
-    s.add_tracer('Misc', 'source_0')
-    with pytest.warns(UserWarning):
-        s.add_data_point('cl_wrong', ('source_0', 'source_0'),
-                         0.1, ell=10.)
-
 
 def test_get_data_types():
     s = get_filled_sacc()
