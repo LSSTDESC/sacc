@@ -603,6 +603,40 @@ class Sacc:
         indices = self.indices(data_type=data_type, tracers=tracers, **select)
         return self.mean[indices]
 
+    def get_standard_deviation(self, data_type=None, tracers=None, **select):
+        """
+        Get standard deviation values for each data point matching the criteria.
+
+        This requires the covariance matrix to be set.
+
+        Parameters
+        ----------
+
+        data_type: str
+            Select only data points which are of this data type.
+            If None (the default) then match any data types
+
+        tracers: tuple
+            Select only data points which match this tracer combination.
+            If None (the default) then match any tracer combinations.
+
+        **select:
+            Select only data points with tag names and values matching
+            all values provided in this kwargs option.
+            You can also use the syntax name__lt=value or
+            name__gt=value in the selection to select points
+            less or greater than a threshold
+
+        Returns
+        -------
+        values: array
+            The standard deviation values for each matching data point,
+            in the order they were added.
+
+        """
+        indices = self.indices(data_type=data_type, tracers=tracers, **select)
+        return np.sqrt(self.covariance.get_block(indices).diagonal())
+
     def get_data_types(self, tracers=None):
         """
         Get a list of the different data types stored in the Sacc
