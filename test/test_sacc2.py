@@ -891,3 +891,33 @@ def test_sacc_has_tracer():
     assert not s.has_tracer("this_is_not_a_tracer")
     for tracer_name in ['source_0', 'source_1', 'source_2']:
         assert s.has_tracer(tracer_name)
+
+def test_save_order_maintained():
+    s = sacc.Sacc()
+
+    # Tracer
+    s.add_tracer('misc', 'source_0')
+
+    # add a series of data points with alternating
+    # types so they will be saved in separate table
+    s.add_data_point("dt1", ('source_0',), 0.1, a=1)
+    s.add_data_point("dt2", ('source_0',), 0.1, b=2)
+    s.add_data_point("dt1", ('source_0',), 0.1, a=-1)
+    s.add_data_point("dt2", ('source_0',), 0.1, b=-2)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    # check that the order of the data points is maintained
+    assert len(s2) == 4
+    assert s2.data[0].data_type == "dt1"
+    assert s2.data[1].data_type == "dt2"
+    assert s2.data[2].data_type == "dt1"
+    assert s2.data[3].data_type == "dt2"
+    # and that the tags are all okay
+    assert s2.data[0].get_tag('a') == 1
+    assert s2.data[1].get_tag('b') == 2
+    assert s2.data[2].get_tag('a') == -1
+    assert s2.data[3].get_tag('b') == -2
