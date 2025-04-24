@@ -904,7 +904,7 @@ class Sacc:
 
         # Put the data back in its original order, matching the
         # covariance.
-        data = [None for i in range(len(data))]
+        data = [None for i in range(len(data_unordered))]
         for i, d in zip(index, data_unordered):
             data[i] = d
 
