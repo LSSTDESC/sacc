@@ -2,7 +2,6 @@ import numpy as np
 from astropy.table import Table
 from .utils import (Namespace, hide_null_values,
                     remove_dict_null_values, unique_list)
-import warnings
 
 standard_quantities = Namespace('galaxy_shear',
                                 'galaxy_density',
@@ -40,10 +39,6 @@ class BaseTracer:
         # We encourage people to use existing quantity names, and issue a
         # warning if they do not to prod them in the right direction.
         quantity = kwargs.pop('quantity', 'generic')
-        if quantity not in standard_quantities:
-            warnings.warn(f"Unknown quantity {quantity}. "
-                          "If possible use a pre-defined quantity, or "
-                          "add to the list.")
         self.name = name
         self.quantity = quantity
         self.metadata = kwargs.pop('metadata', {})

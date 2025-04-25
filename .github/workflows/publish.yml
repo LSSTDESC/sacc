@@ -17,7 +17,8 @@ jobs:
 
     - name: Build wheel and source tarball
       run: |
-        python setup.py sdist
+        python -m pip install build
+        python -m build . --sdist --wheel
 
     - name: Publish to Real PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

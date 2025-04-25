@@ -1,0 +1,52 @@
+[project]
+name = "sacc"
+description = "SACC - the LSST/DESC summary statistic data format library"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "LSST DESC", email = "joezuntz@googlemail.com" }
+]
+dynamic = ["version"]
+
+
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+    "scipy",
+    "numpy>=1.20",
+    "astropy"
+]
+
+
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "setuptools_scm<7.0",
+    "setuptools_scm_git_archive",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/LSSTDESC/sacc"
+
+
+[project.optional-dependencies]
+all = ["qp-prob[all]", "numpydoc"]
+doc = ["numpydoc"]
+qp = ["qp-prob[all]"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sacc"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sacc.__version__"}
+
+[tool.coverage.run]
+relative_paths = true

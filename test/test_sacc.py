@@ -8,6 +8,7 @@ import os
 import pathlib
 import urllib
 import time
+import warnings
 try:
     import qp
 except:
@@ -134,20 +135,6 @@ def test_get_sigma():
     ])
     assert np.allclose(sigma, expected)
 
-
-def test_quantity_warning():
-    s = sacc.Sacc()
-    with pytest.warns(UserWarning):
-        s.add_tracer('Misc', 'source_0',
-                     quantity='dummy')
-
-
-def test_data_type_warning():
-    s = sacc.Sacc()
-    s.add_tracer('Misc', 'source_0')
-    with pytest.warns(UserWarning):
-        s.add_data_point('cl_wrong', ('source_0', 'source_0'),
-                         0.1, ell=10.)
 
 
 def test_get_data_types():
@@ -976,3 +963,16 @@ def test_save_order_maintained():
     assert s2.data[1].get_tag('b') == 2
     assert s2.data[2].get_tag('a') == -1
     assert s2.data[3].get_tag('b') == -2
+
+def test_warn_empty():
+    s = sacc.Sacc()
+
+    # First check that no warning is raised if warn_empty is False
+    # which is the default
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        s.indices(data_type='non_existent_data_type', warn_empty=False)
+
+    # Now check that a warning is raised if warn_empty is True
+    with pytest.warns(UserWarning, match="Empty index selected"):
+        s.indices(data_type='non_existent_data_type', warn_empty=True)

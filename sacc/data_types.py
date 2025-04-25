@@ -1,4 +1,3 @@
-import warnings
 from collections import namedtuple
 from astropy.table import Table
 
@@ -297,13 +296,6 @@ class DataPoint:
                     raise ValueError("Tag {tag} required for data type "
                                      f"{data_type} "
                                      "(ignore_missing_tags=False)")
-
-        # We encourage people to use existing type names, and issue a
-        # warning if they do not to prod them in the right direction.
-        if data_type not in standard_types:
-            warnings.warn(f"Unknown data_type value {data_type}. "
-                          "If possible use a pre-defined type, or "
-                          "add to the list.")
 
     def __repr__(self):
         t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items())

@@ -371,12 +371,14 @@ class Sacc:
             # Record this index
             if ok:
                 indices.append(i)
+
         if len(indices) == 0 and warn_empty:
             if tracers is None:
                 warnings.warn("Empty index selected")
             else:
                 warnings.warn("Empty index selected - maybe you "
                               "should check the tracer order?")
+
         return np.array(indices, dtype=int)
 
     def remove_selection(self, data_type=None, tracers=None,
@@ -1028,7 +1030,7 @@ class Sacc:
                              "later.")
         ws = ws[0]
         if not isinstance(ws, BandpowerWindow):
-            warnings.warn("No bandpower windows associated to these data")
+            warnings.warn("No bandpower windows associated with these data")
             return None
         else:
             w_inds = np.array(self._get_tags_by_index(['window_ind'],
