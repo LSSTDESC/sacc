@@ -34,6 +34,7 @@ jobs:
 
     - name: Report coverage
       uses: orgoro/coverage@v3.2
+      if: matrix.python-version == '3.11'
       with:
         coverageFile: ./coverage.xml
         token: ${{ secrets.GITHUB_TOKEN }}
