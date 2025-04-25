@@ -971,7 +971,7 @@ def test_warn_empty():
     # which is the default
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        s.indices(data_type='non_existent_data_type')
+        s.indices(data_type='non_existent_data_type', warn_empty=False)
 
     # Now check that a warning is raised if warn_empty is True
     with pytest.warns(UserWarning, match="Empty index selected"):

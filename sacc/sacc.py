@@ -312,7 +312,7 @@ class Sacc:
         # Get the mask method to do the actual work
         self.keep_indices(~indices)
 
-    def indices(self, data_type=None, tracers=None, warn_empty=False, **select):
+    def indices(self, data_type=None, tracers=None, warn_empty=True, **select):
         """
         Find the indices of all points matching the given selection criteria.
 
@@ -382,7 +382,7 @@ class Sacc:
         return np.array(indices, dtype=int)
 
     def remove_selection(self, data_type=None, tracers=None,
-                         warn_empty=False, **select):
+                         warn_empty=True, **select):
         """
         Remove data points, getting rid of points matching the given criteria.
 
@@ -415,7 +415,7 @@ class Sacc:
         self.remove_indices(indices)
 
     def keep_selection(self, data_type=None, tracers=None,
-                       warn_empty=False, **select):
+                       warn_empty=True, **select):
         """
         Remove data points, keeping only points matching the given criteria.
 
