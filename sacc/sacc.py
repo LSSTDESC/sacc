@@ -930,6 +930,21 @@ class Sacc:
         # Window objects.
         lookup = {'window': windows}
 
+        # Check if all tables have the 'sacc_ordering' column
+        if not all("sacc_ordering" in table.colnames for table in data_tables):
+            warnings.warn(
+                "The FITS format without the 'sacc_ordering' column is deprecated. "
+                "Assuming data rows are in the correct order as it was before version 1.0."
+            )
+            last_index = 0
+            for table in data_tables:
+                # Create a sequential order assuming rows are stored contiguously
+                order = range(last_index, last_index + len(table))
+                # Update last_index for the next table
+                last_index += len(table)
+                # Add the 'sacc_ordering' column to the table
+                table.add_column(order, name="sacc_ordering")
+
         # Collect together all the data points from the different sections
         data_unordered = []
         index = []
