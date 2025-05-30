@@ -1,7 +1,7 @@
 from .base import BaseTracer
 from astropy.table import Table
 import numpy as np
-from ..utils import remove_dict_null_values
+from ..utils import remove_dict_null_values, convert_to_astropy_table
 
 class NZTracer(BaseTracer, tracer_type='NZ'):
     """
@@ -205,8 +205,6 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         tables: list
             List of astropy tables
         """
-        from tables_io.convUtils import convertToApTables
-
         tables = []
 
         for tracer in instance_list:
@@ -221,7 +219,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 fid_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:fid'
 
             table_dict = tracer.ensemble.build_tables()
-            ap_tables = convertToApTables(table_dict)
+            ap_tables = convert_to_astropy_table(table_dict)
             data_table = ap_tables['data']
             meta_table = ap_tables['meta']
             ancil_table = ap_tables.get('ancil', None)
