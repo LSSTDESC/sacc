@@ -179,7 +179,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         super().__init__(name, **kwargs)
         self.ensemble = ens
         if z is None:
-            ens_meta = ens.metadata()
+            ens_meta = ens.metadata
             if 'bins' in list(ens_meta.keys()):
                 z = ens_meta['bins'][0]
         self.z = z
@@ -220,10 +220,12 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 fid_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:fid'
 
             table_dict = tracer.ensemble.build_tables()
-            ap_tables = convert_to_astropy_table(table_dict)
-            data_table = ap_tables['data']
-            meta_table = ap_tables['meta']
-            ancil_table = ap_tables.get('ancil', None)
+            data_table = convert_to_astropy_table(table_dict['data'])
+            meta_table = convert_to_astropy_table(table_dict['meta'])
+            if 'ancil' in table_dict:
+                ancil_table = convert_to_astropy_table(table_dict['ancil'])
+            else:
+                ancil_table = None
             meta_table.meta['SACCTYPE'] = 'tracer'
             meta_table.meta['SACCCLSS'] = cls.tracer_type
             meta_table.meta['SACCNAME'] = tracer.name
@@ -242,7 +244,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             tables.append(meta_table)
             if tracer.z is not None:
                 tables.append(fid_table)
-            if ancil_table:
+            if ancil_table is not None:
                 ancil_table.meta['SACCTYPE'] = 'tracer'
                 ancil_table.meta['SACCCLSS'] = cls.tracer_type
                 ancil_table.meta['SACCNAME'] = tracer.name
