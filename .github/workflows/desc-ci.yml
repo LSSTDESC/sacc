@@ -26,6 +26,8 @@ jobs:
     - name: Dependencies
       run: |
         python -m pip install --upgrade numpy pytest pytest-cov coverage pip
+        # Temporary until fixes applied in another PR
+        python -m pip install "tables_io<0.9" "qp-prob<1"
         python -m pip install '.[all]'
 
     - name: Run tests and measure coverage
