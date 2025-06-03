@@ -186,7 +186,8 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         if z is None:
             self.nz = None
         else:
-            self.nz = np.mean(ens.pdf(self.z),axis=0)
+            nz = np.atleast_2d(ens.pdf(z))
+            self.nz = np.mean(nz, axis=0)
         
     @classmethod
     def to_tables(cls, instance_list):

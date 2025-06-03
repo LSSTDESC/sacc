@@ -174,7 +174,7 @@ def convert_to_astropy_table(obj):
         version = 1
     except ImportError:
         try:
-            from tables_io.conv import convert_table
+            from tables_io import convert_table
             version = 2
         except ImportError:
             raise ImportError("Error importing table conversion tool from tables_io. "
