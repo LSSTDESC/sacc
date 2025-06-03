@@ -744,6 +744,7 @@ class Sacc:
             for tri in trs:
                 if tri not in names:
                     self.remove_selection(tracers=trs)
+                    break
 
         trs_names = list(self.tracers.keys())
         for name in trs_names:
