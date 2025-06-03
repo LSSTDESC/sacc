@@ -37,9 +37,9 @@ Homepage = "https://github.com/LSSTDESC/sacc"
 
 
 [project.optional-dependencies]
-all = ["qp-prob[all]", "numpydoc"]
+all = ["qp-prob[all]>=1", "numpydoc"]
 doc = ["numpydoc"]
-qp = ["qp-prob[all]"]
+qp = ["qp-prob[all]>=1"]
 
 [tool.setuptools.packages.find]
 where = ["."]
