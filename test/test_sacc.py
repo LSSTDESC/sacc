@@ -904,6 +904,7 @@ def test_qpnz_tracer():
 
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="Skip under Python 3.8 or 3.9")
 def test_io_qp():
     s = sacc.Sacc()
 
