@@ -4,6 +4,7 @@ import sacc.data_types
 import sacc.tracers
 import numpy as np
 import pytest
+import sys
 import os
 import pathlib
 import urllib
@@ -867,6 +868,7 @@ def test_rename_tracer():
                   s2.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="Skip under Python 3.8 or 3.9")
 def test_qpnz_tracer():
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
