@@ -1,9 +1,9 @@
-from .base import BaseTracer
+from .base import BaseTracer, ONE_OBJECT_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 from ..utils import remove_dict_null_values
 from astropy.table import Table
 import numpy as np
 
-class MapTracer(BaseTracer, tracer_type='Map'):
+class MapTracer(BaseTracer, type_name='Map'):
     """
     A Tracer type for a sky map.
 
@@ -25,6 +25,8 @@ class MapTracer(BaseTracer, tracer_type='Map'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
+    storage_type = ONE_OBJECT_PER_TABLE
+
     def __init__(self, name, spin, ell, beam,
                  beam_extra=None, map_unit='none', **kwargs):
         super().__init__(name, **kwargs)
@@ -34,82 +36,58 @@ class MapTracer(BaseTracer, tracer_type='Map'):
         self.beam = np.array(beam)
         self.beam_extra = {} if beam_extra is None else beam_extra
 
+    def to_table(self):
+        # Beams
+        names = ['ell', 'beam']
+        cols = [self.ell, self.beam]
+        for beam_id, col in self.beam_extra.items():
+            names.append(str(beam_id))
+            cols.append(col)
+        table = Table(data=cols, names=names)
+        table.meta['SACCTYPE'] = 'tracer'
+        table.meta['SACCCLSS'] = self.type_name
+        table.meta['SACCNAME'] = self.name
+        table.meta['SACCQTTY'] = self.quantity
+        extname = f'tracer:{self.type_name}:{self.name}:beam'
+        table.meta['EXTNAME'] = extname
+        table.meta['MAP_UNIT'] = self.map_unit
+        table.meta['SPIN'] = self.spin
+        for key, value in self.metadata.items():
+            table.meta['META_'+key] = value
+        remove_dict_null_values(table.meta)
+
+        return table
+
+    
     @classmethod
-    def to_tables(cls, instance_list):
-        tables = []
-        for tracer in instance_list:
-            # Beams
-            names = ['ell', 'beam']
-            cols = [tracer.ell, tracer.beam]
-            for beam_id, col in tracer.beam_extra.items():
-                names.append(str(beam_id))
-                cols.append(col)
-            table = Table(data=cols, names=names)
-            table.meta['SACCTYPE'] = 'tracer'
-            table.meta['SACCCLSS'] = cls.tracer_type
-            table.meta['SACCNAME'] = tracer.name
-            table.meta['SACCQTTY'] = tracer.quantity
-            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
-            table.meta['EXTNAME'] = extname
-            table.meta['MAP_UNIT'] = tracer.map_unit
-            table.meta['SPIN'] = tracer.spin
-            for key, value in tracer.metadata.items():
-                table.meta['META_'+key] = value
-            remove_dict_null_values(table.meta)
-            tables.append(table)
-        return tables
+    def from_table(cls, table):
+        """Convert a single astropy table into a MapTracer instance.
 
-    @classmethod
-    def from_tables(cls, table_list):
-        tracers = {}
+        This is used when loading data from a file.
 
-        # Collect beam and bandpass tables describing the same tracer
-        tr_tables = {}
-        for table in table_list:
-            # Read name and table type
-            name = table.meta['SACCNAME']
-            tabtyp = table.meta['EXTNAME'].split(':')[-1]
-            if tabtyp not in ['beam']:
-                raise KeyError("Unknown table type " + table.meta['EXTNAME'])
+        Parameters
+        ----------
+        table: astropy.table.Table
 
-            # If not present yet, create new tracer entry
-            if name not in tr_tables:
-                tr_tables[name] = {}
-            # Add table
-            tr_tables[name][tabtyp] = table
-
-        # Now loop through different tracers and build them from their tables
-        for dt in tr_tables.values():
-            quantity = []
-            metadata = {}
-            map_unit = 'none'
-            ell = []
-            beam = []
-            beam_extra = {}
-            spin = 0
-
-            if 'beam' in dt:
-                table = dt['beam']
-                name = table.meta['SACCNAME']
-                quantity = table.meta.get('SACCQTTY', 'generic')
-                ell = table['ell']
-                beam = table['beam']
-                for col in table.columns.values():
-                    if col.name not in ['ell', 'beam']:
-                        beam_extra[col.name] = col.data
-                map_unit = table.meta['MAP_UNIT']
-                spin = table.meta['SPIN']
-                for key, value in table.meta.items():
-                    if key.startswith("META_"):
-                        metadata[key[5:]] = value
-
-            tracers[name] = cls(name, spin, ell, beam,
-                                quantity=quantity, beam_extra=beam_extra,
-                                map_unit=map_unit, metadata=metadata)
-        return tracers
+        Returns
+        -------
+        tracer: MapTracer
+            An instance of MapTracer created from the table.
+        """
+        name = table.meta['SACCNAME']
+        quantity = table.meta.get('SACCQTTY', 'generic')
+        map_unit = table.meta['MAP_UNIT']
+        spin = table.meta['SPIN']
+        metadata = {key[5:]: value for key, value in table.meta.items() if key.startswith("META_")}
+        
+        ell = table['ell']
+        beam = table['beam']
+        beam_extra = {col.name: col.data for col in table.columns.values() if col.name not in ['ell', 'beam']}
+        
+        return cls(name, spin, ell, beam, beam_extra=beam_extra, map_unit=map_unit, quantity=quantity, metadata=metadata)
 
 
-class NuMapTracer(BaseTracer, tracer_type='NuMap'):
+class NuMapTracer(BaseTracer, type_name='NuMap'):
     """
     A Tracer type for a sky map at a given frequency.
 
@@ -145,6 +123,8 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
          Map units (e.g. 'uK_CMB'). 'none' by default.
     """
 
+    storage_type = ONE_OBJECT_MULTIPLE_TABLES
+
     def __init__(self, name, spin, nu, bandpass,
                  ell, beam, bandpass_extra=None,
                  beam_extra=None, nu_unit='GHz',
@@ -160,121 +140,78 @@ class NuMapTracer(BaseTracer, tracer_type='NuMap'):
         self.beam = np.array(beam)
         self.beam_extra = {} if beam_extra is None else beam_extra
 
-    @classmethod
-    def to_tables(cls, instance_list):
-        tables = []
-        for tracer in instance_list:
-            # Bandpasses
-            names = ['nu', 'bandpass']
-            cols = [tracer.nu, tracer.bandpass]
-            for bandpass_id, col in tracer.bandpass_extra.items():
-                names.append(str(bandpass_id))
-                cols.append(col)
-            table = Table(data=cols, names=names)
-            table.meta['SACCTYPE'] = 'tracer'
-            table.meta['SACCCLSS'] = cls.tracer_type
-            table.meta['SACCNAME'] = tracer.name
-            table.meta['SACCQTTY'] = tracer.quantity
-            extname = f'tracer:{cls.tracer_type}:{tracer.name}:bandpass'
-            table.meta['EXTNAME'] = extname
-            table.meta['NU_UNIT'] = tracer.nu_unit
-            table.meta['SPIN'] = tracer.spin
-            for key, value in tracer.metadata.items():
-                table.meta['META_'+key] = value
-            remove_dict_null_values(table.meta)
-            tables.append(table)
+    def to_tables(self):
+        # Bandpass
+        names = ['nu', 'bandpass']
+        cols = [self.nu, self.bandpass]
+        for bandpass_id, col in self.bandpass_extra.items():
+            names.append(str(bandpass_id))
+            cols.append(col)
+        bandpass_table = Table(data=cols, names=names)
+        bandpass_table.meta['SACCTYPE'] = 'tracer'
+        bandpass_table.meta['SACCCLSS'] = self.type_name
+        bandpass_table.meta['SACCNAME'] = self.name
+        bandpass_table.meta['SACCQTTY'] = self.quantity
+        extname = f'tracer:{self.type_name}:{self.name}:bandpass'
+        bandpass_table.meta['EXTNAME'] = extname
+        bandpass_table.meta['NU_UNIT'] = self.nu_unit
+        bandpass_table.meta['SPIN'] = self.spin
+        for key, value in self.metadata.items():
+            bandpass_table.meta['META_'+key] = value
+        remove_dict_null_values(bandpass_table.meta)
 
-            # Beams
-            names = ['ell', 'beam']
-            cols = [tracer.ell, tracer.beam]
-            for beam_id, col in tracer.beam_extra.items():
-                names.append(str(beam_id))
-                cols.append(col)
-            table = Table(data=cols, names=names)
-            table.meta['SACCTYPE'] = 'tracer'
-            table.meta['SACCCLSS'] = cls.tracer_type
-            table.meta['SACCNAME'] = tracer.name
-            table.meta['SACCQTTY'] = tracer.quantity
-            extname = f'tracer:{cls.tracer_type}:{tracer.name}:beam'
-            table.meta['EXTNAME'] = extname
-            table.meta['MAP_UNIT'] = tracer.map_unit
-            table.meta['SPIN'] = tracer.spin
-            for key, value in tracer.metadata.items():
-                table.meta['META_'+key] = value
-            remove_dict_null_values(table.meta)
-            tables.append(table)
-        return tables
+        # Beam
+        names = ['ell', 'beam']
+        cols = [self.ell, self.beam]
+        for beam_id, col in self.beam_extra.items():
+            names.append(str(beam_id))
+            cols.append(col)
+        beam_table = Table(data=cols, names=names)
+        beam_table.meta['SACCTYPE'] = 'tracer'
+        beam_table.meta['SACCCLSS'] = self.type_name
+        beam_table.meta['SACCNAME'] = self.name
+        beam_table.meta['SACCQTTY'] = self.quantity
+        extname = f'tracer:{self.type_name}:{self.name}:beam'
+        beam_table.meta['EXTNAME'] = extname
+        beam_table.meta['MAP_UNIT'] = self.map_unit
+        beam_table.meta['SPIN'] = self.spin
+        for key, value in self.metadata.items():
+            beam_table.meta['META_'+key] = value
+        remove_dict_null_values(beam_table.meta)
+
+        return [bandpass_table, beam_table]
 
     @classmethod
-    def from_tables(cls, table_list):
-        tracers = {}
+    def from_tables(cls, table_dict):
+        """Convert a dictionary of astropy tables into a NuMapTracer instance."""
+        bandpass_table = table_dict['bandpass']
+        beam_table = table_dict['beam']
 
-        # Collect beam and bandpass tables describing the same tracer
-        tr_tables = {}
-        for table in table_list:
-            # Read name and table type
-            name = table.meta['SACCNAME']
-            tabtyp = table.meta['EXTNAME'].split(':')[-1]
-            if tabtyp not in ['bandpass', 'beam']:
-                raise KeyError("Unknown table type " + table.meta['EXTNAME'])
+        # Get the various bits of metadata out of the bandpass table
+        name = bandpass_table.meta['SACCNAME']
+        spin = bandpass_table.meta['SPIN']
+        quantity = bandpass_table.meta.get('SACCQTTY', 'generic')
+        nu_unit = bandpass_table.meta['NU_UNIT']
 
-            # If not present yet, create new tracer entry
-            if name not in tr_tables:
-                tr_tables[name] = {}
-            # Add table
-            tr_tables[name][tabtyp] = table
+        # Additional miscellaneous metadata
+        metadata = {key[5:]: value for key, value in bandpass_table.meta.items() if key.startswith("META_")}
 
-        # Now loop through different tracers and build them from their tables
-        for dt in tr_tables.values():
-            quantity = []
-            metadata = {}
-            nu = []
-            bandpass = []
-            bandpass_extra = {}
-            nu_unit = 'GHz'
-            map_unit = 'none'
-            ell = []
-            beam = []
-            beam_extra = {}
-            spin = 0
+        # And the actual bandpass data columns themselves
+        nu = bandpass_table['nu']
+        bandpass = bandpass_table['bandpass']
+        bandpass_extra = {col.name: col.data for col in bandpass_table.columns.values() if col.name not in ['nu', 'bandpass']}
 
-            if 'bandpass' in dt:
-                table = dt['bandpass']
-                name = table.meta['SACCNAME']
-                quantity = table.meta.get('SACCQTTY', 'generic')
-                nu = table['nu']
-                bandpass = table['bandpass']
-                for col in table.columns.values():
-                    if col.name not in ['nu', 'bandpass']:
-                        bandpass_extra[col.name] = col.data
-                nu_unit = table.meta['NU_UNIT']
-                spin = table.meta['SPIN']
-                for key, value in table.meta.items():
-                    if key.startswith("META_"):
-                        metadata[key[5:]] = value
+        # Now the same for the beam table
+        ell = beam_table['ell']
+        beam = beam_table['beam']
+        beam_extra = {col.name: col.data for col in beam_table.columns.values() if col.name not in ['ell', 'beam']}
+        map_unit = beam_table.meta['MAP_UNIT']
 
-            if 'beam' in dt:
-                table = dt['beam']
-                name = table.meta['SACCNAME']
-                quantity = table.meta.get('SACCQTTY', 'generic')
-                ell = table['ell']
-                beam = table['beam']
-                for col in table.columns.values():
-                    if col.name not in ['ell', 'beam']:
-                        beam_extra[col.name] = col.data
-                map_unit = table.meta['MAP_UNIT']
-                spin = table.meta['SPIN']
-                for key, value in table.meta.items():
-                    if key.startswith("META_"):
-                        metadata[key[5:]] = value
-
-            tracers[name] = cls(name, spin,
-                                nu, bandpass,
-                                ell, beam,
-                                quantity=quantity,
-                                bandpass_extra=bandpass_extra,
-                                beam_extra=beam_extra,
-                                map_unit=map_unit,
-                                nu_unit=nu_unit,
-                                metadata=metadata)
-        return tracers
+        return cls(name, spin, nu, bandpass,
+                   ell, beam,
+                   bandpass_extra=bandpass_extra,
+                   beam_extra=beam_extra,
+                   nu_unit=nu_unit,
+                   map_unit=map_unit,
+                   quantity=quantity,
+                   metadata=metadata)

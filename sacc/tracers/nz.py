@@ -1,9 +1,9 @@
-from .base import BaseTracer
+from .base import BaseTracer, ONE_OBJECT_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 from astropy.table import Table
 import numpy as np
 from ..utils import remove_dict_null_values
 
-class NZTracer(BaseTracer, tracer_type='NZ'):
+class NZTracer(BaseTracer, type_name='NZ'):
     """
     A Tracer type for tomographic n(z) data.
 
@@ -24,6 +24,8 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
     extra_columns: dict[str: array] or dict[int: array]
         Additional estimates of the same n(z), by name
     """
+
+    storage_type = ONE_OBJECT_PER_TABLE
 
     def __init__(self, name, z, nz,
                  extra_columns=None, **kwargs):
@@ -57,8 +59,7 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         self.nz = np.array(nz)
         self.extra_columns = {} if extra_columns is None else extra_columns
 
-    @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(self):
         """Convert a list of NZTracers to a list of astropy tables
 
         This is used when saving data to a file.
@@ -74,35 +75,27 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
         tables: list
             List of astropy tables
         """
-        tables = []
-        for tracer in instance_list:
-            names = ['z', 'nz']
-            cols = [tracer.z, tracer.nz]
-            for nz_id, col in tracer.extra_columns.items():
-                names.append(str(nz_id))
-                cols.append(col)
-            table = Table(data=cols, names=names)
-            table.meta['SACCTYPE'] = 'tracer'
-            table.meta['SACCCLSS'] = cls.tracer_type
-            table.meta['SACCNAME'] = tracer.name
-            table.meta['SACCQTTY'] = tracer.quantity
-            table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}'
-            for key, value in tracer.metadata.items():
-                table.meta['META_'+key] = value
-            remove_dict_null_values(table.meta)
-            tables.append(table)
-        return tables
+        names = ['z', 'nz']
+        cols = [self.z, self.nz]
+        for nz_id, col in self.extra_columns.items():
+            names.append(str(nz_id))
+            cols.append(col)
+        table = Table(data=cols, names=names)
+        table.meta['SACCQTTY'] = self.quantity
+        for key, value in self.metadata.items():
+            table.meta['META_'+key] = value
+        remove_dict_null_values(table.meta)
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
-        """Convert an astropy table into a dictionary of tracers
+    def from_table(cls, table):
+        """Convert an astropy table into a an n(z) tracer
 
         This is used when loading data from a file.
-        A single tracer object is read from the table.
 
         Parameters
         ----------
-        table_list: list[astropy.table.Table]
+        table: astropy.table.Table
             Must contain the appropriate data, for example as saved
             by to_table.
 
@@ -112,29 +105,27 @@ class NZTracer(BaseTracer, tracer_type='NZ'):
             Dict mapping string names to tracer objects.
             Only contains one key/value pair for the one tracer.
         """
-        tracers = {}
-        for table in table_list:
-            name = table.meta['SACCNAME']
-            quantity = table.meta.get('SACCQTTY', 'generic')
-            z = table['z']
-            nz = table['nz']
-            extra_columns = {}
-            for col in table.columns.values():
-                if col.name not in ['z', 'nz']:
-                    extra_columns[col.name] = col.data
+        name = table.meta['SACCNAME']
+        quantity = table.meta.get('SACCQTTY', 'generic')
+        z = table['z']
+        nz = table['nz']
+        extra_columns = {}
+        for col in table.columns.values():
+            if col.name not in ['z', 'nz']:
+                extra_columns[col.name] = col.data
 
-            metadata = {}
-            for key, value in table.meta.items():
-                if key.startswith("META_"):
-                    metadata[key[5:]] = value
-            tracers[name] = cls(name, z, nz,
-                                quantity=quantity,
-                                extra_columns=extra_columns,
-                                metadata=metadata)
-        return tracers
+        metadata = {}
+        for key, value in table.meta.items():
+            if key.startswith("META_"):
+                metadata[key[5:]] = value
+        return cls(name, z, nz,
+                            quantity=quantity,
+                            extra_columns=extra_columns,
+                            metadata=metadata)
 
 
-class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
+
+class QPNZTracer(BaseTracer, type_name='QPNZ'):
     """
     A Tracer type for tomographic n(z) data represented as a `qp.Ensemble`
 
@@ -151,6 +142,8 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
     ensemble: qp.Ensemble
         The qp.ensemble in questions
     """
+
+    storage_type = ONE_OBJECT_MULTIPLE_TABLES
 
     def __init__(self, name, ens, z=None, **kwargs):
         """
@@ -215,10 +208,10 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 cols = [tracer.z, tracer.nz]
                 fid_table = Table(data=cols, names=names)
                 fid_table.meta['SACCTYPE'] = 'tracer'
-                fid_table.meta['SACCCLSS'] = cls.tracer_type
+                fid_table.meta['SACCCLSS'] = cls.type_name
                 fid_table.meta['SACCNAME'] = tracer.name
                 fid_table.meta['SACCQTTY'] = tracer.quantity
-                fid_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:fid'
+                fid_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:fid'
 
             table_dict = tracer.ensemble.build_tables()
             ap_tables = convertToApTables(table_dict)
@@ -226,16 +219,16 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             meta_table = ap_tables['meta']
             ancil_table = ap_tables.get('ancil', None)
             meta_table.meta['SACCTYPE'] = 'tracer'
-            meta_table.meta['SACCCLSS'] = cls.tracer_type
+            meta_table.meta['SACCCLSS'] = cls.type_name
             meta_table.meta['SACCNAME'] = tracer.name
             meta_table.meta['SACCQTTY'] = tracer.quantity
-            meta_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:meta'
+            meta_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:meta'
 
             data_table.meta['SACCTYPE'] = 'tracer'
-            data_table.meta['SACCCLSS'] = cls.tracer_type
+            data_table.meta['SACCCLSS'] = cls.type_name
             data_table.meta['SACCNAME'] = tracer.name
             data_table.meta['SACCQTTY'] = tracer.quantity
-            data_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:data'
+            data_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:data'
 
             for kk, vv in tracer.metadata.items():
                 meta_table.meta['META_'+kk] = vv
@@ -245,10 +238,10 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
                 tables.append(fid_table)
             if ancil_table:
                 ancil_table.meta['SACCTYPE'] = 'tracer'
-                ancil_table.meta['SACCCLSS'] = cls.tracer_type
+                ancil_table.meta['SACCCLSS'] = cls.type_name
                 ancil_table.meta['SACCNAME'] = tracer.name
                 ancil_table.meta['SACCQTTY'] = tracer.quantity
-                ancil_table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}:{tracer.name}:ancil'
+                ancil_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:ancil'
 
                 tables.append(ancil_table)
         return tables

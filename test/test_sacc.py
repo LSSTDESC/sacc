@@ -976,3 +976,7 @@ def test_warn_empty():
     # Now check that a warning is raised if warn_empty is True
     with pytest.warns(UserWarning, match="Empty index selected"):
         s.indices(data_type='non_existent_data_type', warn_empty=True)
+
+
+if __name__ == "__main__":
+    test_bandpower_window()

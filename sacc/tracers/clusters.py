@@ -1,11 +1,13 @@
-from .base import BaseTracer
+from .base import BaseTracer, MULTIPLE_OBJECTS_PER_TABLE
 from astropy.table import Table
 
-class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
+class BinZTracer(BaseTracer, type_name="bin_z"):  # type: ignore
     """A tracer for a single redshift bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of redshift, such that we only need the data
     for a given interval instead of at individual redshifts."""
+
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __init__(self, name: str, lower: float, upper: float, **kwargs):
         """
@@ -54,8 +56,8 @@ class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
         return [table]
 
     @classmethod
@@ -79,11 +81,12 @@ class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
                 tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
-class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
+class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
     """A tracer for a single log-mass bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of log(mass), such that we only need the data
     for a given interval instead of at individual masses."""
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __init__(self, name: str, lower: float, upper: float, **kwargs):
         """
@@ -131,8 +134,8 @@ class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
         ]
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
         return [table]
 
     @classmethod
@@ -157,11 +160,12 @@ class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
         return tracers
 
          
-class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
+class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
     """A tracer for a single richness bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of log(richness), such that we only need the data
     for a given interval instead of at individual richness."""
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
@@ -209,8 +213,8 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
         return [table]
 
     @classmethod
@@ -240,11 +244,13 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
         return tracers
 
 
-class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
+class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
     """A tracer for a single radial bin, e.g. when dealing with cluster shear profiles.
     It gives the bin edges and the value of the bin "center". The latter would typically
     be returned by CLMM and correspond to the average radius of the galaxies in that
     radial bin. """
+
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
@@ -300,8 +306,8 @@ class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
         return [table]
 
     @classmethod

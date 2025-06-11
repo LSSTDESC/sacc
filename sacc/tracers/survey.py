@@ -1,11 +1,13 @@
-from .base import BaseTracer
+from .base import BaseTracer, MULTIPLE_OBJECTS_PER_TABLE
 from astropy.table import Table
 
 
-class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
+class SurveyTracer(BaseTracer, type_name="survey"):  # type: ignore
     """A tracer for the survey definition. It shall 
     be used to filter data related to a given survey
     and to provide the survey sky-area of analysis."""
+
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
@@ -26,7 +28,7 @@ class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
         self.sky_area = sky_area
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of SurveyTracer to a list of astropy tables
 
         This is used when saving data to a file.
@@ -45,9 +47,9 @@ class SurveyTracer(BaseTracer, tracer_type="survey"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
-        return [table]
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
+        return table
 
     @classmethod
     def from_tables(cls, table_list):
