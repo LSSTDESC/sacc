@@ -4,3 +4,4 @@ from .clusters import BinZTracer, BinLogMTracer, BinRichnessTracer, BinRadiusTra
 from .maps import MapTracer, NuMapTracer
 from .misc import MiscTracer
 from .survey import SurveyTracer
+from .uncertainty import BaseTracerUncertainty, NZTracerUncertainty

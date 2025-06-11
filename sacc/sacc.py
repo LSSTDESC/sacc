@@ -105,14 +105,14 @@ class Sacc:
     # Builder methods for building up Sacc data from scratch in memory
     #
 
-    def add_tracer(self, tracer_type, name,
+    def add_tracer(self, type_name, name,
                    *args, **kwargs):
         """
         Add a new tracer
 
         Parameters
         ----------
-        tracer_type: str
+        type_name: str
             A string corresponding to one of the known tracer types,
             or 'misc' to use a new tracer with no parameters.
             e.g. "NZ" for n(z) tracers
@@ -135,7 +135,7 @@ class Sacc:
         None
 
         """
-        tracer = BaseTracer.make(tracer_type, name,
+        tracer = BaseTracer.make(type_name, name,
                                  *args, **kwargs)
         self.add_tracer_object(tracer)
 

@@ -1,8 +1,8 @@
-from .base import BaseTracer
+from .base import BaseTracer, MULTIPLE_OBJECTS_PER_TABLE
 from astropy.table import Table
 from ..utils import hide_null_values, remove_dict_null_values
 
-class MiscTracer(BaseTracer, tracer_type='Misc'):
+class MiscTracer(BaseTracer, type_name='Misc'):
     """A Tracer type for miscellaneous other data points.
 
     MiscTracers do not have any attributes except for their
@@ -13,6 +13,7 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
     name: str
         The name of the tracer
     """
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -55,13 +56,13 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
         table = Table(data=cols,
                       names=['name', 'quantity'] + metadata_cols)
         table.meta['SACCTYPE'] = 'tracer'
-        table.meta['SACCCLSS'] = cls.tracer_type
-        table.meta['EXTNAME'] = f'tracer:{cls.tracer_type}'
+        table.meta['SACCCLSS'] = cls.type_name
+        table.meta['EXTNAME'] = f'tracer:{cls.type_name}'
         hide_null_values(table)
         return [table]
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert a list of astropy table into a dictionary of MiscTracer instances.
 
         In general table_list should have a single element in, since all the
@@ -77,15 +78,14 @@ class MiscTracer(BaseTracer, tracer_type='Misc'):
         """
         tracers = {}
 
-        for table in table_list:
-            metadata_cols = [col for col in table.colnames
-                             if col not in ['name', 'quantity']]
+        metadata_cols = [col for col in table.colnames
+                            if col not in ['name', 'quantity']]
 
-            for row in table:
-                name = row['name']
-                quantity = row['quantity']
-                metadata = {key: row[key] for key in metadata_cols}
-                remove_dict_null_values(metadata)
-                tracers[name] = cls(name, quantity=quantity, metadata=metadata)
+        for row in table:
+            name = row['name']
+            quantity = row['quantity']
+            metadata = {key: row[key] for key in metadata_cols}
+            remove_dict_null_values(metadata)
+            tracers[name] = cls(name, quantity=quantity, metadata=metadata)
         return tracers
 

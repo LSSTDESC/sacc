@@ -3,4 +3,5 @@ from .windows import Window, BandpowerWindow, TopHatWindow, LogTopHatWindow  # n
 from .data_types import standard_types, parse_data_type_name, build_data_type_name  # noqa
 from .tracers import BaseTracer  # noqa
 from .covariance import BaseCovariance  # noqa
+from .io import BaseIO
 __version__ = '1.0.2' #noqa
