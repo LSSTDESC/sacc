@@ -305,9 +305,6 @@ class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
         ]
 
         table = Table(data=cols, names=names)
-        table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.type_name
-        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
         return [table]
 
     @classmethod

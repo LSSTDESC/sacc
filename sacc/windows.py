@@ -78,9 +78,6 @@ class TopHatWindow(BaseWindow, type_name='TopHat'):
         maxs = [w.max for w in window_list]
         ids = [id(w) for w in window_list]
         t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
-        t.meta['SACCTYPE'] = 'window'
-        t.meta['SACCCLSS'] = cls.type_name
-        t.meta['EXTNAME'] = 'window:' + cls.type_name
         return [t]
 
     @classmethod
@@ -156,10 +153,6 @@ class Window(BaseWindow, type_name='Standard'):
         cols = [self.values, self.weight]
         names = ['values', 'weight']
         t = Table(data=cols, names=names)
-        t.meta['SACCTYPE'] = 'window'
-        t.meta['SACCCLSS'] = self.type_name
-        t.meta['SACCNAME'] = id(self)
-        t.meta['EXTNAME'] = 'window:' + self.type_name
         return t
 
     @classmethod
@@ -209,8 +202,7 @@ class BandpowerWindow(BaseWindow, type_name='Bandpower'):
         self.values = np.array(values)
         self.weight = np.array(weight)
 
-    @classmethod
-    def to_tables(cls, window_list):
+    def to_table(self):
         """Convert a list of windows to a list of astropy tables.
 
         One table is created per window.
@@ -229,17 +221,10 @@ class BandpowerWindow(BaseWindow, type_name='Bandpower'):
         table: list
             List of astropy.table.Table instances
         """
-        tables = []
-        for w in window_list:
-            cols = [w.values, w.weight]
-            names = ['values', 'weight']
-            t = Table(data=cols, names=names)
-            t.meta['SACCTYPE'] = 'window'
-            t.meta['SACCCLSS'] = cls.type_name
-            t.meta['SACCNAME'] = id(w)
-            t.meta['EXTNAME'] = 'window:' + cls.type_name
-            tables.append(t)
-        return tables
+        cols = [self.values, self.weight]
+        names = ['values', 'weight']
+        t = Table(data=cols, names=names)
+        return t
 
     @classmethod
     def from_table(cls, table):

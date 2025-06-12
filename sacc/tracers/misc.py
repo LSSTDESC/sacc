@@ -19,7 +19,7 @@ class MiscTracer(BaseTracer, type_name='Misc'):
         super().__init__(name, **kwargs)
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of MiscTracer instances to a astropy tables.
 
         This is used when saving data to file.
@@ -55,11 +55,8 @@ class MiscTracer(BaseTracer, type_name='Misc'):
 
         table = Table(data=cols,
                       names=['name', 'quantity'] + metadata_cols)
-        table.meta['SACCTYPE'] = 'tracer'
-        table.meta['SACCCLSS'] = cls.type_name
-        table.meta['EXTNAME'] = f'tracer:{cls.type_name}'
         hide_null_values(table)
-        return [table]
+        return table
 
     @classmethod
     def from_table(cls, table):

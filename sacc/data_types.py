@@ -358,11 +358,38 @@ class DataPoint(BaseIO, type_name="DataPoint"):
         tags = list(tags)
         tracers = [f'tracer_{i}' for i in range(ntracer)]
         return tracers, tags
+    
+    @classmethod
+    def to_tables(cls, data, lookups=None):
+        data_by_type = {}
+        for i, d in enumerate(data):
+            d.tags['sacc_ordering'] = i
+            # Get the data type name
+            data_type = d.data_type
+            if data_type not in data_by_type:
+                data_by_type[data_type] = []
+            # Add the data point to the table for this type
+            data_by_type[data_type].append(d)
+
+        tables = {}
+        for data_type, data_points in data_by_type.items():
+            # Convert the data points to a table
+            table = cls.to_table(data_points, lookups)
+            # Add metadata to the table
+            table.meta['SACCTYPE'] = 'data'
+            table.meta['SACCNAME'] = data_type
+            tables[data_type] = table
+        
+        # Now remove the temporary ordering tag
+        for d in data:
+            del d.tags['sacc_ordering']
+        
+        return tables
 
     @classmethod
     def to_table(cls, data, lookups=None):
         """
-        Convert a list of data points to a single homogenous table
+        Convert a list of data points to a single homogenous table.
 
         Since data points can have varying tags, this method uses
         null values to represent non-present tags.

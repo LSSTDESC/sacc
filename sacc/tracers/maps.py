@@ -148,12 +148,8 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
             names.append(str(bandpass_id))
             cols.append(col)
         bandpass_table = Table(data=cols, names=names)
-        bandpass_table.meta['SACCTYPE'] = 'tracer'
-        bandpass_table.meta['SACCCLSS'] = self.type_name
-        bandpass_table.meta['SACCNAME'] = self.name
         bandpass_table.meta['SACCQTTY'] = self.quantity
         extname = f'tracer:{self.type_name}:{self.name}:bandpass'
-        bandpass_table.meta['EXTNAME'] = extname
         bandpass_table.meta['NU_UNIT'] = self.nu_unit
         bandpass_table.meta['SPIN'] = self.spin
         for key, value in self.metadata.items():
@@ -167,12 +163,7 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
             names.append(str(beam_id))
             cols.append(col)
         beam_table = Table(data=cols, names=names)
-        beam_table.meta['SACCTYPE'] = 'tracer'
-        beam_table.meta['SACCCLSS'] = self.type_name
-        beam_table.meta['SACCNAME'] = self.name
         beam_table.meta['SACCQTTY'] = self.quantity
-        extname = f'tracer:{self.type_name}:{self.name}:beam'
-        beam_table.meta['EXTNAME'] = extname
         beam_table.meta['MAP_UNIT'] = self.map_unit
         beam_table.meta['SPIN'] = self.spin
         for key, value in self.metadata.items():

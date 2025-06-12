@@ -181,8 +181,7 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         else:
             self.nz = np.mean(ens.pdf(self.z),axis=0)
         
-    @classmethod
-    def to_tables(cls, instance_list):
+    def to_tables(self):
         """Convert a list of NZTracers to a list of astropy tables
 
         This is used when saving data to a file.
@@ -200,50 +199,32 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         """
         from tables_io.convUtils import convertToApTables
 
-        tables = []
+        tables = {}
 
-        for tracer in instance_list:
-            if tracer.z is not None:
-                names = ['z', 'nz']
-                cols = [tracer.z, tracer.nz]
-                fid_table = Table(data=cols, names=names)
-                fid_table.meta['SACCTYPE'] = 'tracer'
-                fid_table.meta['SACCCLSS'] = cls.type_name
-                fid_table.meta['SACCNAME'] = tracer.name
-                fid_table.meta['SACCQTTY'] = tracer.quantity
-                fid_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:fid'
+        if self.z is not None:
+            names = ['z', 'nz']
+            cols = [self.z, self.nz]
+            fid_table = Table(data=cols, names=names)
+            fid_table.meta['SACCQTTY'] = self.quantity
 
-            table_dict = tracer.ensemble.build_tables()
-            ap_tables = convertToApTables(table_dict)
-            data_table = ap_tables['data']
-            meta_table = ap_tables['meta']
-            ancil_table = ap_tables.get('ancil', None)
-            meta_table.meta['SACCTYPE'] = 'tracer'
-            meta_table.meta['SACCCLSS'] = cls.type_name
-            meta_table.meta['SACCNAME'] = tracer.name
-            meta_table.meta['SACCQTTY'] = tracer.quantity
-            meta_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:meta'
+        table_dict = self.ensemble.build_tables()
+        ap_tables = convertToApTables(table_dict)
+        data_table = ap_tables['data']
+        meta_table = ap_tables['meta']
+        ancil_table = ap_tables.get('ancil', None)
+        meta_table.meta['SACCQTTY'] = self.quantity
+        data_table.meta['SACCQTTY'] = self.quantity
 
-            data_table.meta['SACCTYPE'] = 'tracer'
-            data_table.meta['SACCCLSS'] = cls.type_name
-            data_table.meta['SACCNAME'] = tracer.name
-            data_table.meta['SACCQTTY'] = tracer.quantity
-            data_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:data'
+        for kk, vv in self.metadata.items():
+            meta_table.meta['META_'+kk] = vv
+        tables.append(data_table)
 
-            for kk, vv in tracer.metadata.items():
-                meta_table.meta['META_'+kk] = vv
-            tables.append(data_table)
-            tables.append(meta_table)
-            if tracer.z is not None:
-                tables.append(fid_table)
-            if ancil_table:
-                ancil_table.meta['SACCTYPE'] = 'tracer'
-                ancil_table.meta['SACCCLSS'] = cls.type_name
-                ancil_table.meta['SACCNAME'] = tracer.name
-                ancil_table.meta['SACCQTTY'] = tracer.quantity
-                ancil_table.meta['EXTNAME'] = f'tracer:{cls.type_name}:{tracer.name}:ancil'
+        tables.append(meta_table)
+        if self.z is not None:
+            tables.append(fid_table)
+        if ancil_table:
+            ancil_table.meta['SACCQTTY'] = self.quantity
 
-                tables.append(ancil_table)
         return tables
 
     @classmethod

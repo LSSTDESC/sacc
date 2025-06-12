@@ -811,10 +811,16 @@ class Sacc:
         # Convert any window objects in the data set to tables,
         # and record a mapping from those objects to table references
         # This could easily be extended to other types
-        all_windows = unique_list(d.get_tag('window') for d in self.data)
-        window_ids = {w: id(w) for w in all_windows}
-        tables = BaseWindow.to_tables(all_windows)
-        return tables, window_ids
+        windows = []
+        for d in self.data:
+            w = d.get_tag("window")
+            if w is not None:
+                windows.append(w)
+
+        windows = unique_list(windows)
+        window_ids = {id(w):w for w in windows}
+        return window_ids
+        
 
     def save_fits(self, filename, overwrite=False):
         """

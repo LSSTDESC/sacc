@@ -78,194 +78,211 @@ class BaseIO:
         cls.type_name = type_name
 
 
-    @classmethod
-    def to_tables(cls, category_dict):
-        """Convert a list of tracers to a list of astropy tables
+def to_tables(category_dict):
+    """Convert a list of tracers to a list of astropy tables
 
-        This is used when saving data to a file.
+    This is used when saving data to a file.
 
-        This class method converts a list of tracers, each of which
-        can instances of any subclass of BaseTracer, and turns them
-        into a list of astropy tables, ready to be saved to disk.
+    This class method converts a list of tracers, each of which
+    can instances of any subclass of BaseTracer, and turns them
+    into a list of astropy tables, ready to be saved to disk.
 
-        Some tracers generate a single table for all of the
-        different instances, and others generate one table per
-        instance.
+    Some tracers generate a single table for all of the
+    different instances, and others generate one table per
+    instance.
 
-        Parameters
-        ----------
-        category_: dict[str, dict[str, BaseIO]]
-            Tracer instances by category, then name
+    Parameters
+    ----------
+    category_: dict[str, dict[str, BaseIO]]
+        Tracer instances by category, then name
 
-        Returns
-        -------
-        tables: list
-            List of astropy tables
-        """
-        tables = []
+    Returns
+    -------
+    tables: list
+        List of astropy tables
+    """
+    from .data_types import DataPoint
+    tables = []
+    data_tables = []
+    for category, instance_dict in category_dict.items():
         multi_object_tables = {}
-        data_tables = []
-        for category, instance_dict in category_dict.items():
-            if category == 'data':
-                data_tables.append(instance_dict)
-                continue
-            for name, obj in instance_dict.items():
-                # Get the class of the instance
-                cls = type(name, obj)
+        if category == 'data':
+            continue
+        for name, obj in instance_dict.items():
+            # Get the class of the instance
+            cls = type(obj)
 
-                # Check if the class is a subclass of BaseIO
-                if not issubclass(cls, BaseIO):
-                    raise RuntimeError(f"Instance {name, obj} of type {cls.__name__} does not subclass BaseIO.")
+            # Check if the class is a subclass of BaseIO
+            if not issubclass(cls, BaseIO):
+                raise RuntimeError(f"Instance {obj} of type {cls.__name__} does not subclass BaseIO.")
 
-                # Convert the instance to tables using its own method
-                if obj.storage_type == ONE_OBJECT_PER_TABLE:
-                    # If the storage type is ONE_OBJECT_PER_TABLE, we expect
-                    # that the table will return a single instance of the class.
-                    table = obj.to_table()
-                    table.meta['SACCTYPE'] = category
-                    table.meta['SACCCLSS'] = cls.type_name
-                    table.meta['SACCNAME'] = name
-                    tables.append(table)
-                elif obj.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
-                    # If the storage type is MULTIPLE_OBJECTS_PER_TABLE then
-                    # we need to collect together all the instances of this
-                    # class and convert at the end
-                    if cls not in multi_object_tables:
-                        multi_object_tables[cls] = []
-                    multi_object_tables[cls].append(obj)
-                elif obj.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
-                    # If the storage type is ONE_OBJECT_MULTIPLE_TABLES, we expect
-                    # that the table will return a dict of instances of the class,
-                    # each in its own table.
-                    tables = obj.to_tables()
-                    for name, table in tables.items():
-                        table.meta['SACCTYPE'] = category
-                        table.meta['SACCCLSS'] = cls.type_name
-                        table.meta['SACCNAME'] = obj.name
-                        table.meta['SACCPART'] = name
-                else:
-                    raise RuntimeError(f"Storage type {cls.storage_type} for {cls.__name__} is not recognized.")
-
-        # Now process the multi-object tables
-        for cls, instance_list in multi_object_tables.items():
-            # Convert the list of instances to a single table
-            table = cls.to_table(instance_list)
-            tables.append(table)
-
-        for dt in data_tables:
-            # each table has a bunch of data points in.
-
-        return tables
-
-    @classmethod
-    def from_tables(cls, table_list):
-        """Convert a list of astropy tables into a dictionary of tracers
-
-        This is used when loading data from a file.
-
-        This class method takes a list of tracers, such as those
-        read from a file, and converts them into a list of instances.
-
-        It is not quite the inverse of the to_tables method, since it
-        returns a dict instead of a list.
-
-        Subclasses overrides of this method do the actual work, but
-        should *NOT* call this parent base method.
-
-        Parameters
-        ----------
-        table_list: list
-            List of astropy tables
-
-        Returns
-        -------
-        tracers: dict
-            Dict mapping string names to tracer objects.
-        """
-        from .data_types import DataPoint
-        outputs = {}
-        multi_tables = {}
-        data_point_tables = []
-
-        for table in table_list:
-            # what general category of object is this table, e.g.
-            # tracers, windows, data points.
-            table_category = table.meta['SACCTYPE'].lower()
-
-            # what specific subclass of that category is this table?
-            # e.g. N(z) tracer, top hat window, etc.
-            if table_category == 'data':
-                # This is a data table, which we treat as a special case.
-                # because the ordering here is particularly important
-                table_class_name = "datapoint"
-                table_class = DataPoint
-                data_point_tables.append(table)
-                continue
-
-            else:
-                table_class_name = table.meta['SACCCLSS'].lower()
-                # The class that represents this specific subtype
-                base_class = cls._base_subclasses[table_category]
-                table_class = base_class._sub_classes[table_class_name]
-                if table_category not in outputs:
-                    outputs[table_category] = {}
-
-            # We will be doing the types where an object is split up
-            # over multiple tables separately, so we store them
-            # in a dict for later processing.
-            if table_class.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
-                name = table.meta["SACCNAME"]
-                if "SACCPART" in table.meta:
-                    part = table.meta["SACCPART"]
-                else:
-                    # legacy tables may not have the part - in this case
-                    # name should hopefully be kind:class:part
-                    part = table.meta['EXTNAME'].rsplit(":", 1)[-1]
-                key = (table_category, table_class, name)
-                if key not in multi_tables:
-                    multi_tables[key] = {}
-                multi_tables[key][part] = table
-                continue
-
-            # # Delete this later once things are working:
-            # print(f"Processing table {table.meta['EXTNAME']} of type {table_class_name} in category {table_category} storage type {table_class.storage_type} length {len(table)}")
-
-            # Convert the tables into either one instance of the class or a list of instances
-            if table_class.storage_type == ONE_OBJECT_PER_TABLE:
+            # Convert the instance to tables using its own method
+            if obj.storage_type == ONE_OBJECT_PER_TABLE:
                 # If the storage type is ONE_OBJECT_PER_TABLE, we expect
                 # that the table will return a single instance of the class.
-                obj = table_class.from_table(table)
-                name = table.meta['SACCNAME']
-                outputs[table_category][name] = obj
-
-            elif table_class.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
-                # If the storage type is MULTIPLE_OBJECTS_PER_TABLE, we expect
+                table = obj.to_table()
+                table.meta['SACCTYPE'] = category
+                table.meta['SACCCLSS'] = cls.type_name
+                table.meta['SACCNAME'] = name
+                tables.append(table)
+            elif obj.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
+                # If the storage type is MULTIPLE_OBJECTS_PER_TABLE then
+                # we need to collect together all the instances of this
+                # class and convert at the end
+                if cls not in multi_object_tables:
+                    multi_object_tables[cls, name] = []
+                multi_object_tables[cls, name].append(obj)
+            elif obj.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
+                # If the storage type is ONE_OBJECT_MULTIPLE_TABLES, we expect
                 # that the table will return a dict of instances of the class,
-                # keyed by their names.
-                objs = table_class.from_table(table)
-                outputs[table_category].update(objs)
+                # each in its own table.
+                tabs = obj.to_tables()
+                for name, table in tabs.items():
+                    table.meta['SACCTYPE'] = category
+                    table.meta['SACCCLSS'] = cls.type_name
+                    if hasattr(obj, 'name'):
+                        table.meta['SACCNAME'] = obj.name
+                    else:
+                        table.meta['SACCNAME'] = id(obj)
+                    table.meta['SACCPART'] = name
+                    tables.append(table)
+            else:
+                raise RuntimeError(f"Storage type {cls.storage_type} for {cls.__name__} is not recognized.")
 
-        # Now process the multi-table objects that we collected above.
-        for key, m_tables in multi_tables.items():
-            # key is a tuple of (table_category, table_class, name)
-            table_category, table_class, name = key
-            # Convert the dict of tables into a single instance
-            obj = table_class.from_tables(m_tables)
+        # Now process the multi-object tables for this category
+        for (cls, name), instance_list in multi_object_tables.items():
+            # Convert the list of instances to a single table
+            table = cls.to_table(instance_list)
+            table.meta['SACCTYPE'] = category
+            table.meta['SACCNAME'] = name
+            table.meta['SACCCLSS'] = cls.type_name
+            tables.append(table)
+
+    # Handle data points separately, since they are a special case
+    data = category_dict.get('data', [])
+    lookups = category_dict.get('window', {})
+    
+    # Because lots of objects share the same window function
+    # we map a code number for a window to the window object
+    #when serializing.
+    lookups = {'window': {v: k for k, v in lookups.items()}}
+    data_tables = DataPoint.to_tables(data, lookups=lookups)
+    
+    for name, table in data_tables.items():
+        table.meta['SACCTYPE'] = "data"
+        table.meta['SACCNAME'] = name
+        tables.append(table)
+
+    return tables
+
+def from_tables(table_list):
+    """Convert a list of astropy tables into a dictionary of tracers
+
+    This is used when loading data from a file.
+
+    This class method takes a list of tracers, such as those
+    read from a file, and converts them into a list of instances.
+
+    It is not quite the inverse of the to_tables method, since it
+    returns a dict instead of a list.
+
+    Subclasses overrides of this method do the actual work, but
+    should *NOT* call this parent base method.
+
+    Parameters
+    ----------
+    table_list: list
+        List of astropy tables
+
+    Returns
+    -------
+    tracers: dict
+        Dict mapping string names to tracer objects.
+    """
+    from .data_types import DataPoint
+    outputs = {}
+    multi_tables = {}
+    data_point_tables = []
+
+    for table in table_list:
+        # what general category of object is this table, e.g.
+        # tracers, windows, data points.
+        table_category = table.meta['SACCTYPE'].lower()
+
+        # what specific subclass of that category is this table?
+        # e.g. N(z) tracer, top hat window, etc.
+        if table_category == 'data':
+            # This is a data table, which we treat as a special case.
+            # because the ordering here is particularly important
+            table_class_name = "datapoint"
+            table_class = DataPoint
+            data_point_tables.append(table)
+            continue
+
+        else:
+            table_class_name = table.meta['SACCCLSS'].lower()
+            # The class that represents this specific subtype
+            base_class = BaseIO._base_subclasses[table_category]
+            table_class = base_class._sub_classes[table_class_name]
+            if table_category not in outputs:
+                outputs[table_category] = {}
+
+        # We will be doing the types where an object is split up
+        # over multiple tables separately, so we store them
+        # in a dict for later processing.
+        if table_class.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
+            name = table.meta["SACCNAME"]
+            if "SACCPART" in table.meta:
+                part = table.meta["SACCPART"]
+            else:
+                # legacy tables may not have the part - in this case
+                # name should hopefully be kind:class:part
+                part = table.meta['EXTNAME'].rsplit(":", 1)[-1]
+            key = (table_category, table_class, name)
+            if key not in multi_tables:
+                multi_tables[key] = {}
+            multi_tables[key][part] = table
+            continue
+
+        # # Delete this later once things are working:
+        # print(f"Processing table {table.meta['EXTNAME']} of type {table_class_name} in category {table_category} storage type {table_class.storage_type} length {len(table)}")
+
+        # Convert the tables into either one instance of the class or a list of instances
+        if table_class.storage_type == ONE_OBJECT_PER_TABLE:
+            # If the storage type is ONE_OBJECT_PER_TABLE, we expect
+            # that the table will return a single instance of the class.
+            obj = table_class.from_table(table)
+            name = table.meta['SACCNAME']
             outputs[table_category][name] = obj
 
-        # Now finally process the data point tables.
-        data_points = []
-        if 'window' in outputs:
-            lookups = {'window': outputs['window']}
-        else:
-            lookups = {}
-        for table in data_point_tables:
-            # Each data point table is a single data point
-            dps = DataPoint.from_table(table, lookups=lookups)
-            data_points.extend(dps)
+        elif table_class.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
+            # If the storage type is MULTIPLE_OBJECTS_PER_TABLE, we expect
+            # that the table will return a dict of instances of the class,
+            # keyed by their names.
+            objs = table_class.from_table(table)
+            outputs[table_category].update(objs)
 
-        outputs['data'] = data_points
-        return outputs
+    # Now process the multi-table objects that we collected above.
+    for key, m_tables in multi_tables.items():
+        # key is a tuple of (table_category, table_class, name)
+        table_category, table_class, name = key
+        # Convert the dict of tables into a single instance
+        obj = table_class.from_tables(m_tables)
+        outputs[table_category][name] = obj
+
+    # Now finally process the data point tables.
+    data_points = []
+    if 'window' in outputs:
+        lookups = {'window': outputs['window']}
+    else:
+        lookups = {}
+    for table in data_point_tables:
+        # Each data point table is a single data point
+        dps = DataPoint.from_table(table, lookups=lookups)
+        data_points.extend(dps)
+
+    outputs['data'] = data_points
+    return outputs
 
 
 def numpy_to_vanilla(x):
