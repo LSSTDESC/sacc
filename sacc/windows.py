@@ -77,8 +77,7 @@ class TopHatWindow(BaseWindow, type_name='TopHat'):
         mins = [w.min for w in window_list]
         maxs = [w.max for w in window_list]
         ids = [id(w) for w in window_list]
-        t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
-        return [t]
+        return Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
 
     @classmethod
     def from_table(cls, table):

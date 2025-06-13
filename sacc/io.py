@@ -1,5 +1,6 @@
 from .utils import unique_list
 import numpy as np
+from io import BytesIO
 
 
 ONE_OBJECT_PER_TABLE = "ONE_OBJECT_PER_TABLE"
@@ -79,22 +80,26 @@ class BaseIO:
 
 
 def to_tables(category_dict):
-    """Convert a list of tracers to a list of astropy tables
+    """Convert a dic of objects to a list of astropy tables
 
     This is used when saving data to a file.
 
-    This class method converts a list of tracers, each of which
-    can instances of any subclass of BaseTracer, and turns them
+    This class method converts a dict of objects, each of which
+    can instances of any subclass of BaseIO, and turns them
     into a list of astropy tables, ready to be saved to disk.
 
-    Some tracers generate a single table for all of the
+    Some object types generate a single table for all of the
     different instances, and others generate one table per
-    instance.
+    instance, and some others generate multiple tables
+    for a single instance.
+
+    The storage type of each class decides which of these it is.
 
     Parameters
     ----------
     category_: dict[str, dict[str, BaseIO]]
-        Tracer instances by category, then name
+        Tracer instances by category (e.g. "tracer", "window", "covariance"), then name
+        (e.g. "source_1")
 
     Returns
     -------
@@ -102,12 +107,20 @@ def to_tables(category_dict):
         List of astropy tables
     """
     from .data_types import DataPoint
+
+    # This is the list of tables that we will build up and return
     tables = []
-    data_tables = []
+
+    # The top leveo category_dict is a dict mapping
+    # general categories of data, each represented by a different
+    # subclass of BaseIO, to a dict of further subclasses of that subclass.
     for category, instance_dict in category_dict.items():
         multi_object_tables = {}
+
+        # We handle the "data" category separately, since it is a special case
         if category == 'data':
             continue
+
         for name, obj in instance_dict.items():
             # Get the class of the instance
             cls = type(obj)
@@ -116,35 +129,36 @@ def to_tables(category_dict):
             if not issubclass(cls, BaseIO):
                 raise RuntimeError(f"Instance {obj} of type {cls.__name__} does not subclass BaseIO.")
 
-            # Convert the instance to tables using its own method
             if obj.storage_type == ONE_OBJECT_PER_TABLE:
                 # If the storage type is ONE_OBJECT_PER_TABLE, we expect
                 # that the table will return a single instance of the class.
+                # print(f"Saving {name} of type {cls.type_name} in category {category} to a single table.")
                 table = obj.to_table()
                 table.meta['SACCTYPE'] = category
                 table.meta['SACCCLSS'] = cls.type_name
                 table.meta['SACCNAME'] = name
                 tables.append(table)
+
             elif obj.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
                 # If the storage type is MULTIPLE_OBJECTS_PER_TABLE then
                 # we need to collect together all the instances of this
                 # class and convert at the end
+                # print(f"Saving {name} of type {cls.type_name} in category {category} to a multi-object table.")
                 if cls not in multi_object_tables:
                     multi_object_tables[cls, name] = []
                 multi_object_tables[cls, name].append(obj)
+
             elif obj.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
                 # If the storage type is ONE_OBJECT_MULTIPLE_TABLES, we expect
-                # that the table will return a dict of instances of the class,
+                # that the table will return a dict of tables
                 # each in its own table.
+                # print(f"Saving {name} of type {cls.type_name} in category {category} to multiple tables.")
                 tabs = obj.to_tables()
-                for name, table in tabs.items():
+                for part_name, table in tabs.items():
                     table.meta['SACCTYPE'] = category
                     table.meta['SACCCLSS'] = cls.type_name
-                    if hasattr(obj, 'name'):
-                        table.meta['SACCNAME'] = obj.name
-                    else:
-                        table.meta['SACCNAME'] = id(obj)
-                    table.meta['SACCPART'] = name
+                    table.meta["SACCNAME"] = name
+                    table.meta['SACCPART'] = part_name
                     tables.append(table)
             else:
                 raise RuntimeError(f"Storage type {cls.storage_type} for {cls.__name__} is not recognized.")
@@ -164,30 +178,25 @@ def to_tables(category_dict):
     
     # Because lots of objects share the same window function
     # we map a code number for a window to the window object
-    #when serializing.
+    # when serializing.
     lookups = {'window': {v: k for k, v in lookups.items()}}
     data_tables = DataPoint.to_tables(data, lookups=lookups)
-    
+
     for name, table in data_tables.items():
         table.meta['SACCTYPE'] = "data"
         table.meta['SACCNAME'] = name
         tables.append(table)
 
+
     return tables
 
 def from_tables(table_list):
-    """Convert a list of astropy tables into a dictionary of tracers
+    """Convert a list of astropy tables into a dictionary of sacc objects.
 
     This is used when loading data from a file.
 
-    This class method takes a list of tracers, such as those
-    read from a file, and converts them into a list of instances.
-
-    It is not quite the inverse of the to_tables method, since it
-    returns a dict instead of a list.
-
-    Subclasses overrides of this method do the actual work, but
-    should *NOT* call this parent base method.
+    This class method takes a list of astropy tables, typically read from 
+    a file, and converts them all into instances of BaseIO subclasses.
 
     Parameters
     ----------
@@ -196,8 +205,8 @@ def from_tables(table_list):
 
     Returns
     -------
-    tracers: dict
-        Dict mapping string names to tracer objects.
+    objects: dict[Str, dict[str, BaseIO]]
+        Dict mapping category names then object names to instances of BaseIO subclasses.
     """
     from .data_types import DataPoint
     outputs = {}
@@ -212,6 +221,7 @@ def from_tables(table_list):
         # what specific subclass of that category is this table?
         # e.g. N(z) tracer, top hat window, etc.
         if table_category == 'data':
+
             # This is a data table, which we treat as a special case.
             # because the ordering here is particularly important
             table_class_name = "datapoint"
@@ -293,3 +303,18 @@ def numpy_to_vanilla(x):
     elif type(x) == np.float64:
         x = float(x)
     return x
+
+
+
+def astropy_buffered_fits_write(filename, hdu_list):
+    # Write out data - do it to a buffer because astropy
+    # metadata performance on some file systems is terrible.
+    buf = BytesIO()
+    hdu_list.writeto(buf)
+    # Rewind and read the binary data we just wrote
+    buf.seek(0)
+    output_data = buf.read()
+    # Write the binary data to the target file
+    with open(filename, "wb") as f:
+        f.write(output_data)
+

@@ -12,7 +12,7 @@ from .windows import BaseWindow, BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
-
+from . import io
 
 class Sacc:
     """
@@ -821,6 +821,35 @@ class Sacc:
         window_ids = {id(w):w for w in windows}
         return window_ids
         
+    def to_tables(self):
+        """
+        Convert this data set to a collection of astropy tables.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        tables: list of astropy Table objects
+            A list of tables, each corresponding to a different
+            type of object in the data set.  The tables will have
+            metadata that can be used to reconstruct the data set.
+        """
+        # Get the tracers
+        objects = {
+            "tracer": self.tracers,
+            "data": self.data,
+            "window": self._make_window_tables(),
+        }
+
+        if self.covariance is not None:
+            objects["covariance"] = {"cov": self.covariance}
+
+        tables = io.to_tables(objects)
+
+        return tables
+
 
     def save_fits(self, filename, overwrite=False):
         """
@@ -836,71 +865,40 @@ class Sacc:
             If True, overwrite the file silently.
         """
 
-        # Since we don't want to re-order the file as a side effect
-        # we first make a copy of ourself and re-order that.
-        # Tables for the windows
-        tables, window_ids = self._make_window_tables()
-        lookup = {'window': window_ids}
+        if os.path.exists(filename) and not overwrite:
+            raise FileExistsError(f"File {filename} already exists. "
+                                  "Use overwrite=True to overwrite it.")
 
-        # Tables for the tracers
-        tables += BaseTracer.to_tables(self.tracers.values())
+        tables = self.to_tables()
 
-        # Tables for the data sets
-        for dt in self.get_data_types():
-            indices = self.indices(dt)
-            data = [self.data[i] for i in indices]
-            table = DataPoint.to_table(data, lookup)
-            table.add_column(indices, name='sacc_ordering')
-            # Could move this inside to_table?
-            table.meta['SACCTYPE'] = 'data'
-            table.meta['SACCNAME'] = dt
-            table.meta['EXTNAME'] = f'data:{dt}'
-            tables.append(table)
+        # Add the EXTNAME metadata value to each table.
+        # This is used to set the HDU name in the FITS file.
+        for table in tables:
+            typ = table.meta['SACCTYPE']
+            name = table.meta['SACCNAME']
+            if typ == 'data':
+                extname = f'{typ}:{name}'
+            else:
+                cls = table.meta['SACCCLSS']
+                extname = f'{typ}:{cls}:{name}'
+                table.meta['EXTNAME'] = extname
+
 
         # Create the actual fits object
-        hdr = fits.Header()
+        primary_header = fits.Header()
 
-        # save any global metadata in the header.
+        # Save any global metadata in the header.
         # We save the keys and values as separate header cards,
         # because otherwise the keys are all forced to upper case
-        hdr['NMETA'] = len(self.metadata)
+        primary_header['NMETA'] = len(self.metadata)
         for i, (k, v) in enumerate(self.metadata.items()):
-            hdr[f'KEY{i}'] = k
-            hdr[f'VAL{i}'] = v
-        hdus = [fits.PrimaryHDU(header=hdr)] + \
-               [fits.table_to_hdu(table) for table in tables]
-
-        # Covariance, if needed.
-        # All the other data elements become astropy tables first,
-        # But covariances are a bit more complicated and dense, so we
-        # allow them to convert straight to
-        if self.covariance is not None:
-            hdus.append(self.covariance.to_hdu())
-
-        # Make and save the final FITS data
+            primary_header[f'KEY{i}'] = k
+            primary_header[f'VAL{i}'] = v
+        hdus = [fits.PrimaryHDU(header=primary_header)] + \
+                [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
 
-        # The astropy writeto shows very poor performance
-        # when writing lots of small metadata strings on
-        # the NERSC Lustre file system.  So we write to
-        # a buffer first and then save that.
-
-        # First we have to manually check for overwritten files
-        # We raise the same error as astropy
-        if os.path.exists(filename) and not overwrite:
-            raise OSError(f"File {filename} already exists and overwrite=False")
-
-        # Create the buffer and write the data to it
-        buf = BytesIO()
-        hdu_list.writeto(buf)
-
-        # Rewind and read the binary data we just wrote
-        buf.seek(0)
-        output_data = buf.read()
-
-        # Write the binary data to the target file
-        with open(filename, "wb") as f:
-            f.write(output_data)
+        io.astropy_buffered_fits_write(filename, hdu_list)
 
     @classmethod
     def load_fits(cls, filename):
@@ -915,87 +913,66 @@ class Sacc:
         filename: str
             A FITS format sacc file
         """
-        hdu_list = fits.open(filename, "readonly")
+        cov = None
 
-        # Split the HDU's into the different sacc types
-        tracer_tables = [Table.read(hdu)
-                         for hdu in hdu_list
-                         if hdu.header.get('SACCTYPE') == 'tracer']
-        window_tables = [Table.read(hdu)
-                         for hdu in hdu_list
-                         if hdu.header.get('SACCTYPE') == 'window']
-        data_tables = [Table.read(hdu) for hdu in hdu_list
-                       if hdu.header.get('SACCTYPE') == 'data']
-        cov = [hdu for hdu in hdu_list if hdu.header.get('SACCTYPE') == 'cov']
+        with fits.open(filename, mode="readonly") as f:
+            tables = []
+            for hdu in f:
+                if hdu.name.lower() == 'primary':
+                    # The primary table is not a data table,
+                    continue
+                elif hdu.name.lower() == 'covariance':
+                    # Legacy covariance - HDU will just be called covariance
+                    # instead of the full name given by BaseIO.
+                    # Note that this will also allow us to use multiple
+                    # covariances in future.
+                    cov = BaseCovariance.from_hdu(hdu)
+                else:
+                    tables.append(Table.read(hdu))
 
-        # Pull out the classes for these components.
-        tracers = BaseTracer.from_tables(tracer_tables)
-        windows = BaseWindow.from_tables(window_tables)
+        return cls.from_tables(tables, cov=cov)
+    
+    @classmethod
+    def from_tables(cls, tables, cov=None):
+        """
+        Reassmble a Sacc object from a collection of tables.
 
-        # The lookup table is used to convert from ID numbers to
-        # Window objects.
-        lookup = {'window': windows}
+        Parameters
+        ----------
+        objs: dict[str, dict[str, BaseIO]]
+            A dictionary of objects, with some of 'tracer', 'data', 'window',
+            and 'covariance'. Each key maps to a list of objects
+            or a single object.
+        """
+        s = cls()
 
-        # Check if all tables have the 'sacc_ordering' column
-        if not all("sacc_ordering" in table.colnames for table in data_tables):
-            warnings.warn(
-                "The FITS format without the 'sacc_ordering' column is deprecated. "
-                "Assuming data rows are in the correct order as it was before version 1.0."
-            )
-            last_index = 0
-            for table in data_tables:
-                # Create a sequential order assuming rows are stored contiguously
-                order = range(last_index, last_index + len(table))
-                # Update last_index for the next table
-                last_index += len(table)
-                # Add the 'sacc_ordering' column to the table
-                table.add_column(order, name="sacc_ordering")
+        objs =  io.from_tables(tables)
 
-        # Collect together all the data points from the different sections
-        data_unordered = []
-        index = []
-        for table in data_tables:
-            index += table["sacc_ordering"].tolist()
-            table.remove_column('sacc_ordering')
-            data_unordered += DataPoint.from_table(table, lookup)
 
-        # Put the data back in its original order, matching the
-        # covariance.
-        data = [None for i in range(len(data_unordered))]
-        for i, d in zip(index, data_unordered):
-            data[i] = d
-
-        # Finally, take all the pieces that we have collected
-        # and add them all into this data set.
-        S = cls()
+        # Add all the tracers
+        tracers = objs['tracer']
         for tracer in tracers.values():
-            S.add_tracer_object(tracer)
+            s.add_tracer_object(tracer)
 
-        # Add the data points manually instead of using the API, since we
-        # have already constructed them.
+        # Add the actual data points. The windows and any future
+        # objects that are attached to individual data points
+        # will be included in the data points themselves, there is
+        # no need to add them separately.
+        data = fix_data_ordering(objs['data'])
         for d in data:
-            S.data.append(d)
+            s.data.append(d)
 
-        # Assume there is only a single covariance extension,
-        # if there are any
-        if cov:
-            S.add_covariance(BaseCovariance.from_hdu(cov[0]))
+        # Add the covariance, if it is present.
+        if "covariance" in objs:
+            if cov is not None:
+                raise ValueError("Found both a legacy covariance and a new one in the same file.")
+            cov = objs["covariance"]["cov"]
 
-        # Load metadata from the primary heaer
-        header = hdu_list[0].header
+        if cov is not None:
+            s.add_covariance(cov)
+        
+        return s
 
-        # Load each key,value pair in turn.
-        # This will work for normal scalar data types;
-        # arrays etc. will need some thought.
-        n_meta = header['NMETA']
-        for i in range(n_meta):
-            k = header[f'KEY{i}']
-            v = header[f'VAL{i}']
-            S.metadata[k] = v
-
-        hdu_list.close()
-
-        return S
 
     #
     # Methods below here are helper functions for specific types of data.
@@ -1477,3 +1454,57 @@ def concatenate_data_sets(*data_sets, labels=None, same_tracers=None):
             output.metadata[key] = val
 
     return output
+
+
+
+
+def fix_data_ordering(data_points):
+    """
+    SACC data points have an ordering column called 'sacc_ordering'
+    which is used to keep the data points in the same order as
+    the covariance matrix. This function re-orders the data points
+    accordingly
+
+    Parameters
+    ----------
+    data_points: list of DataPoint objects
+
+    Returns
+    -------
+    ordered_data_points: list of DataPoint objects
+    
+    """
+    # Older versions of SACC did not have this column, so we
+    # check for that situation and if not then add it here, in the
+    # order the data points were found in the file.
+    # In the old sacc version this order automatically matched the
+    # covariance matrix.
+    have_ordering = ['sacc_ordering' in dp.tags for dp in data_points]
+    if not all(have_ordering):
+
+        if any(have_ordering):
+            raise ValueError(
+                "Some data points have sacc ordering and some do not. "
+                "Hybrid old/new version. This is very wrong. "
+                "Please check your data files or ask on #desc-sacc for help."
+            )
+
+        print("Warning: The FITS format without the 'sacc_ordering' column is deprecated")
+        print("Assuming data rows are in the correct order as it was before version 1.0.")
+        for i, dp in enumerate(data_points):
+            dp.tags['sacc_ordering'] = i
+
+
+
+    # In either case, we now have the 'sacc_ordering' column,
+    # so can re-order the data points.
+    ordered_data_points = [None for i in range(len(data_points))]
+    for dp in data_points:
+        i = dp.tags['sacc_ordering']
+        ordered_data_points[i] = dp
+
+        # We remove the ordering tag now, as it is not needed
+        # in the main library
+        del dp.tags['sacc_ordering']
+
+    return ordered_data_points

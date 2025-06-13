@@ -36,6 +36,11 @@ class BaseTracer(BaseIO):
     """
     _sub_classes = {}
 
+    @property
+    def tracer_type(self):
+        """Legacy value - this name has been replaced by type_name."""
+        return self.type_name
+
     def __init__(self, name, **kwargs):
         # We encourage people to use existing quantity names, and issue a
         # warning if they do not to prod them in the right direction.

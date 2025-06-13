@@ -149,7 +149,6 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
             cols.append(col)
         bandpass_table = Table(data=cols, names=names)
         bandpass_table.meta['SACCQTTY'] = self.quantity
-        extname = f'tracer:{self.type_name}:{self.name}:bandpass'
         bandpass_table.meta['NU_UNIT'] = self.nu_unit
         bandpass_table.meta['SPIN'] = self.spin
         for key, value in self.metadata.items():
@@ -170,7 +169,7 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
             beam_table.meta['META_'+key] = value
         remove_dict_null_values(beam_table.meta)
 
-        return [bandpass_table, beam_table]
+        return {'bandpass': bandpass_table, 'beam': beam_table}
 
     @classmethod
     def from_tables(cls, table_dict):
