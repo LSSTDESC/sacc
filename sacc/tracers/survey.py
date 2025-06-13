@@ -52,7 +52,7 @@ class SurveyTracer(BaseTracer, type_name="survey"):  # type: ignore
         return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -63,14 +63,13 @@ class SurveyTracer(BaseTracer, type_name="survey"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                sky_area = row["sky_area"]
-                tracers[name] = cls(
-                    name,
-                    quantity=quantity,
-                    sky_area=sky_area,
-                )
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            sky_area = row["sky_area"]
+            tracers[name] = cls(
+                name,
+                quantity=quantity,
+                sky_area=sky_area,
+            )
         return tracers

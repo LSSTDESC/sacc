@@ -10,6 +10,7 @@ from sacc.tracers import (
     BinRadiusTracer,
     SurveyTracer,
 )
+from astropy.table import Table
 
 
 def test_make_binztracer():
@@ -194,9 +195,10 @@ def test_surveytracer_equality():
 def test_surveytracer_tables():
     a = SurveyTracer.make("survey", name="bullwinkle", sky_area=1.0)
     b = SurveyTracer.make("survey", name="rocky", sky_area=2.0)
-    tables = SurveyTracer.to_tables([a, b])
-    assert len(tables) == 1
-    d = SurveyTracer.from_tables(tables)
+    table = SurveyTracer.to_table([a, b])
+    assert type(table) == Table
+    assert len(table) == 2
+    d = SurveyTracer.from_table(table)
     assert len(d) == 2
     assert d["bullwinkle"] == a
     assert d["rocky"] == b
