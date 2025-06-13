@@ -38,10 +38,10 @@ def test_binztracer_equality():
 def test_binztracer_tables():
     a = BinZTracer.make("bin_z", name="fred", lower=0.5, upper=1.0)
     b = BinZTracer.make("bin_z", name="wilma", lower=1.0, upper=1.5)
-    tables = BinZTracer.to_tables([a, b])
-    assert len(tables) == 1  # all BinZTracers are written to a single table
+    table = BinZTracer.to_table([a, b])
+    assert len(table) == 2  # all BinZTracers are written to a single table
 
-    d = BinZTracer.from_tables(tables)
+    d = BinZTracer.from_table(table)
     assert len(d) == 2  # this list of tables recovers both BinZTracers
     assert d["fred"] == a
     assert d["wilma"] == b
@@ -72,10 +72,10 @@ def test_binlogmtracer_equality():
 def test_binlogmtracer_tables():
     a = BinLogMTracer.make("bin_logm", name="fred", lower=13.0, upper=15.0)
     b = BinLogMTracer.make("bin_logm", name="wilma", lower=14.0, upper=15.5)
-    tables = BinLogMTracer.to_tables([a, b])
-    assert len(tables) == 1
+    table = BinLogMTracer.to_table([a, b])
+    assert len(table) == 2
 
-    d = BinLogMTracer.from_tables(tables)
+    d = BinLogMTracer.from_table(table)
     assert len(d) == 2
     assert d["fred"] == a
     assert d["wilma"] == b
@@ -111,9 +111,9 @@ def test_binrichnesstracer_equality():
 def test_binrichnesstracer_tables():
     a = BinRichnessTracer.make("bin_richness", name="barney", lower=0.0, upper=0.5)
     b = BinRichnessTracer.make("bin_richness", name="betty", lower=1.25, upper=2.0)
-    tables = BinRichnessTracer.to_tables([a, b])
-    assert len(tables) == 1
-    d = BinRichnessTracer.from_tables(tables)
+    table = BinRichnessTracer.to_table([a, b])
+    assert len(table) == 2
+    d = BinRichnessTracer.from_table(table)
     assert len(d) == 2  # this list of tables recovers both BinRichnessTracers
     assert d["barney"] == a
     assert d["betty"] == b
@@ -164,9 +164,9 @@ def test_binradiustracer_tables():
     b = BinRadiusTracer.make(
         "bin_radius", name="bambam", lower=3.0, center=4.0, upper=5.0
     )
-    tables = BinRadiusTracer.to_tables([a, b])
-    assert len(tables) == 1
-    d = BinRadiusTracer.from_tables(tables)
+    table = BinRadiusTracer.to_table([a, b])
+    assert len(table) == 2
+    d = BinRadiusTracer.from_table(table)
     assert len(d) == 2
     assert d["pebbles"] == a
     assert d["bambam"] == b

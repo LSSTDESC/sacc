@@ -44,10 +44,8 @@ class MapTracer(BaseTracer, type_name='Map'):
             names.append(str(beam_id))
             cols.append(col)
         table = Table(data=cols, names=names)
-        table.meta['SACCTYPE'] = 'tracer'
-        table.meta['SACCCLSS'] = self.type_name
-        table.meta['SACCNAME'] = self.name
         table.meta['SACCQTTY'] = self.quantity
+        table.meta['NAME'] = self.name
         extname = f'tracer:{self.type_name}:{self.name}:beam'
         table.meta['EXTNAME'] = extname
         table.meta['MAP_UNIT'] = self.map_unit
@@ -74,7 +72,7 @@ class MapTracer(BaseTracer, type_name='Map'):
         tracer: MapTracer
             An instance of MapTracer created from the table.
         """
-        name = table.meta['SACCNAME']
+        name = table.meta['NAME']
         quantity = table.meta.get('SACCQTTY', 'generic')
         map_unit = table.meta['MAP_UNIT']
         spin = table.meta['SPIN']
@@ -150,6 +148,7 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
         bandpass_table = Table(data=cols, names=names)
         bandpass_table.meta['SACCQTTY'] = self.quantity
         bandpass_table.meta['NU_UNIT'] = self.nu_unit
+        bandpass_table.meta['NAME'] = self.name
         bandpass_table.meta['SPIN'] = self.spin
         for key, value in self.metadata.items():
             bandpass_table.meta['META_'+key] = value
@@ -178,7 +177,7 @@ class NuMapTracer(BaseTracer, type_name='NuMap'):
         beam_table = table_dict['beam']
 
         # Get the various bits of metadata out of the bandpass table
-        name = bandpass_table.meta['SACCNAME']
+        name = bandpass_table.meta['NAME']
         spin = bandpass_table.meta['SPIN']
         quantity = bandpass_table.meta.get('SACCQTTY', 'generic')
         nu_unit = bandpass_table.meta['NU_UNIT']

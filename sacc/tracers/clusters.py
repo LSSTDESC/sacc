@@ -35,7 +35,7 @@ class BinZTracer(BaseTracer, type_name="bin_z"):  # type: ignore
         )
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinZTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -58,10 +58,10 @@ class BinZTracer(BaseTracer, type_name="bin_z"):  # type: ignore
         table.meta["SACCTYPE"] = "tracer"
         table.meta["SACCCLSS"] = cls.type_name
         table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
-        return [table]
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -72,13 +72,12 @@ class BinZTracer(BaseTracer, type_name="bin_z"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
 class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
@@ -114,7 +113,7 @@ class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
         )
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinLogMTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -136,10 +135,10 @@ class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
         table.meta["SACCTYPE"] = "tracer"
         table.meta["SACCCLSS"] = cls.type_name
         table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
-        return [table]
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -150,13 +149,12 @@ class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
          
@@ -193,7 +191,7 @@ class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
         self.upper = upper
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinZTracers to a list of astropy tables
 
         This is used when saving data to a file.
@@ -215,10 +213,10 @@ class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
         table.meta["SACCTYPE"] = "tracer"
         table.meta["SACCCLSS"] = cls.type_name
         table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
-        return [table]
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -229,18 +227,17 @@ class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(
-                    name,
-                    quantity=quantity,
-                    lower=lower,
-                    upper=upper,
-                )
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(
+                name,
+                quantity=quantity,
+                lower=lower,
+                upper=upper,
+            )
         return tracers
 
 
@@ -284,7 +281,7 @@ class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
         self.center = center
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinRadiusTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -305,10 +302,10 @@ class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
         ]
 
         table = Table(data=cols, names=names)
-        return [table]
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -319,18 +316,17 @@ class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                center = row["center"]
-                tracers[name] = cls(
-                    name,
-                    quantity=quantity,
-                    lower=lower,
-                    upper=upper,
-                    center=center,
-                )
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            center = row["center"]
+            tracers[name] = cls(
+                name,
+                quantity=quantity,
+                lower=lower,
+                upper=upper,
+                center=center,
+            )
         return tracers

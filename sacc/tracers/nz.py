@@ -82,6 +82,7 @@ class NZTracer(BaseTracer, type_name='NZ'):
             cols.append(col)
         table = Table(data=cols, names=names)
         table.meta['SACCQTTY'] = self.quantity
+        table.meta['NAME'] = self.name
         for key, value in self.metadata.items():
             table.meta['META_'+key] = value
         remove_dict_null_values(table.meta)
@@ -105,7 +106,7 @@ class NZTracer(BaseTracer, type_name='NZ'):
             Dict mapping string names to tracer objects.
             Only contains one key/value pair for the one tracer.
         """
-        name = table.meta['SACCNAME']
+        name = table.meta['NAME']
         quantity = table.meta.get('SACCQTTY', 'generic')
         z = table['z']
         nz = table['nz']
@@ -213,6 +214,7 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         meta_table = ap_tables['meta']
         ancil_table = ap_tables.get('ancil', None)
         meta_table.meta['SACCQTTY'] = self.quantity
+        meta_table.meta['NAME'] = self.name
         data_table.meta['SACCQTTY'] = self.quantity
 
         for kk, vv in self.metadata.items():
@@ -266,7 +268,7 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
             else:
                 z = None
             ensemble = qp.from_tables(val)
-            name = meta_table.meta['SACCNAME']
+            name = meta_table.meta['NAME']
             quantity = meta_table.meta.get('SACCQTTY', 'generic')
             ensemble = qp.from_tables(val)
             metadata = {}

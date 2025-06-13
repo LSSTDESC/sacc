@@ -1,7 +1,7 @@
 from .utils import unique_list
 import numpy as np
 from io import BytesIO
-
+import inspect
 
 ONE_OBJECT_PER_TABLE = "ONE_OBJECT_PER_TABLE"
 MULTIPLE_OBJECTS_PER_TABLE = "MULTIPLE_OBJECTS_PER_TABLE"
@@ -28,7 +28,6 @@ if storage_type == ONE_OBJECT_MULTIPLE_TABLES then the class must have
 
 """
 
-
 class BaseIO:
     """
     This base class represents interfaces for input/output operations
@@ -51,6 +50,13 @@ class BaseIO:
         # We can have base subclasses that do not have a type name
         if cls.__name__.startswith('Base'):
             BaseIO._base_subclasses[cls.__name__[4:].lower()] = cls
+
+            # Check that the class variable _sub_classes, which bases classes
+            # use to register their subclasses, exists.
+            if not hasattr(cls, '_sub_classes'):
+                raise RuntimeError("Base subclasses of BaseIO must have a dictionary class variable _sub_classes, but"
+                                  f" {cls.__name__} does not have one defined.")
+            
             return
         
         if type_name == "":
@@ -64,13 +70,24 @@ class BaseIO:
             raise RuntimeError(f"Subclasses of BaseIO must have a class variable storage_type set to one of "
                                f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
                                f"but {cls.__name__} has {cls.storage_type}.")
-
-
-        # Check that the class variable _sub_classes, which bases classes
-        # use to register their subclasses, exists.
-        if not hasattr(cls, '_sub_classes'):
-            raise RuntimeError("Subclasses of BaseIO must have a dictionary class variable _sub_classes")
         
+        if cls.storage_type == ONE_OBJECT_PER_TABLE:
+            check_has_standard_method(cls, 'to_table')
+            check_has_class_method(cls, 'from_table')
+            
+        elif cls.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
+            check_has_standard_method(cls, 'to_tables')
+            check_has_class_method(cls, 'from_tables')
+
+        elif cls.storage_type == MULTIPLE_OBJECTS_PER_TABLE:
+            check_has_class_method(cls, 'to_table')
+            check_has_class_method(cls, 'from_table')
+        else:
+            raise RuntimeError(f"Subclasses of BaseIO must have a class variable storage_type set to one of "
+                               f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
+                               f"but {cls.__name__} has {cls.storage_type}.")
+    
+
         if type_name.lower() in cls._sub_classes:
             raise RuntimeError(f"Subclasses of BaseIO must have unique type_name, "
                                f"but {type_name} is already registered.")
@@ -318,3 +335,28 @@ def astropy_buffered_fits_write(filename, hdu_list):
     with open(filename, "wb") as f:
         f.write(output_data)
 
+
+def is_class_method(method):
+    return callable(method) and inspect.ismethod(method) and not inspect.isfunction(method)
+    
+
+def check_has_class_method(cls, method_name):
+    """Check if a class has a class method with the given name."""
+    method = getattr(cls, method_name, None)
+    if method is None:
+        raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} should have a class method {method_name} defined.")
+    
+    if not is_class_method(method):
+        raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is not defined as a class method.")
+
+def check_has_standard_method(cls, method_name):
+    """Check if a class has a regular method with the given name."""
+    method = getattr(cls, method_name, None)
+    if method is None:
+        raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} should have a method {method_name} defined.")
+    
+    if not callable(method):
+        raise RuntimeError(f"As a BaseIO subclass, class {cls.__name__} has {method_name}, but it is not a method.")
+    
+    if is_class_method(method):
+        raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is defined as a class method or something else like that")
