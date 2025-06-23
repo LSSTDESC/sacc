@@ -844,13 +844,12 @@ class Sacc:
             "window": self._make_window_tables(),
         }
 
-        if self.covariance is not None:
+        if self.has_covariance():
             objects["covariance"] = {"cov": self.covariance}
 
         tables = io.to_tables(objects)
 
         return tables
-
 
     def save_fits(self, filename, overwrite=False):
         """
