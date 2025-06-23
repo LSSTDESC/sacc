@@ -820,6 +820,7 @@ def test_rename_tracer():
 
 
 def test_qpnz_tracer():
+    import qp
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     z = np.linspace(0., 1., 101)
@@ -848,9 +849,10 @@ def test_qpnz_tracer():
     T3 = sacc.BaseTracer.make('QPNZ', 'tracer3', nz_qp_interp, 
                               quantity='galaxy_density',
                               metadata=md1)
-    tables = sacc.BaseTracer.to_tables([T3])
-    D = sacc.BaseTracer.from_tables(tables)
-    assert D['tracer3'].z is None
+    tables = T3.to_tables()
+    D = sacc.tracers.QPNZTracer.from_tables(tables)
+    assert D.z is None
+    assert D.name == 'tracer3'
 
 
 

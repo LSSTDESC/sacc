@@ -179,7 +179,7 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         super().__init__(name, **kwargs)
         self.ensemble = ens
         if z is None:
-            ens_meta = ens.metadata()
+            ens_meta = ens.metadata
             if 'bins' in list(ens_meta.keys()):
                 z = ens_meta['bins'][0]
         self.z = z
@@ -210,83 +210,76 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         tables: list
             List of astropy tables
         """
-        from tables_io.convUtils import convertToApTables
-
+        from ..utils import convert_to_astropy_table
         tables = {}
+
+        table_dict = self.ensemble.build_tables()
+
+        data_table = convert_to_astropy_table(table_dict['data'])
+        data_table.meta['SACCQTTY'] = self.quantity
+        data_table.meta['SACCNAME'] = self.name
+        tables["data"] = data_table
+
+        meta_table = convert_to_astropy_table(table_dict['meta'])
+        meta_table.meta['SACCQTTY'] = self.quantity
+        meta_table.meta['SACCNAME'] = self.name
+
+        for kk, vv in self.metadata.items():
+            meta_table.meta['META_'+kk] = vv
+
+        tables["meta"] = meta_table
+
+        if 'ancil' in table_dict:
+            ancil_table = convert_to_astropy_table(table_dict['ancil'])
+            ancil_table.meta['SACCQTTY'] = self.quantity
+            ancil_table.meta['SACCNAME'] = self.name
+            tables["ancil"] = ancil_table
 
         if self.z is not None:
             names = ['z', 'nz']
             cols = [self.z, self.nz]
             fid_table = Table(data=cols, names=names)
             fid_table.meta['SACCQTTY'] = self.quantity
+            fid_table.meta['SACCNAME'] = self.name
+            tables["fid"] = fid_table
 
-        table_dict = self.ensemble.build_tables()
-        ap_tables = convertToApTables(table_dict)
-        data_table = ap_tables['data']
-        meta_table = ap_tables['meta']
-        ancil_table = ap_tables.get('ancil', None)
-        meta_table.meta['SACCQTTY'] = self.quantity
-        data_table.meta['SACCQTTY'] = self.quantity
-
-        for kk, vv in self.metadata.items():
-            meta_table.meta['META_'+kk] = vv
-        tables.append(data_table)
-
-        tables.append(meta_table)
-        if self.z is not None:
-            tables.append(fid_table)
-        if ancil_table:
-            ancil_table.meta['SACCQTTY'] = self.quantity
 
         return tables
 
     @classmethod
-    def from_tables(cls, table_list):
-        """Convert an astropy table into a dictionary of tracers
+    def from_tables(cls, tables):
+        """Convert a dict of astropy tables into a tracer
 
         This is used when loading data from a file.
         A single tracer object is read from the table.
 
         Parameters
         ----------
-        table_list: list[astropy.table.Table]
+        tables: dict[str,astropy.table.Table]
             Must contain the appropriate data, for example as saved
-            by to_table.
+            by to_tables.
 
         Returns
         -------
-        tracers: dict
-            Dict mapping string names to tracer objects.
-            Only contains one key/value pair for the one tracer.
+        tracer: QPNZTracer
         """
         import qp
 
-        tracers = {}
-        sorted_dict = {}
-        for table_ in table_list:
-            tokens = table_.meta['EXTNAME'].split(':')
-            table_key = f'{tokens[0]}:{tokens[1]}:{tokens[2]}'
-            table_type = f'{tokens[3]}'
-            if table_key not in sorted_dict:
-                sorted_dict[table_key] = {table_type: table_}
-            else:
-                sorted_dict[table_key][table_type] = table_
 
-        for val in sorted_dict.values():
-            meta_table = val['meta']
-            if 'fid' in val:
-                z = val['fid']['z']
-            else:
-                z = None
-            ensemble = qp.from_tables(val)
-            name = meta_table.meta['SACCNAME']
-            quantity = meta_table.meta.get('SACCQTTY', 'generic')
-            ensemble = qp.from_tables(val)
-            metadata = {}
-            for key, value in meta_table.meta.items():
-                if key.startswith("META_"):
-                    metadata[key[5:]] = value
-            tracers[name] = cls(name, ensemble, z=z,
-                                quantity=quantity,
-                                metadata=metadata)
-        return tracers
+        meta_table = tables['meta']
+        if 'fid' in tables:
+            z = tables['fid']['z']
+            nz = tables['fid']['nz']
+        else:
+            z = None
+            nz = None
+        ensemble = qp.from_tables(tables)
+        name = meta_table.meta['SACCNAME']
+        quantity = meta_table.meta.get('SACCQTTY', 'generic')
+        metadata = {}
+        for key, value in meta_table.meta.items():
+            if key.startswith("META_"):
+                metadata[key[5:]] = value
+        return cls(name, ensemble, z=z, nz=nz,
+                            quantity=quantity,
+                            metadata=metadata)
