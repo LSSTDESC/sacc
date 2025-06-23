@@ -935,6 +935,15 @@ def test_warn_empty():
     with pytest.warns(UserWarning, match="Empty index selected"):
         s.indices(data_type='non_existent_data_type', warn_empty=True)
 
+def test_old_qp_sacc_readable():
+    s = sacc.Sacc.load_fits("test/legacy_files/old_qp_sacc.fits")
+    t = s.tracers['tracer1']
+    assert isinstance(t, sacc.tracers.QPNZTracer)
+    assert t.quantity
+    md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
+    for k, v in md1.items():
+        assert t.metadata[k] == v
+
 
 if __name__ == "__main__":
     test_bandpower_window()
