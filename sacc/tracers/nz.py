@@ -1,7 +1,7 @@
 from .base import BaseTracer, ONE_OBJECT_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 from astropy.table import Table
 import numpy as np
-from ..utils import remove_dict_null_values
+from ..utils import remove_dict_null_values, convert_to_astropy_table
 
 class NZTracer(BaseTracer, type_name='NZ'):
     """
@@ -149,7 +149,7 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
 
     storage_type = ONE_OBJECT_MULTIPLE_TABLES
 
-    def __init__(self, name, ens, z=None, **kwargs):
+    def __init__(self, name, ens, z=None, nz=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -167,6 +167,9 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
             Optional grid of redshift values at which to evaluate the ensemble.
             If left as None then the ensemble metadata is checked for a grid.
             If that is not present then no redshift grid is saved.
+        nz: array
+            Optional, default=None.  establishes a fiducial n(z) for the ensemble.
+            This can later be used to compute systematic biases in the ensemble.
 
         Returns
         -------
@@ -183,8 +186,14 @@ class QPNZTracer(BaseTracer, type_name='QPNZ'):
         if z is None:
             self.nz = None
         else:
-            self.nz = np.mean(ens.pdf(self.z),axis=0)
-        
+            if nz is not None:
+                if len(nz) != len(z):
+                    raise ValueError("nz must have the same length as z")
+                self.nz = nz
+            else:
+                nz = np.atleast_2d(ens.pdf(z))
+                self.nz = np.mean(nz, axis=0)
+
     def to_tables(self):
         """Convert a list of NZTracers to a list of astropy tables
 

@@ -861,7 +861,11 @@ def test_io_qp():
     z = np.linspace(0., 1.0, 101)
     nz = np.expand_dims((z-0.5)**2/0.1**2, 0)
     ens = qp.Ensemble(qp.interp, data=dict(xvals=z, yvals=nz))
-    ens.set_ancil(dict(modes = ens.mode(z)))
+    mu = ens.mean()
+    ancil = {
+        "means": np.array([mu]),
+    }
+    ens.set_ancil(ancil)
     s.add_tracer('QpnZ', 'source_0', ens, z)
 
     for i in range(20):

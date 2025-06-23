@@ -166,3 +166,24 @@ def camel_case_split_and_lowercase(identifier):
                           '|(?<=[A-Z])(?=[A-Z][a-z])|$)',
                           identifier)
     return [m.group(0).lower() for m in matches]
+
+
+def convert_to_astropy_table(obj):
+    try:
+        from tables_io.convUtils import convertToApTables
+        version = 1
+    except ImportError:
+        try:
+            from tables_io import convert_table
+            version = 2
+        except ImportError:
+            raise ImportError("Error importing table conversion tool from tables_io. "
+                              "Maybe they changed its name again. Please open an issue, "
+                              "assuming you have tables_io installed.")
+
+    if version == 1:
+        return convertToApTables(obj)
+    elif version == 2:
+        return convert_table(obj, "astropyTable")
+    else:
+        raise ValueError("Unknown version of tables_io conversion tool.")
