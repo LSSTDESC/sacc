@@ -152,7 +152,7 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         The qp.ensemble in questions
     """
 
-    def __init__(self, name, ens, z=None, **kwargs):
+    def __init__(self, name, ens, z=None, nz=None, **kwargs):
         """
         Create a tracer corresponding to a distribution in redshift n(z),
         for example of galaxies.
@@ -170,6 +170,9 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
             Optional grid of redshift values at which to evaluate the ensemble.
             If left as None then the ensemble metadata is checked for a grid.
             If that is not present then no redshift grid is saved.
+        nz: array
+            Optional, default=None.  establishes a fiducial n(z) for the ensemble.
+            This can later be used to compute systematic biases in the ensemble.
 
         Returns
         -------
@@ -186,9 +189,14 @@ class QPNZTracer(BaseTracer, tracer_type='QPNZ'):
         if z is None:
             self.nz = None
         else:
-            nz = np.atleast_2d(ens.pdf(z))
-            self.nz = np.mean(nz, axis=0)
-        
+            if nz is not None:
+                if len(nz) != len(z):
+                    raise ValueError("nz must have the same length as z")
+                self.nz = nz
+            else:
+                nz = np.atleast_2d(ens.pdf(z))
+                self.nz = np.mean(nz, axis=0)
+
     @classmethod
     def to_tables(cls, instance_list):
         """Convert a list of NZTracers to a list of astropy tables
