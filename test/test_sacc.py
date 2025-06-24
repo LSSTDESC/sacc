@@ -944,6 +944,29 @@ def test_old_qp_sacc_readable():
     for k, v in md1.items():
         assert t.metadata[k] == v
 
+def test_metadata_round_trip():
+    s = sacc.Sacc()
+    s.add_tracer('Misc', 'test_tracer')
+    s.metadata["mouse"]  = True
+    s.metadata["rat"] = False
+    s.metadata["cats"]  = "good"
+    s.metadata["dogs"]  = "bad"
+    s.metadata["number"] = 42
+    s.metadata["pi"] = 3.14159
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert s2.metadata["mouse"] is True
+    assert s2.metadata["rat"] is False
+    assert s2.metadata["cats"] == "good"
+    assert s2.metadata["dogs"] == "bad"
+    assert s2.metadata["number"] == 42
+    assert s2.metadata["pi"] == 3.14159
+
+
 
 if __name__ == "__main__":
     test_bandpower_window()

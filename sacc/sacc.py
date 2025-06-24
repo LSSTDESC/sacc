@@ -854,6 +854,7 @@ class Sacc:
             "tracer": self.tracers,
             "data": self.data,
             "window": self._make_window_tables(),
+            "metadata": self.metadata
         }
 
         if self.has_covariance():
@@ -895,21 +896,11 @@ class Sacc:
                 extname = f'{typ}:{cls}:{name}'
                 table.meta['EXTNAME'] = extname
 
-
         # Create the actual fits object
         primary_header = fits.Header()
-
-        # Save any global metadata in the header.
-        # We save the keys and values as separate header cards,
-        # because otherwise the keys are all forced to upper case
-        primary_header['NMETA'] = len(self.metadata)
-        for i, (k, v) in enumerate(self.metadata.items()):
-            primary_header[f'KEY{i}'] = k
-            primary_header[f'VAL{i}'] = v
         hdus = [fits.PrimaryHDU(header=primary_header)] + \
                 [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
-
         io.astropy_buffered_fits_write(filename, hdu_list)
 
     @classmethod
@@ -926,13 +917,24 @@ class Sacc:
             A FITS format sacc file
         """
         cov = None
+        metadata = None
 
         with fits.open(filename, mode="readonly") as f:
             tables = []
             for hdu in f:
                 if hdu.name.lower() == 'primary':
                     # The primary table is not a data table,
-                    continue
+                    # but in older files it was used to store metadata
+                    header = hdu.header
+                    if "NMETA" in header:
+                        metadata = {}
+                        # Older format metadata is kept in the primary
+                        # header, with keys KEY0, VAL0, etc.
+                        n_meta = header['NMETA']
+                        for i in range(n_meta):
+                            k = header[f'KEY{i}']
+                            v = header[f'VAL{i}']
+                            metadata[k] = v
                 elif hdu.name.lower() == 'covariance':
                     # Legacy covariance - HDU will just be called covariance
                     # instead of the full name given by BaseIO.
@@ -941,6 +943,10 @@ class Sacc:
                     cov = BaseCovariance.from_hdu(hdu)
                 else:
                     tables.append(Table.read(hdu))
+
+        # add the metadata table, if we are in the legacy format
+        if metadata is not None:
+            tables.append(io.metadata_to_table(metadata))
 
         return cls.from_tables(tables, cov=cov)
     
@@ -960,7 +966,6 @@ class Sacc:
 
         objs =  io.from_tables(tables)
 
-
         # Add all the tracers
         tracers = objs['tracer']
         for tracer in tracers.values():
@@ -979,6 +984,9 @@ class Sacc:
             if cov is not None:
                 raise ValueError("Found both a legacy covariance and a new one in the same file.")
             cov = objs["covariance"]["cov"]
+
+        # copy in metadata
+        s.metadata.update(objs.get('metadata', {}))
 
         if cov is not None:
             s.add_covariance(cov)

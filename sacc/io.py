@@ -2,6 +2,7 @@ from .utils import unique_list
 import numpy as np
 from io import BytesIO
 import inspect
+from astropy.table import Table
 
 ONE_OBJECT_PER_TABLE = "ONE_OBJECT_PER_TABLE"
 MULTIPLE_OBJECTS_PER_TABLE = "MULTIPLE_OBJECTS_PER_TABLE"
@@ -135,7 +136,7 @@ def to_tables(category_dict):
         multi_object_tables = {}
 
         # We handle the "data" category separately, since it is a special case
-        if category == 'data':
+        if category == 'data' or category == 'metadata':
             continue
 
         for name, obj in instance_dict.items():
@@ -204,6 +205,10 @@ def to_tables(category_dict):
         table.meta['SACCNAME'] = name
         tables.append(table)
 
+    # Also handle metadata separately. Could consider a metadata class
+    # that subclasses BaseIO and dict?
+    tables.append(metadata_to_table(category_dict.get('metadata', {})))
+
 
     return tables
 
@@ -245,6 +250,10 @@ def from_tables(table_list):
             table_class = DataPoint
             data_point_tables.append(table)
             continue
+        elif table_category == 'metadata':
+            # This is a metadata table, which we treat as a special case.
+            outputs[table_category] = table_to_metadata(table)
+            continue
 
         else:
             table_class_name = table.meta['SACCCLSS'].lower()
@@ -270,9 +279,6 @@ def from_tables(table_list):
                 multi_tables[key] = {}
             multi_tables[key][part] = table
             continue
-
-        # # Delete this later once things are working:
-        # print(f"Processing table {table.meta['EXTNAME']} of type {table_class_name} in category {table_category} storage type {table_class.storage_type} length {len(table)}")
 
         # Convert the tables into either one instance of the class or a list of instances
         if table_class.storage_type == ONE_OBJECT_PER_TABLE:
@@ -319,6 +325,8 @@ def numpy_to_vanilla(x):
         x = int(x)
     elif type(x) == np.float64:
         x = float(x)
+    elif type(x) == np.bool:
+        x = bool(x)
     return x
 
 
@@ -360,3 +368,58 @@ def check_has_standard_method(cls, method_name):
     
     if is_class_method(method):
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is defined as a class method or something else like that")
+
+def metadata_to_table(metadata):
+    """
+    Convert a metadata dict to an astropy table.
+
+    Because astropy table columns must have a single type,
+    we store each item in the metadata dict as a separate column.
+
+    Parameters
+    ----------
+    metadata: dict
+        Dictionary of metadata items, where each key is a string,
+        and values are simple unstructured types (int, float, str, bool, etc.).
+
+    Returns
+    -------
+    table: astropy.table.Table
+        An astropy table with a single row, where each column corresponds
+        to a key in the metadata dict, and the first (only) row values
+        is the corresponding value.
+    """
+    # For typing reasons each key is a column in the table
+    # and there is only one row.
+
+    keys = list(metadata.keys())
+    values = [numpy_to_vanilla(metadata[key]) for key in keys]
+    table: Table = Table(rows=[values], names=keys)
+    table.meta['SACCTYPE'] = "metadata"
+    table.meta['SACCCLSS'] = "metadata"
+    table.meta['SACCNAME'] = "metadata"
+    return table
+
+def table_to_metadata(table):
+    """
+    Convert an astropy table to a metadata dict.
+
+    See metadata_to_table for the format expected.
+
+    Parameters
+    ----------
+    table: astropy.table.Table
+        An astropy table with a single row, where each column corresponds
+        to a key in the metadata dict, and the first (only) row values
+        is the corresponding value.
+
+    Returns
+    -------
+    metadata: dict
+        Dictionary of metadata items, where each key is a string,
+        and values are simple unstructured types (int, float, str, bool, etc.).
+    """
+    metadata = {}
+    for key in table.colnames:
+        metadata[key] = numpy_to_vanilla(table[key][0])
+    return metadata
