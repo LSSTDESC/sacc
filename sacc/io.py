@@ -370,7 +370,25 @@ def check_has_standard_method(cls, method_name):
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is defined as a class method or something else like that")
 
 def metadata_to_table(metadata):
-    """Convert a metadata dict to an astropy table."""
+    """
+    Convert a metadata dict to an astropy table.
+
+    Because astropy table columns must have a single type,
+    we store each item in the metadata dict as a separate column.
+
+    Parameters
+    ----------
+    metadata: dict
+        Dictionary of metadata items, where each key is a string,
+        and values are simple unstructured types (int, float, str, bool, etc.).
+
+    Returns
+    -------
+    table: astropy.table.Table
+        An astropy table with a single row, where each column corresponds
+        to a key in the metadata dict, and the first (only) row values
+        is the corresponding value.
+    """
     # For typing reasons each key is a column in the table
     # and there is only one row.
 
@@ -383,9 +401,25 @@ def metadata_to_table(metadata):
     return table
 
 def table_to_metadata(table):
-    """Convert an astropy table to a metadata dict."""
+    """
+    Convert an astropy table to a metadata dict.
+
+    See metadata_to_table for the format expected.
+
+    Parameters
+    ----------
+    table: astropy.table.Table
+        An astropy table with a single row, where each column corresponds
+        to a key in the metadata dict, and the first (only) row values
+        is the corresponding value.
+
+    Returns
+    -------
+    metadata: dict
+        Dictionary of metadata items, where each key is a string,
+        and values are simple unstructured types (int, float, str, bool, etc.).
+    """
     metadata = {}
     for key in table.colnames:
-        # Convert the value to a vanilla type
         metadata[key] = numpy_to_vanilla(table[key][0])
     return metadata
