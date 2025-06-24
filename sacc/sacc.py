@@ -29,6 +29,7 @@ class Sacc:
         self.tracers = {}
         self.covariance = None
         self.metadata = {}
+        self.tracer_uncertainties = {}
 
     def __len__(self):
         """
@@ -151,6 +152,17 @@ class Sacc:
             The tracer object to add to the data set
         """
         self.tracers[tracer.name] = tracer
+
+    def add_tracer_uncertainty_object(self, uncertainty):
+        """
+        Add a pre-constructed tracer uncertainty object to this data set.
+
+        Parameters
+        ----------
+        uncertainty: BaseTracerUncertainty instance
+            The uncertainty object to add to the data set
+        """
+        self.tracer_uncertainties[uncertainty.name] = uncertainty
 
     def add_data_point(self, data_type, tracers, value,
                        tracers_later=False, **tags):
