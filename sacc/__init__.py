@@ -5,4 +5,4 @@ from .tracers import BaseTracer  # noqa
 from .covariance import BaseCovariance  # noqa
 from .io import BaseIO
 from . import io
-__version__ = '1.0.2' #noqa
+__version__ = '2.0' #noqa
