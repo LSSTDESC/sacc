@@ -854,7 +854,8 @@ class Sacc:
             "tracer": self.tracers,
             "data": self.data,
             "window": self._make_window_tables(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "traceruncertainty": self.tracer_uncertainties,
         }
 
         if self.has_covariance():
@@ -990,7 +991,10 @@ class Sacc:
 
         if cov is not None:
             s.add_covariance(cov)
-        
+
+        for uncertainty in objs.get('traceruncertainty', {}).values():
+            s.add_tracer_uncertainty_object(uncertainty)
+
         return s
 
 

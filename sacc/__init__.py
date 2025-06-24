@@ -3,6 +3,7 @@ from .windows import Window, BandpowerWindow, TopHatWindow, LogTopHatWindow  # n
 from .data_types import standard_types, parse_data_type_name, build_data_type_name  # noqa
 from .tracers import BaseTracer  # noqa
 from .covariance import BaseCovariance  # noqa
+from .tracer_uncertainty import NZShiftUncertainty  # noqa
 from .io import BaseIO
 from . import io
 __version__ = '2.0' #noqa

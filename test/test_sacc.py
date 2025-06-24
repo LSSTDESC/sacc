@@ -966,6 +966,36 @@ def test_metadata_round_trip():
     assert s2.metadata["number"] == 42
     assert s2.metadata["pi"] == 3.14159
 
+def test_nzshift_saving():
+    s = sacc.Sacc()
+    z = np.linspace(0, 1, 100)
+    nz1 = np.exp(-((z - 0.3) ** 2) / (0.1 ** 2))
+    nz2 = np.exp(-((z - 0.6) ** 2) / (0.1 ** 2))
+    s.add_tracer('NZ', 'source1', z, nz1)
+    s.add_tracer('NZ', 'source2', z, nz2)
+
+    tracer_names = ["source1", "source2"]
+    mu = [0.001, 0.002]
+    sigma = [0.01, 0.02]
+    shift = sacc.NZShiftUncertainty("shift", tracer_names, mu, sigma)
+    s.add_tracer_uncertainty_object(shift)
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2.tracer_uncertainties) == 1
+    assert "shift" in s2.tracer_uncertainties
+    shift2 = s2.tracer_uncertainties["shift"]
+    assert shift2.name == "shift"
+    assert isinstance(shift2, sacc.NZShiftUncertainty)
+    assert shift2.tracer_names == tracer_names
+    assert np.allclose(shift2.shift_mean, mu)
+    assert np.allclose(shift2.shift_sigma, sigma)
+
+
 
 
 if __name__ == "__main__":
