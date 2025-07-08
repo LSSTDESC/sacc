@@ -51,7 +51,7 @@ class BaseTracer(BaseIO):
 
 
     @classmethod
-    def make(cls, type_name, name, *args, **kwargs):
+    def make(cls, tracer_type, name, *args, **kwargs):
         """
         Select a Tracer subclass based on type_name
         and instantiate in instance of it with the remaining
@@ -59,7 +59,7 @@ class BaseTracer(BaseIO):
 
         Parameters
         ----------
-        type_name: str
+        tracer_type: str
             Must correspond to the type_name of a subclass
 
         name: str
@@ -70,6 +70,6 @@ class BaseTracer(BaseIO):
         instance: Tracer object
             An instance of a Tracer subclass
         """
-        subclass = cls._sub_classes[type_name.lower()]
+        subclass = cls._sub_classes[tracer_type.lower()]
         obj = subclass(name, *args, **kwargs)
         return obj
