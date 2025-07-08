@@ -1,9 +1,9 @@
 from collections import namedtuple
 from astropy.table import Table
 
-from .utils import (Namespace, hide_null_values,
+from .utils import (Namespace, hide_null_values, numpy_to_vanilla,
                     null_values, camel_case_split_and_lowercase)
-from .io import BaseIO, MULTIPLE_OBJECTS_PER_TABLE, numpy_to_vanilla
+from .io import BaseIO, MULTIPLE_OBJECTS_PER_TABLE
 
 # The format for a data type name looks like this:
 # {sources}_{properties}_{statistic_type}[_{statistic_subtype}]

@@ -1,4 +1,4 @@
-from .utils import unique_list
+from .utils import unique_list, numpy_to_vanilla
 import numpy as np
 from io import BytesIO
 import inspect
@@ -72,6 +72,10 @@ class BaseIO:
                                f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
                                f"but {cls.__name__} has {cls.storage_type}.")
         
+
+        # We could probably be using an Abstract Base Class rather than doing this.
+        # Then you wouldn't get a warning until instantiation. That might be good
+        # or bad.
         if cls.storage_type == ONE_OBJECT_PER_TABLE:
             check_has_standard_method(cls, 'to_table')
             check_has_class_method(cls, 'from_table')
@@ -98,7 +102,7 @@ class BaseIO:
 
 
 def to_tables(category_dict):
-    """Convert a dic of objects to a list of astropy tables
+    """Convert a dict of objects to a list of astropy tables
 
     This is used when saving data to a file.
 
@@ -129,7 +133,7 @@ def to_tables(category_dict):
     # This is the list of tables that we will build up and return
     tables = []
 
-    # The top leveo category_dict is a dict mapping
+    # The top level category_dict is a dict mapping
     # general categories of data, each represented by a different
     # subclass of BaseIO, to a dict of further subclasses of that subclass.
     for category, instance_dict in category_dict.items():
@@ -161,10 +165,10 @@ def to_tables(category_dict):
                 # If the storage type is MULTIPLE_OBJECTS_PER_TABLE then
                 # we need to collect together all the instances of this
                 # class and convert at the end
-                # print(f"Saving {name} of type {cls.type_name} in category {category} to a multi-object table.")
-                if cls not in multi_object_tables:
-                    multi_object_tables[cls, name] = []
-                multi_object_tables[cls, name].append(obj)
+                key = (cls, name)
+                if key not in multi_object_tables:
+                    multi_object_tables[key] = []
+                multi_object_tables[key].append(obj)
 
             elif obj.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
                 # If the storage type is ONE_OBJECT_MULTIPLE_TABLES, we expect
@@ -316,19 +320,6 @@ def from_tables(table_list):
 
     outputs['data'] = data_points
     return outputs
-
-
-def numpy_to_vanilla(x):
-    if type(x) == np.str_:
-        x = str(x)
-    elif type(x) == np.int64:
-        x = int(x)
-    elif type(x) == np.float64:
-        x = float(x)
-    elif type(x) == np.bool:
-        x = bool(x)
-    return x
-
 
 
 def astropy_buffered_fits_write(filename, hdu_list):
