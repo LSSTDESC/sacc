@@ -1,8 +1,9 @@
 from collections import namedtuple
 from astropy.table import Table
 
-from .utils import (Namespace, hide_null_values,
+from .utils import (Namespace, hide_null_values, numpy_to_vanilla,
                     null_values, camel_case_split_and_lowercase)
+from .io import BaseIO, MULTIPLE_OBJECTS_PER_TABLE
 
 # The format for a data type name looks like this:
 # {sources}_{properties}_{statistic_type}[_{statistic_subtype}]
@@ -232,7 +233,7 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
 standard_types = Namespace(*required_tags.keys())
 
 
-class DataPoint:
+class DataPoint(BaseIO, type_name="DataPoint"):
     """A class for a single data point (one scalar value).
 
     Data points have a type, zero or more tracers, a value,
@@ -258,6 +259,8 @@ class DataPoint:
         Dictionary of further data point metadata, such as binning
         info, angles, etc.
     """
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
+    _sub_classes = {}
     def __init__(self, data_type, tracers, value,
                  ignore_missing_tags=False, **tags):
         """Create a new data point.
@@ -298,7 +301,7 @@ class DataPoint:
                                      "(ignore_missing_tags=False)")
 
     def __repr__(self):
-        t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items())
+        t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items() if k != 'sacc_ordering')
         st = f"DataPoint(data_type='{self.data_type}', "
         st += f"tracers={self.tracers}, value={self.value}, {t})"
         return st
@@ -355,11 +358,38 @@ class DataPoint:
         tags = list(tags)
         tracers = [f'tracer_{i}' for i in range(ntracer)]
         return tracers, tags
+    
+    @classmethod
+    def to_tables(cls, data, lookups=None):
+        data_by_type = {}
+        for i, d in enumerate(data):
+            d.tags['sacc_ordering'] = i
+            # Get the data type name
+            data_type = d.data_type
+            if data_type not in data_by_type:
+                data_by_type[data_type] = []
+            # Add the data point to the table for this type
+            data_by_type[data_type].append(d)
+
+        tables = {}
+        for data_type, data_points in data_by_type.items():
+            # Convert the data points to a table
+            table = cls.to_table(data_points, lookups)
+            # Add metadata to the table
+            table.meta['SACCTYPE'] = 'data'
+            table.meta['SACCNAME'] = data_type
+            tables[data_type] = table
+        
+        # Now remove the temporary ordering tag
+        for d in data:
+            del d.tags['sacc_ordering']
+        
+        return tables
 
     @classmethod
     def to_table(cls, data, lookups=None):
         """
-        Convert a list of data points to a single homogenous table
+        Convert a list of data points to a single homogenous table.
 
         Since data points can have varying tags, this method uses
         null values to represent non-present tags.
@@ -424,11 +454,11 @@ class DataPoint:
         data = []
         for row in table:
             # Get basic data elements
-            tracers = tuple([row[f'tracer_{i}'] for i in range(nt)])
-            value = row['value']
+            tracers = tuple([numpy_to_vanilla(row[f'tracer_{i}']) for i in range(nt)])
+            value = numpy_to_vanilla(row['value'])
 
             # Deal with tags.  First just pull out all remaining columns
-            tags = {name: row[name] for name in tag_names}
+            tags = {numpy_to_vanilla(name): row[name] for name in tag_names}
             for k, v in list(tags.items()):
                 # Deal with any tags that we should replace.
                 # This is mainly used for Window instances.

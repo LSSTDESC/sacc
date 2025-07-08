@@ -187,3 +187,28 @@ def convert_to_astropy_table(obj):
         return convert_table(obj, "astropyTable")
     else:
         raise ValueError("Unknown version of tables_io conversion tool.")
+
+
+def numpy_to_vanilla(x):
+    """
+    Convert a NumPy scalar type to its corresponding Python built-in type.
+
+    Parameters
+    ----------
+    x : numpy scalar
+        A NumPy scalar value (e.g., np.str_, np.int64, np.float64, np.bool).
+
+    Returns
+    -------
+    object
+        The equivalent Python built-in type (e.g., str, int, float, bool).
+    """
+    if type(x) == np.str_:
+        x = str(x)
+    elif type(x) == np.int64:
+        x = int(x)
+    elif type(x) == np.float64:
+        x = float(x)
+    elif type(x) == np.bool:
+        x = bool(x)
+    return x

@@ -148,63 +148,44 @@ def test_get_data_types():
     assert [sacc.standard_types.galaxy_shear_cl_bb] == dt2
 
 
-def test_table_creation_0_instances():
-    """If there are no tracer test_table_creation_0_instances, we should
-    generate no tables."""
-    tables = sacc.tracers.BaseTracer.to_tables([])
-    assert len(tables) == 0
-
 
 def test_table_creation_misc_1_instance():
     t = sacc.tracers.MiscTracer("source_0")
-    tables = sacc.tracers.BaseTracer.to_tables([t])
+    tables = sacc.tracers.MiscTracer.to_table([t])
     assert len(tables) == 1
 
 
 def test_table_creation_misc_2_instances():
     t1 = sacc.tracers.MiscTracer("source_0")
     t2 = sacc.tracers.MiscTracer("source_1")
-    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
-    assert len(tables) == 1
+    table = sacc.tracers.MiscTracer.to_table([t1, t2])
+    assert len(table) == 2
 
 
 def test_table_creation_nz_1_instance():
     t = sacc.tracers.NZTracer("source_0", np.zeros(1), np.zeros(1))
-    tables = sacc.tracers.BaseTracer.to_tables([t])
+    tables = t.to_table()
     assert len(tables) == 1
 
 
 def test_table_creation_nz_2_instances():
-    t1 = sacc.tracers.NZTracer("source_0", np.zeros(1), np.zeros(1))
-    t2 = sacc.tracers.NZTracer("source_1", np.zeros(1), np.zeros(1))
-    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
-    assert len(tables) == 2
-
+    t1 = sacc.tracers.NZTracer("source_0", np.zeros(17), np.zeros(17))
+    table = t1.to_table()
+    assert len(table) == 17
 
 def test_table_creation_map_1_instance():
     t = sacc.tracers.MapTracer("source_0", 1, [1.5], [10.0])
-    tables = sacc.tracers.BaseTracer.to_tables([t])
-    assert len(tables) == 1
-
-
-def test_table_creation_map_2_instances():
-    t1 = sacc.tracers.MapTracer("source_0", 1, [1.5], [10.0])
-    t2 = sacc.tracers.MapTracer("source_1", 2, [2.5], [15.0])
-    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
-    assert len(tables) == 2
+    table = t.to_table()
+    assert np.allclose(table['ell'], [1.5])
+    assert np.allclose(table['beam'], [10.0])
+2
 
 
 def test_table_creation_numap_1_instance():
     t = sacc.tracers.NuMapTracer("source_0", 1, [1.5], [10.0], np.zeros(1), np.zeros(1))
-    tables = sacc.tracers.BaseTracer.to_tables([t])
+    tables = t.to_tables()
     assert len(tables) == 2
 
-
-def test_table_creation_numap_2_instances():
-    t1 = sacc.tracers.NuMapTracer("source_0", 1, [1.5], [10.0], np.zeros(1), np.zeros(1))
-    t2 = sacc.tracers.NuMapTracer("source_1", 2, [2.5], [15.0], np.zeros(1), np.zeros(1))
-    tables = sacc.tracers.BaseTracer.to_tables([t1, t2])
-    assert len(tables) == 4
 
 
 def test_construct():
@@ -243,8 +224,8 @@ def test_full_cov():
     assert C.size == 100
     assert isinstance(C, sacc.covariance.FullCovariance)
     assert np.all(C.covmat == covmat)
-    hdu = C.to_hdu()
-    C2 = sacc.covariance.BaseCovariance.from_hdu(hdu)
+    table = C.to_table()
+    C2 = sacc.covariance.FullCovariance.from_table(table)
     assert np.allclose(C.covmat, C2.covmat)
 
 
@@ -255,8 +236,8 @@ def test_block_cov():
     C = sacc.covariance.BaseCovariance.make(covmat)
     assert C.size == 300
     assert isinstance(C, sacc.covariance.BlockDiagonalCovariance)
-    hdu = C.to_hdu()
-    C2 = sacc.covariance.BaseCovariance.from_hdu(hdu)
+    tables = C.to_tables()
+    C2 = sacc.covariance.BlockDiagonalCovariance.from_tables(tables)
     assert len(C2.blocks) == 3
     assert C.block_sizes == C2.block_sizes
     for i in range(3):
@@ -273,8 +254,8 @@ def test_misc_tracer():
     assert T1.metadata == md1
     assert T2.metadata == md2
 
-    tables = sacc.BaseTracer.to_tables([T1, T2])
-    D = sacc.BaseTracer.from_tables(tables)
+    table = sacc.tracers.MiscTracer.to_table([T1, T2])
+    D = sacc.tracers.MiscTracer.from_table(table)
 
     T1a = D['tracer1']
     T2a = D['tracer2']
@@ -309,11 +290,11 @@ def test_numap_tracer():
     assert T2.metadata == md1
     assert T1.metadata == md2
 
-    tables = sacc.BaseTracer.to_tables([T1, T2])
-    D = sacc.BaseTracer.from_tables(tables)
+    tables1 = T1.to_tables()
+    tables2 = T2.to_tables()
 
-    T1a = D['band1']
-    T2a = D['band2']
+    T1a = sacc.tracers.NuMapTracer.from_tables(tables1)
+    T2a = sacc.tracers.NuMapTracer.from_tables(tables2)
     assert T1a.metadata == md2
     assert T2a.metadata == md1
     assert np.all(T1a.bandpass_extra['err1'] == 0.1 * bandpass)
@@ -341,11 +322,8 @@ def test_map_tracer():
     assert T1.metadata == md1
     assert T2.metadata == md2
 
-    tables = sacc.BaseTracer.to_tables([T1, T2])
-    D = sacc.BaseTracer.from_tables(tables)
-
-    T1a = D['y_milca']
-    T2a = D['y_nilc']
+    T1a = sacc.tracers.MapTracer.from_table(T1.to_table())
+    T2a = sacc.tracers.MapTracer.from_table(T2.to_table())
     assert T1a.metadata == md1
     assert T2a.metadata == md2
     assert np.all(T1a.beam_extra['err1'] == err)
@@ -382,39 +360,15 @@ def test_nz_tracer():
                               metadata=md2)
     assert T3.metadata == md2
 
-    tables = sacc.BaseTracer.to_tables([T1, T2])
-    D = sacc.BaseTracer.from_tables(tables)
 
-    T1a = D['tracer1']
-    T2a = D['tracer2']
+    T1a = sacc.tracers.NZTracer.from_table(T1.to_table())
+    T2a = sacc.tracers.NZTracer.from_table(T2.to_table())
     assert T1a.metadata == md1
     assert T2a.metadata == md2
 
     assert np.all(T1a.extra_columns['v1'] == Nz3)
     assert np.all(T1a.extra_columns['v2'] == Nz4)
 
-
-def test_mixed_tracers():
-    md1 = {'potato': 'never'}
-    md2 = {'rank': 'duke'}
-    md3 = {'rank': 'earl', 'robes': 78}
-    z = np.arange(0., 1., 0.01)
-    Nz1 = 1*z  # not a sensible N(z)!
-    Nz2 = 2*z
-    T1 = sacc.BaseTracer.make('NZ', 'tracer1', z, Nz1,
-                              quantity='galaxy_convergence')
-    T2 = sacc.BaseTracer.make('NZ', 'tracer2', z, Nz2,
-                              quantity='galaxy_shear', metadata=md1)
-
-    M1 = sacc.BaseTracer.make("Misc", "sample1", metadata=md2)
-    M2 = sacc.BaseTracer.make("mISC", "sample2", metadata=md3)
-
-    tables = sacc.BaseTracer.to_tables([T1, M1, T2, M2])
-    recovered = sacc.BaseTracer.from_tables(tables)
-    assert recovered['sample1'].metadata['rank'] == 'duke'
-    assert recovered['sample2'].metadata['robes'] == 78
-    assert np.all(recovered['tracer1'].nz == Nz1)
-    assert recovered['tracer2'].metadata['potato'] == 'never'
 
 
 def test_inverses():
@@ -610,22 +564,20 @@ def test_bandpower_window():
     for i in range(nb):
         w[i, i*dl: (i+1)*dl] = 1./dl
 
-    W1 = [sacc.BandpowerWindow(ells, w.T)]
+    w1 = sacc.BandpowerWindow(ells, w.T)
 
-    tables = sacc.BandpowerWindow.to_tables(W1)
-    W2 = sacc.BandpowerWindow.from_tables(tables)
-    for w1 in W1:
-        w2 = W2[id(w1)]
-        assert np.all(w1.values == w2.values)
-        assert np.all(w1.weight.flatten() == w2.weight.flatten())
+    table = w1.to_table()
+    w2 = sacc.BandpowerWindow.from_table(table)
+    assert np.all(w1.values == w2.values)
+    assert np.all(w1.weight.flatten() == w2.weight.flatten())
 
 
 def test_tophat_window():
     edges = np.arange(10) * 10
     W1 = [sacc.TopHatWindow(edges[:-1], edges[1:])]
 
-    tables = sacc.TopHatWindow.to_tables(W1)
-    W2 = sacc.TopHatWindow.from_tables(tables)
+    table = sacc.TopHatWindow.to_table(W1)
+    W2 = sacc.TopHatWindow.from_table(table)
     for w1 in W1:
         w2 = W2[id(w1)]
         assert np.all(w1.min == w2.min)
@@ -636,8 +588,8 @@ def test_log_window():
     edges = (np.arange(10) + 1) * 10
     W1 = [sacc.LogTopHatWindow(edges[:-1], edges[1:])]
 
-    tables = sacc.LogTopHatWindow.to_tables(W1)
-    W2 = sacc.LogTopHatWindow.from_tables(tables)
+    tables = sacc.LogTopHatWindow.to_table(W1)
+    W2 = sacc.LogTopHatWindow.from_table(tables)
     for w1 in W1:
         w2 = W2[id(w1)]
         assert np.all(w1.min == w2.min)
@@ -868,6 +820,7 @@ def test_rename_tracer():
 
 
 def test_qpnz_tracer():
+    import qp
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     z = np.linspace(0., 1., 101)
@@ -884,11 +837,11 @@ def test_qpnz_tracer():
     assert T1.metadata == md1
     assert T2.metadata == md2
 
-    tables = sacc.BaseTracer.to_tables([T1, T2])
-    D = sacc.BaseTracer.from_tables(tables)
+    tables1 = T1.to_tables()
+    tables2 = T2.to_tables()
 
-    T1a = D['tracer1']
-    T2a = D['tracer2']
+    T1a = sacc.tracers.QPNZTracer.from_tables(tables1)
+    T2a = sacc.tracers.QPNZTracer.from_tables(tables2)
     assert T1a.metadata == md1
     assert T2a.metadata == md2
 
@@ -896,9 +849,10 @@ def test_qpnz_tracer():
     T3 = sacc.BaseTracer.make('QPNZ', 'tracer3', nz_qp_interp, 
                               quantity='galaxy_density',
                               metadata=md1)
-    tables = sacc.BaseTracer.to_tables([T3])
-    D = sacc.BaseTracer.from_tables(tables)
-    assert D['tracer3'].z is None
+    tables = T3.to_tables()
+    D = sacc.tracers.QPNZTracer.from_tables(tables)
+    assert D.z is None
+    assert D.name == 'tracer3'
 
 
 
@@ -980,3 +934,39 @@ def test_warn_empty():
     # Now check that a warning is raised if warn_empty is True
     with pytest.warns(UserWarning, match="Empty index selected"):
         s.indices(data_type='non_existent_data_type', warn_empty=True)
+
+def test_old_qp_sacc_readable():
+    s = sacc.Sacc.load_fits("test/legacy_files/old_qp_sacc.fits")
+    t = s.tracers['tracer1']
+    assert isinstance(t, sacc.tracers.QPNZTracer)
+    assert t.quantity
+    md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
+    for k, v in md1.items():
+        assert t.metadata[k] == v
+
+def test_metadata_round_trip():
+    s = sacc.Sacc()
+    s.add_tracer('Misc', 'test_tracer')
+    s.metadata["mouse"]  = True
+    s.metadata["rat"] = False
+    s.metadata["cats"]  = "good"
+    s.metadata["dogs"]  = "bad"
+    s.metadata["number"] = 42
+    s.metadata["pi"] = 3.14159
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert s2.metadata["mouse"] is True
+    assert s2.metadata["rat"] is False
+    assert s2.metadata["cats"] == "good"
+    assert s2.metadata["dogs"] == "bad"
+    assert s2.metadata["number"] == 42
+    assert s2.metadata["pi"] == 3.14159
+
+
+
+if __name__ == "__main__":
+    test_bandpower_window()

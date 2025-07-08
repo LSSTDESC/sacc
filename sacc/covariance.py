@@ -2,11 +2,12 @@ from astropy.io import fits
 from astropy.table import Table
 import scipy.linalg
 import numpy as np
+import warnings
 
 from .utils import invert_spd_matrix
+from .io import BaseIO, ONE_OBJECT_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 
-
-class BaseCovariance:
+class BaseCovariance(BaseIO):
     """
     The abstract base class for covariances in different forms.
     These are not currently designed to be modified after creation.
@@ -26,7 +27,7 @@ class BaseCovariance:
     cov_type: string
         The type of the covariance (class variable)
     """
-    _covariance_classes = {}
+    _sub_classes = {}
 
     def __init__(self):
         """Abstract superclass constructor.
@@ -37,13 +38,9 @@ class BaseCovariance:
         self._dense = None
         self._dense_inverse = None
 
-    # This method gets called whenever a subclass is
-    # defined.  The keyword argument in the class definition
-    # (e.g. cov_type='full' below is passed to this class method)
-    @classmethod
-    def __init_subclass__(cls, cov_type):
-        cls._covariance_classes[cov_type] = cls
-        cls.cov_type = cov_type
+        # At the moment we only allow one covariance object per table,
+        # so this is only used for consistency when saving objects.
+        self.name = "cov"
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -64,8 +61,11 @@ class BaseCovariance:
         instance: BaseCovariance
             A covariance instance
         """
+        warnings.warn("You are using an older SACC legacy SACC file format with old covariance data."
+                      " Consider updating it by loading it and saving it again with the latest SACC version.",
+                      DeprecationWarning)
         subclass_name = hdu.header['saccclss']
-        subclass = cls._covariance_classes[subclass_name]
+        subclass = cls._sub_classes[subclass_name]
         return subclass.from_hdu(hdu)
 
     @classmethod
@@ -140,7 +140,7 @@ class BaseCovariance:
         return self._dense_inverse
 
 
-class FullCovariance(BaseCovariance, cov_type='full'):
+class FullCovariance(BaseCovariance, type_name='full'):
     """
     A covariance subclass representing a full matrix with correlations
     anywhere.  Represented as an n x n matrix.
@@ -153,36 +153,20 @@ class FullCovariance(BaseCovariance, cov_type='full'):
     covmat: 2D array
         The matrix itself, of shape (size x size)
     """
+
+    storage_type = ONE_OBJECT_PER_TABLE
+
     def __init__(self, covmat):
         self.covmat = np.atleast_2d(covmat)
         self.size = self.covmat.shape[0]
         super().__init__()
 
-    def to_hdu(self):
-        """
-        Make an astropy FITS HDU object with this covariance in it.
-        This is represented as an image.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        hdu: astropy.fits.ImageHDU instance
-            HDU that can be used to reconstruct the object.
-        """
-        hdu = fits.ImageHDU(self.covmat)
-        hdu.header['EXTNAME'] = 'covariance'
-        hdu.header['SACCTYPE'] = 'cov'
-        hdu.header['SACCCLSS'] = self.cov_type
-        hdu.header['SIZE'] = self.size
-        return hdu
-
     @classmethod
     def from_hdu(cls, hdu):
         """
+        
         Load a covariance object from the data in the HDU
+        LEGACY METHOD: new sacc files will use from_table
 
         Parameters
         ----------
@@ -195,6 +179,44 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         """
         C = hdu.data
         return cls(C)
+
+    def to_table(self):
+        """
+        Make an astropy table object with this covariance in it.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        table: astropy.table.Table instance
+            Table that can be used to reconstruct the object.
+        """
+        col_names = [f'col_{i}' for i in range(self.size)]
+        cols = [self.covmat[i] for i in range(self.size)]
+        table = Table(data=cols, names=col_names)
+        table.meta['SIZE'] = self.size
+        return table
+
+    @classmethod
+    def from_table(cls, table):
+        """
+        Load a covariance object from the data in the table
+
+        Parameters
+        ----------
+        table: astropy.table.Table instance
+
+        Returns
+        -------
+        cov: FullCovariance
+            Loaded covariance object
+        """
+        size = table.meta['SIZE']
+        covmat = np.array([table[f'col_{i}'] for i in range(size)])
+        return cls(covmat)
+
 
     def keeping_indices(self, indices):
         """
@@ -240,7 +262,7 @@ class FullCovariance(BaseCovariance, cov_type='full'):
         return self.covmat.copy()
 
 
-class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
+class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
     """A covariance subclass representing block diagonal covariances
 
     Block diagonal covariances have sub-blocks that are full dense matrices,
@@ -258,6 +280,9 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
     size: int
         overall total size of the matrix
     """
+
+    storage_type = ONE_OBJECT_MULTIPLE_TABLES
+
     def __init__(self, blocks):
         """Create a BlockDiagonalCovariance object from a list of blocks
 
@@ -271,34 +296,11 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         self.size = sum(self.block_sizes)
         super().__init__()
 
-    def to_hdu(self):
-        """Write a FITS HDU from the data, ready to be saved.
-
-        The data in the HDU is stored as a single 1 x size image,
-        and the header contains the information needed to reconstruct it.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        hdu: astropy.fits.ImageHDU object
-            HDU containing data and metadata
-        """
-        hdu = fits.ImageHDU(np.concatenate([b.flatten() for b in self.blocks]))
-        hdu.name = 'covariance'
-        hdu.header['sacctype'] = 'cov'
-        hdu.header['saccclss'] = self.cov_type
-        hdu.header['size'] = self.size
-        hdu.header['blocks'] = len(self.blocks)
-        for i, s in enumerate(self.block_sizes):
-            hdu.header[f'size_{i}'] = s
-        return hdu
 
     @classmethod
     def from_hdu(cls, hdu):
         """Read a covariance object from a loaded FITS HDU.
+        LEGACY METHOD: new sacc files will use from_tables
 
         Parameters
         ----------
@@ -319,6 +321,59 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
             s += b**2
             blocks.append(B)
         return cls(blocks)
+    
+    @classmethod
+    def from_tables(cls, tables):
+        """
+        Load a covariance object from the data in the tables
+
+        Parameters
+        ----------
+        tables: list
+            list of astropy.table.Table instances in block order
+
+        Returns
+        -------
+        cov: BlockDiagonalCovariance
+            Loaded covariance object
+        """
+
+        blocks = []
+        # Get the block count from the first table
+        nblock = list(tables.values())[0].meta['SACCBCNT']
+        for i in range(nblock):
+            table = tables[f'block_{i}']
+            block_size = table.meta['SACCBSZE']
+            cols = [table[f'block_col_{i}'] for i in range(block_size)]
+            blocks.append(np.array(cols))
+        return cls(blocks)
+    
+    def to_tables(self):
+        """
+        Make an astropy table object with this covariance in it.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        table: astropy.table.Table instance
+            Table that can be used to reconstruct the object.
+        """
+        tables = {}
+        nblock = len(self.blocks)
+        for j, block in enumerate(self.blocks):
+            b = len(block)
+            col_names = [f'block_col_{i}' for i in range(b)]
+            cols = [block[i] for i in range(b)]
+            table = Table(data=cols, names=col_names)
+            table.meta['SIZE'] = self.size
+            table.meta['SACCBIDX'] = j
+            table.meta['SACCBCNT'] = nblock
+            table.meta['SACCBSZE'] = b
+            tables[f'block_{j}'] = table
+        return tables
 
     def get_block(self, indices):
         """Read a (not necessarily contiguous) sublock of the matrix
@@ -405,7 +460,7 @@ class BlockDiagonalCovariance(BaseCovariance, cov_type='block'):
         return scipy.linalg.block_diag(*self.blocks)
 
 
-class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
+class DiagonalCovariance(BaseCovariance, type_name='diagonal'):
     """A covariance subclass representing covariances that are
     purely diagonal.
 
@@ -417,6 +472,9 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
     diag: array
         The diagonal terms in the covariance (i.e. the variances)
     """
+
+    storage_type = ONE_OBJECT_PER_TABLE
+
     def __init__(self, variances):
         """
         Create a DiagonalCovariance object from the variances
@@ -431,26 +489,6 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         self.size = len(self.diag)
         super().__init__()
 
-    def to_hdu(self):
-        """
-        Make an astropy FITS HDU object with this covariance in it.
-        In this can a binary table HDU is created.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        hdu: astropy.fits.BinTableHDU instance
-            HDU that can be used to reconstruct the object.
-        """
-        table = Table(names=['variance'], data=[self.diag])
-        hdu = fits.table_to_hdu(table)
-        hdu.name = 'covariance'
-        hdu.header['sacctype'] = 'cov'
-        hdu.header['saccclss'] = self.cov_type
-        return hdu
 
     def keeping_indices(self, indices):
         """
@@ -471,6 +509,40 @@ class DiagonalCovariance(BaseCovariance, cov_type='diagonal'):
         """
         D = self.diag[indices]
         return self.__class__(D)
+    
+    @classmethod
+    def from_table(cls, table):
+        """
+        Load a covariance object from the data in the table
+
+        Parameters
+        ----------
+        table: astropy.table.Table instance
+
+        Returns
+        -------
+        cov: DiagonalCovariance
+            Loaded covariance object
+        """
+        D = table['variance']
+        return cls(D)
+    
+    def to_table(self):
+        """
+        Make an astropy table object with this covariance in it.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        table: astropy.table.Table instance
+            Table that can be used to reconstruct the object.
+        """
+        table = Table(data=[self.diag], names=['variance'])
+        table.meta['SIZE'] = self.size
+        return table
 
     @classmethod
     def from_hdu(cls, hdu):

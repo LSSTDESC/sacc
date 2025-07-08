@@ -1,11 +1,13 @@
-from .base import BaseTracer
+from .base import BaseTracer, MULTIPLE_OBJECTS_PER_TABLE
 from astropy.table import Table
 
-class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
+class BinZTracer(BaseTracer, type_name="bin_z"):  # type: ignore
     """A tracer for a single redshift bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of redshift, such that we only need the data
     for a given interval instead of at individual redshifts."""
+
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __init__(self, name: str, lower: float, upper: float, **kwargs):
         """
@@ -33,7 +35,7 @@ class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
         )
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinZTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -54,12 +56,12 @@ class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
-        return [table]
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -70,20 +72,20 @@ class BinZTracer(BaseTracer, tracer_type="bin_z"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
-class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
+class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
     """A tracer for a single log-mass bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of log(mass), such that we only need the data
     for a given interval instead of at individual masses."""
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __init__(self, name: str, lower: float, upper: float, **kwargs):
         """
@@ -111,7 +113,7 @@ class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
         )
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinLogMTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -131,12 +133,12 @@ class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
         ]
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
-        return [table]
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -147,21 +149,21 @@ class BinLogMTracer(BaseTracer, tracer_type="bin_logM"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
          
-class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
+class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
     """A tracer for a single richness bin. The tracer shall
     be used for binned data where we want a desired quantity
     per interval of log(richness), such that we only need the data
     for a given interval instead of at individual richness."""
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
@@ -189,7 +191,7 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
         self.upper = upper
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinZTracers to a list of astropy tables
 
         This is used when saving data to a file.
@@ -209,12 +211,12 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
 
         table = Table(data=cols, names=names)
         table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
-        return [table]
+        table.meta["SACCCLSS"] = cls.type_name
+        table.meta["EXTNAME"] = f"tracer:{cls.type_name}"
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -225,26 +227,27 @@ class BinRichnessTracer(BaseTracer, tracer_type="bin_richness"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                tracers[name] = cls(
-                    name,
-                    quantity=quantity,
-                    lower=lower,
-                    upper=upper,
-                )
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            tracers[name] = cls(
+                name,
+                quantity=quantity,
+                lower=lower,
+                upper=upper,
+            )
         return tracers
 
 
-class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
+class BinRadiusTracer(BaseTracer, type_name="bin_radius"):  # type: ignore
     """A tracer for a single radial bin, e.g. when dealing with cluster shear profiles.
     It gives the bin edges and the value of the bin "center". The latter would typically
     be returned by CLMM and correspond to the average radius of the galaxies in that
     radial bin. """
+
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
 
     def __eq__(self, other) -> bool:
         """Test for equality. If :python:`other` is not a
@@ -278,7 +281,7 @@ class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
         self.center = center
 
     @classmethod
-    def to_tables(cls, instance_list):
+    def to_table(cls, instance_list):
         """Convert a list of BinRadiusTracers to a single astropy table
 
         This is used when saving data to a file.
@@ -299,13 +302,10 @@ class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
         ]
 
         table = Table(data=cols, names=names)
-        table.meta["SACCTYPE"] = "tracer"
-        table.meta["SACCCLSS"] = cls.tracer_type
-        table.meta["EXTNAME"] = f"tracer:{cls.tracer_type}"
-        return [table]
+        return table
 
     @classmethod
-    def from_tables(cls, table_list):
+    def from_table(cls, table):
         """Convert an astropy table into a dictionary of tracers
 
         This is used when loading data from a file.
@@ -316,18 +316,17 @@ class BinRadiusTracer(BaseTracer, tracer_type="bin_radius"):  # type: ignore
         """
         tracers = {}
 
-        for table in table_list:
-            for row in table:
-                name = row["name"]
-                quantity = row["quantity"]
-                lower = row["lower"]
-                upper = row["upper"]
-                center = row["center"]
-                tracers[name] = cls(
-                    name,
-                    quantity=quantity,
-                    lower=lower,
-                    upper=upper,
-                    center=center,
-                )
+        for row in table:
+            name = row["name"]
+            quantity = row["quantity"]
+            lower = row["lower"]
+            upper = row["upper"]
+            center = row["center"]
+            tracers[name] = cls(
+                name,
+                quantity=quantity,
+                lower=lower,
+                upper=upper,
+                center=center,
+            )
         return tracers

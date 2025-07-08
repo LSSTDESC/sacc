@@ -1,8 +1,8 @@
 import numpy as np
 from astropy.table import Table
+from .io import BaseIO, MULTIPLE_OBJECTS_PER_TABLE, ONE_OBJECT_PER_TABLE
 
-
-class BaseWindow:
+class BaseWindow(BaseIO):
     """Base class for window functions.
 
     Window functions here are for 1D variables and describe
@@ -17,70 +17,10 @@ class BaseWindow:
     This base class has class methods that can be used to turn
     mixed lists of windows to/from astropy tables, for I/O.
     """
-    _window_classes = {}
-
-    def __init_subclass__(cls, window_type):
-        # This gets called whenever a subclass is defined.
-        # The window_type argument is specified next to the
-        # base class in the subclass definition, e.g.
-        # window_typ='TopHat', as shown below
-        cls._window_classes[window_type] = cls
-        cls.window_type = window_type
-
-    @classmethod
-    def to_tables(cls, instance_list):
-        """Convert a list of BaseWindos to a list of tables.
-
-        This is called when saving data to file.
-
-        The input instances can be different subclasses, and no
-        ordering is maintained.
-
-        Parameters
-        ----------
-        instance_list: list
-            List of BaseWindow subclass instances
-
-        Returns
-        -------
-        table: list
-            List of astropy.table.Table instances
-        """
-        tables = []
-        for name, subcls in cls._window_classes.items():
-            # Pull out the relevant objects for this subclass.
-            # Note that we can't use isinstance here.
-            windows = [w for w in instance_list if type(w) == subcls]
-            if len(windows) > 0:
-                tables += subcls.to_tables(windows)
-        return tables
-
-    @classmethod
-    def from_tables(cls, table_list):
-        """Turn a list of astropy tables into window objects
-
-        This is called when loading data from file.
-
-        Parameters
-        ----------
-        instance_list: list
-            List of BaseWindow instances
-
-        Returns
-        -------
-        windows: dict
-            Dictionary of id -> Window instances
-        """
-        windows = {}
-        for table in table_list:
-            subclass_name = table.meta['SACCCLSS']
-            subclass = cls._window_classes[subclass_name]
-            # Different subclasses can handle this differently.
-            windows.update(subclass.from_table(table))
-        return windows
+    _sub_classes = {}
 
 
-class TopHatWindow(BaseWindow, window_type='TopHat'):
+class TopHatWindow(BaseWindow, type_name='TopHat'):
     """A window function that is constant between two values.
 
     The top-hat is zero elsewhere.
@@ -98,6 +38,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
     max: int/float
         The maximum value where the top-hat function equals 1
     """
+    storage_type = MULTIPLE_OBJECTS_PER_TABLE
     def __init__(self, range_min, range_max):
         """Create a top-hat window
 
@@ -114,7 +55,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         self.max = range_max
 
     @classmethod
-    def to_tables(cls, window_list):
+    def to_table(cls, window_list):
         """Convert a list of Top-Hat windows to a list of astropy tables.
 
         A single table is created for all the windows.
@@ -136,11 +77,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         mins = [w.min for w in window_list]
         maxs = [w.max for w in window_list]
         ids = [id(w) for w in window_list]
-        t = Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
-        t.meta['SACCTYPE'] = 'window'
-        t.meta['SACCCLSS'] = cls.window_type
-        t.meta['EXTNAME'] = 'window:' + cls.window_type
-        return [t]
+        return Table(data=[ids, mins, maxs], names=['id', 'min', 'max'])
 
     @classmethod
     def from_table(cls, table):
@@ -160,7 +97,7 @@ class TopHatWindow(BaseWindow, window_type='TopHat'):
         return {row['id']: cls(row['min'], row['max']) for row in table}
 
 
-class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
+class LogTopHatWindow(TopHatWindow, type_name='LogTopHat'):
     """A window function that is log-constant between two values.
 
     This object is the same as the TopHat form, except that in between
@@ -170,7 +107,7 @@ class LogTopHatWindow(TopHatWindow, window_type='LogTopHat'):
     pass
 
 
-class Window(BaseWindow, window_type='Standard'):
+class Window(BaseWindow, type_name='Standard'):
     """The Window class defines a tabulated window function.
 
     The class contains tabulated values of the abscissa (e.g. ell or theta) and
@@ -187,12 +124,13 @@ class Window(BaseWindow, window_type='Standard'):
         The weights corresponding to each value
 
     """
+    storage_type = ONE_OBJECT_PER_TABLE
+
     def __init__(self, values, weight):
         self.values = np.array(values)
         self.weight = np.array(weight)
 
-    @classmethod
-    def to_tables(cls, window_list):
+    def to_table(self):
         """Convert a list of windows to a list of astropy tables.
 
         One table is created per window.
@@ -211,17 +149,10 @@ class Window(BaseWindow, window_type='Standard'):
         table: list
             List of astropy.table.Table instances
         """
-        tables = []
-        for w in window_list:
-            cols = [w.values, w.weight]
-            names = ['values', 'weight']
-            t = Table(data=cols, names=names)
-            t.meta['SACCTYPE'] = 'window'
-            t.meta['SACCCLSS'] = cls.window_type
-            t.meta['SACCNAME'] = id(w)
-            t.meta['EXTNAME'] = 'window:' + cls.window_type
-            tables.append(t)
-        return tables
+        cols = [self.values, self.weight]
+        names = ['values', 'weight']
+        t = Table(data=cols, names=names)
+        return t
 
     @classmethod
     def from_table(cls, table):
@@ -238,10 +169,10 @@ class Window(BaseWindow, window_type='Standard'):
         windows: dict
             Dictionary of id -> Window instances
         """
-        return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
+        return cls(table['values'], table['weight'])
 
 
-class BandpowerWindow(BaseWindow, window_type='Bandpower'):
+class BandpowerWindow(BaseWindow, type_name='Bandpower'):
     """The BandpowerWindow class defines a tabulated for power
     spectrum bandpowers.
 
@@ -258,6 +189,8 @@ class BandpowerWindow(BaseWindow, window_type='Bandpower'):
         weights corresponding to each value.
 
     """
+    storage_type = ONE_OBJECT_PER_TABLE
+
     def __init__(self, values, weight):
         nl, nv = weight.shape
         nell = len(values)
@@ -268,8 +201,7 @@ class BandpowerWindow(BaseWindow, window_type='Bandpower'):
         self.values = np.array(values)
         self.weight = np.array(weight)
 
-    @classmethod
-    def to_tables(cls, window_list):
+    def to_table(self):
         """Convert a list of windows to a list of astropy tables.
 
         One table is created per window.
@@ -288,17 +220,10 @@ class BandpowerWindow(BaseWindow, window_type='Bandpower'):
         table: list
             List of astropy.table.Table instances
         """
-        tables = []
-        for w in window_list:
-            cols = [w.values, w.weight]
-            names = ['values', 'weight']
-            t = Table(data=cols, names=names)
-            t.meta['SACCTYPE'] = 'window'
-            t.meta['SACCCLSS'] = cls.window_type
-            t.meta['SACCNAME'] = id(w)
-            t.meta['EXTNAME'] = 'window:' + cls.window_type
-            tables.append(t)
-        return tables
+        cols = [self.values, self.weight]
+        names = ['values', 'weight']
+        t = Table(data=cols, names=names)
+        return t
 
     @classmethod
     def from_table(cls, table):
@@ -315,7 +240,7 @@ class BandpowerWindow(BaseWindow, window_type='Bandpower'):
         windows: dict
             Dictionary of id -> Window instances
         """
-        return {table.meta['SACCNAME']: cls(table['values'], table['weight'])}
+        return cls(table['values'], table['weight'])
 
     def get_section(self, indices):
         """Get part of this window function corresponding to the input
