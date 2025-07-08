@@ -4,35 +4,37 @@ from astropy.table import Table
 import numpy as np
 
 
-class NZShiftUncertainty(BaseTracerUncertainty, type_name="nz_shift"):
+class NZShiftStretchUncertainty(BaseTracerUncertainty, type_name="nz_ShiftStretch"):
     """
     Class to handle uncertainty in number density tracers.
     """
 
     storage_type = ONE_OBJECT_PER_TABLE
 
-    def __init__(self, name, tracer_names, shift_mean, shift_cov):
+    def __init__(self, name, tracer_names, ShiftStretch_mean, ShiftStretch_cov):
         """
-        Initialize the NZShiftUncertainty object.
+        Initialize the NZShiftStretchUncertainty object.
         Parameters
         ----------
         tracer_names : list of str
             List of tracer names to which the uncertainty applies.
-        shift_mean : array-like
-            Mean shift values for the tracers.
-        shift_cov : array-like
-            covariance of the shift values for the tracers.
+        ShiftStretch_mean : array-like
+            Mean ShiftStretch values for the tracers.
+            This is strucutred as (shift_1, stretch_1, shift_2, stretch_2, ...).
+        ShiftStretch_cov : array-like
+            covariance of the ShiftStretch values for the tracers.
+            Follows the ordering of the mean
         """
 
         super().__init__(name, tracer_names)
-        self.shift_mean = np.array(shift_mean)
-        self.shift_cov = np.array(shift_cov)
-        self.nparams = 1
+        self.ShiftStretch_mean = np.array(ShiftStretch_mean)
+        self.ShiftStretch_cov = np.array(ShiftStretch_cov)
+        self.nparams = 2
 
     @classmethod
     def from_table(self, table):
         """
-        Read an NZShiftUncertainty object from an astropy table.
+        Read an NZShiftStretchUncertainty object from an astropy table.
 
         Parameters
         ----------
@@ -41,18 +43,18 @@ class NZShiftUncertainty(BaseTracerUncertainty, type_name="nz_shift"):
 
         Returns
         -------
-        instance: NZShiftUncertainty
-            An instance of the NZShiftUncertainty class.
+        instance: NZShiftStretchUncertainty
+            An instance of the NZShiftStretchUncertainty class.
         """
-        mean = table["shift_mean"]
-        cov = table["shift_cov"]
+        mean = table["ShiftStretch_mean"]
+        cov = table["ShiftStretch_cov"]
         tracer_names = [table.meta[f"TRACER_NAME_{i}"] for i in range(table.meta["N_TRACERS"])]
         name = table.meta["SACCNAME"]
-        return NZShiftUncertainty(name, tracer_names, mean, cov)
+        return NZShiftStretchUncertainty(name, tracer_names, mean, cov)
 
     def to_table(self):
         """
-        Write an NZShiftUncertainty object to an astropy table.
+        Write an NZShiftStretchUncertainty object to an astropy table.
 
         Parameters
         ----------
@@ -65,8 +67,8 @@ class NZShiftUncertainty(BaseTracerUncertainty, type_name="nz_shift"):
         """
 
         data = {
-            "shift_mean": self.shift_mean,
-            "shift_cov": self.shift_cov,
+            "ShiftStretch_mean": self.ShiftStretch_mean,
+            "ShiftStretch_cov": self.ShiftStretch_cov,
         }
         table = Table(data=data)
         table.meta["N_TRACERS"] = len(self.tracer_names)

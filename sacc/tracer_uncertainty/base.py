@@ -1,5 +1,6 @@
 from ..io import BaseIO
 
+
 class BaseTracerUncertainty(BaseIO):
     _sub_classes = {}
 
@@ -9,7 +10,7 @@ class BaseTracerUncertainty(BaseIO):
         must define a list of tracer names to which the uncertainty applies.
 
         This could be a single tracer or multiple tracers.
-        
+
         Parameters
         ----------
         tracer_names : list of str
