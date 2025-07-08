@@ -846,7 +846,9 @@ class Sacc:
         }
 
         if self.has_covariance():
-            objects["covariance"] = {"cov": self.covariance}
+            # For now the name will just be "cov", but in future
+            # we may support alternatives.
+            objects["covariance"] = {self.covariance.name: self.covariance}
 
         tables = io.to_tables(objects)
 
