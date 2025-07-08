@@ -72,6 +72,10 @@ class BaseIO:
                                f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
                                f"but {cls.__name__} has {cls.storage_type}.")
         
+
+        # We could probably be using an Abstract Base Class rather than doing this.
+        # Then you wouldn't get a warning until instantiation. That might be good
+        # or bad.
         if cls.storage_type == ONE_OBJECT_PER_TABLE:
             check_has_standard_method(cls, 'to_table')
             check_has_class_method(cls, 'from_table')
