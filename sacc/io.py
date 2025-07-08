@@ -1,4 +1,4 @@
-from .utils import unique_list
+from .utils import unique_list, numpy_to_vanilla
 import numpy as np
 from io import BytesIO
 import inspect
@@ -320,19 +320,6 @@ def from_tables(table_list):
 
     outputs['data'] = data_points
     return outputs
-
-
-def numpy_to_vanilla(x):
-    if type(x) == np.str_:
-        x = str(x)
-    elif type(x) == np.int64:
-        x = int(x)
-    elif type(x) == np.float64:
-        x = float(x)
-    elif type(x) == np.bool:
-        x = bool(x)
-    return x
-
 
 
 def astropy_buffered_fits_write(filename, hdu_list):
