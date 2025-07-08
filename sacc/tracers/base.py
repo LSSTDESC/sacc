@@ -53,7 +53,7 @@ class BaseTracer(BaseIO):
     @classmethod
     def make(cls, tracer_type, name, *args, **kwargs):
         """
-        Select a Tracer subclass based on type_name
+        Select a Tracer subclass based on tracer_type
         and instantiate in instance of it with the remaining
         arguments.
 
