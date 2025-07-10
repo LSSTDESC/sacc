@@ -967,6 +967,14 @@ def test_metadata_round_trip():
     assert s2.metadata["pi"] == 3.14159
 
 
+def test_load_file_without_tracers():
+    s = sacc.Sacc()
+    s.add_data_point(sacc.standard_types.galaxy_shear_cl_ee,
+                         ('source_0', 'source_0'), 0.1, ell=10.0, tracers_later=True)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
 
 if __name__ == "__main__":
     test_bandpower_window()
