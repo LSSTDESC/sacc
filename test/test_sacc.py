@@ -946,7 +946,6 @@ def test_old_qp_sacc_readable():
 
 def test_metadata_round_trip():
     s = sacc.Sacc()
-    s.add_tracer('Misc', 'test_tracer')
     s.metadata["mouse"]  = True
     s.metadata["rat"] = False
     s.metadata["cats"]  = "good"
@@ -965,7 +964,6 @@ def test_metadata_round_trip():
     assert s2.metadata["dogs"] == "bad"
     assert s2.metadata["number"] == 42
     assert s2.metadata["pi"] == 3.14159
-
 
 
 if __name__ == "__main__":
