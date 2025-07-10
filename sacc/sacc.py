@@ -957,7 +957,7 @@ class Sacc:
         objs =  io.from_tables(tables)
 
         # Add all the tracers
-        tracers = objs['tracer']
+        tracers = objs.get('tracer', {})
         for tracer in tracers.values():
             s.add_tracer_object(tracer)
 
@@ -965,7 +965,7 @@ class Sacc:
         # objects that are attached to individual data points
         # will be included in the data points themselves, there is
         # no need to add them separately.
-        data = fix_data_ordering(objs['data'])
+        data = fix_data_ordering(objs.get('data', []))
         for d in data:
             s.data.append(d)
 
