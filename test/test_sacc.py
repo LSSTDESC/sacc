@@ -36,6 +36,9 @@ def get_from_wiki(url):
     return local_file_name
 
 
+/* <<<<<<<<<<<<<<  ✨ Windsurf Command 🌟 >>>>>>>>>>>>>>>> */
+@pytest.fixture
+def filled_sacc():
 def get_filled_sacc():
     s = sacc.Sacc()
 
@@ -70,6 +73,7 @@ def get_filled_sacc():
                          tracers, bb, ell=10.0*i)
 
     return s
+/* <<<<<<<<<<  5484c9bd-4c1d-4dfb-88fd-0645674f4553  >>>>>>>>>>> */
 
 
 def test_add_covariance():
@@ -964,6 +968,27 @@ def test_metadata_round_trip():
     assert s2.metadata["dogs"] == "bad"
     assert s2.metadata["number"] == 42
     assert s2.metadata["pi"] == 3.14159
+
+def test_equality():
+    x = sacc.Sacc()
+    cov = np.ones((x.mean.size, x.mean.size))
+    x.add_covariance(cov)
+    assert x == x
+
+    y = sacc.Sacc()
+    assert x != y
+    y.add_covariance(cov)
+    assert x == y
+
+    x = get_filled_sacc()
+    assert x == x
+
+    y = get_filled_sacc()
+    assert x is not y
+    assert x == y
+
+    y.remove_tracers(['source_0'])
+    assert x != y
 
 
 if __name__ == "__main__":

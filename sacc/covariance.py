@@ -1,3 +1,5 @@
+from platform import android_ver
+
 from astropy.io import fits
 from astropy.table import Table
 import scipy.linalg
@@ -41,6 +43,26 @@ class BaseCovariance(BaseIO):
         # At the moment we only allow one covariance object per table,
         # so this is only used for consistency when saving objects.
         self.name = "cov"
+
+    def __eq__(self, other):
+        """
+        Test for equality
+
+        Parameters
+        ----------
+        other: object
+            The other object to test for equality
+
+        Returns
+        -------
+        equal: bool
+            True if the objects are equal
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        return self.name == other.name and \
+            self._dense == other._dense and \
+            self._dense_inverse == other._dense_inverse
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -161,10 +183,15 @@ class FullCovariance(BaseCovariance, type_name='full'):
         self.size = self.covmat.shape[0]
         super().__init__()
 
+    def __eq__(self, other):
+        return super().__eq__(other) and \
+            self.size == other.size and \
+            np.all(self.covmat == other.covmat)
+
     @classmethod
     def from_hdu(cls, hdu):
         """
-        
+
         Load a covariance object from the data in the HDU
         LEGACY METHOD: new sacc files will use from_table
 
@@ -296,6 +323,11 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
         self.size = sum(self.block_sizes)
         super().__init__()
 
+    def __eq__(self, other):
+        return super().__eq__(other) and \
+            self.size == other.size and \
+            self.block_sizes == other.block_sizes and \
+            np.all([np.all(b1 == b2) for b1, b2 in zip(self.blocks, other.blocks)])
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -321,7 +353,7 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
             s += b**2
             blocks.append(B)
         return cls(blocks)
-    
+
     @classmethod
     def from_tables(cls, tables):
         """
@@ -347,7 +379,7 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
             cols = [table[f'block_col_{i}'] for i in range(block_size)]
             blocks.append(np.array(cols))
         return cls(blocks)
-    
+
     def to_tables(self):
         """
         Make an astropy table object with this covariance in it.
@@ -509,7 +541,7 @@ class DiagonalCovariance(BaseCovariance, type_name='diagonal'):
         """
         D = self.diag[indices]
         return self.__class__(D)
-    
+
     @classmethod
     def from_table(cls, table):
         """
@@ -526,7 +558,7 @@ class DiagonalCovariance(BaseCovariance, type_name='diagonal'):
         """
         D = table['variance']
         return cls(D)
-    
+
     def to_table(self):
         """
         Make an astropy table object with this covariance in it.

@@ -41,6 +41,44 @@ class Sacc:
         """
         return len(self.data)
 
+    def __eq__(self, other):
+        """
+        Test for equality between two Sacc instances.
+
+        Checks whether the two values are equal.  This is a
+        complete equality check, and will check that the data points,
+        tracers, covariance and metadata are all the same.
+
+        Parameters
+        ----------
+        other: Sacc instance
+            The other data set to compare with
+
+        Returns
+        -------
+        equal: bool
+            True if the two data sets are the same, False otherwise.
+        """
+        if not isinstance(other, Sacc):
+            return False
+
+        for d1, d2 in zip(self.data, other.data):
+            if d1 != d2:
+                return False
+
+        for t1, t2 in zip(self.tracers, other.tracers):
+            if t1 != t2:
+                return False
+
+        if self.covariance != other.covariance:
+            return False
+
+        for m1, m2 in zip(self.metadata, other.metadata):
+            if m1 != m2:
+                return False
+
+        return True
+
     def copy(self):
         """
         Create a copy of the data set with no data shared with the original.
