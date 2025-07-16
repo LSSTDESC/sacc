@@ -62,22 +62,26 @@ class Sacc:
         if not isinstance(other, Sacc):
             return False
 
-        for d1, d2 in zip(self.data, other.data):
-            if d1 != d2:
-                return False
+        if self.data != other.data:
+            return False
 
-        for t1, t2 in zip(self.tracers, other.tracers):
-            if t1 != t2:
+        if len(self.tracers) != len(other.tracers):
+            return False
+        if list(self.tracers.keys()) != list(other.tracers.keys()):
+            return False
+        for k1, v1 in self.tracers.items():
+            v2 = other.tracers[k1]
+            if not v1 == v2:
                 return False
 
         if self.covariance != other.covariance:
             return False
 
-        for m1, m2 in zip(self.metadata, other.metadata):
-            if m1 != m2:
-                return False
+        if self.metadata != other.metadata:
+            return False
 
         return True
+
 
     def copy(self):
         """
@@ -859,7 +863,7 @@ class Sacc:
         windows = unique_list(windows)
         window_ids = {id(w):w for w in windows}
         return window_ids
-        
+
     def to_tables(self):
         """
         Convert this data set to a collection of astropy tables.
@@ -977,7 +981,7 @@ class Sacc:
             tables.append(io.metadata_to_table(metadata))
 
         return cls.from_tables(tables, cov=cov)
-    
+
     @classmethod
     def from_tables(cls, tables, cov=None):
         """
@@ -1018,7 +1022,7 @@ class Sacc:
 
         if cov is not None:
             s.add_covariance(cov)
-        
+
         return s
 
 
@@ -1520,7 +1524,7 @@ def fix_data_ordering(data_points):
     Returns
     -------
     ordered_data_points: list of DataPoint objects
-    
+
     """
     # Older versions of SACC did not have this column, so we
     # check for that situation and if not then add it here, in the

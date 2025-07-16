@@ -61,6 +61,7 @@ class BaseCovariance(BaseIO):
         if not isinstance(other, self.__class__):
             return False
         return self.name == other.name and \
+            self.size == other.size and \
             self._dense == other._dense and \
             self._dense_inverse == other._dense_inverse
 
@@ -102,21 +103,19 @@ class BaseCovariance(BaseIO):
         Parameters
         ----------
         cov: list[array] or array
-            If a list, the total length of all the arrays in it
-            should equal n.  If an array, it should be either 1D of
-            length n or 2D of shape (n x n).
+            If a list, it should be a list of array-like objects each of which
+            can be coerced into a 2d array. A BlockDiagonalCovariance will be
+            returned.
 
-        n: int
-            length of the data vector to which this covariance applies
+            If an array, it should be either 1D or 2d and square. Either a
+            DiagonalCovariance or a FullCovariance will be returned.
         """
         if isinstance(cov, list):
-            s = 0
             for block in cov:
                 block = np.atleast_2d(block)
                 if (block.ndim != 2) or (block.shape[0] != block.shape[1]):
                     raise ValueError("Covariance block has wrong size "
                                      f"or shape {block.shape}")
-                s += block.shape[0]
             return BlockDiagonalCovariance(cov)
         else:
             cov = np.array(cov).squeeze()
@@ -520,6 +519,10 @@ class DiagonalCovariance(BaseCovariance, type_name='diagonal'):
         self.diag = np.atleast_1d(variances)
         self.size = len(self.diag)
         super().__init__()
+
+    def __eq__(self, other):
+        return super().__eq__(other) and \
+            np.allclose(self.diag, other.diag)
 
 
     def keeping_indices(self, indices):
