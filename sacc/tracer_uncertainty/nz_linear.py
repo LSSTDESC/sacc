@@ -11,7 +11,7 @@ class NZLinearUncertainty(BaseTracerUncertainty, type_name="nz_Linear"):
 
     storage_type = ONE_OBJECT_PER_TABLE
 
-    def __init__(self, name, tracer_names, Linear_intercept, Linear_slope):
+    def __init__(self, name, tracer_names, linear_intercept, linear_slope):
         """
         Initialize the NZLinearUncertainty object.
         Parameters
@@ -30,12 +30,9 @@ class NZLinearUncertainty(BaseTracerUncertainty, type_name="nz_Linear"):
         """
 
         super().__init__(name, tracer_names)
-        self.Linear_intercept = np.array(Linear_intercept)
-        self.Linear_slope = np.array(Linear_slope)
-        if type(tracer_names) == str:
-            self.nparams = len(self.Linear_intercept)
-        else:
-            self.nparams = len(self.Linear_intercept) // len(tracer_names)
+        self.linear_intercept = np.array(linear_intercept)
+        self.linear_slope = np.array(linear_slope)
+        self.nparams = len(self.linear_intercept) // len(tracer_names)
         n, m = self.Linear_slope.shape
         if n != m:
             self.slope_type = "linear_model_matrix"
@@ -78,8 +75,8 @@ class NZLinearUncertainty(BaseTracerUncertainty, type_name="nz_Linear"):
         """
 
         data = {
-            "Linear_intercept": self.Linear_intercept,
-            "Linear_slope": self.Linear_slope,
+            "linear_intercept": self.linear_intercept,
+            "linear_slope": self.linear_slope,
         }
         table = Table(data=data)
         table.meta["N_TRACERS"] = len(self.tracer_names)
