@@ -1,76 +1,39 @@
 from .base import BaseTracerUncertainty
 from ..io import ONE_OBJECT_PER_TABLE
-from astropy.table import Table
-import numpy as np
 
 
-class NZShiftUncertainty(BaseTracerUncertainty, type_name="nz_shift"):
+class NZShiftUncertainty(
+    BaseTracerUncertainty,
+    type_name="nz_shift",
+):
     """
     Class to handle uncertainty in number density tracers.
     """
-
     storage_type = ONE_OBJECT_PER_TABLE
 
-    def __init__(self, name, tracer_names, shift_mean, shift_cov):
+    def __init__(
+            self,
+            name,
+            tracer_names,
+            mean,
+            chol):
         """
         Initialize the NZShiftUncertainty object.
         Parameters
         ----------
+        name : str
+            Name of the uncertainty object.
         tracer_names : list of str
             List of tracer names to which the uncertainty applies.
-        shift_mean : array-like
+        mean : array-like
             Mean shift values for the tracers.
-        shift_cov : array-like
-            covariance of the shift values for the tracers.
+        chol : array-like
+            choleskey factor of the covariance of the shift values for the tracers.
         """
-
-        super().__init__(name, tracer_names)
-        self.shift_mean = np.array(shift_mean)
-        self.shift_cov = np.array(shift_cov)
-        self.nparams = 1
-
-    @classmethod
-    def from_table(self, table):
-        """
-        Read an NZShiftUncertainty object from an astropy table.
-
-        Parameters
-        ----------
-        table: astropy.table.Table
-            An astropy table containing the uncertainty data.
-
-        Returns
-        -------
-        instance: NZShiftUncertainty
-            An instance of the NZShiftUncertainty class.
-        """
-        mean = table["shift_mean"]
-        cov = table["shift_cov"]
-        tracer_names = [table.meta[f"TRACER_NAME_{i}"] for i in range(table.meta["N_TRACERS"])]
-        name = table.meta["SACCNAME"]
-        return NZShiftUncertainty(name, tracer_names, mean, cov)
-
-    def to_table(self):
-        """
-        Write an NZShiftUncertainty object to an astropy table.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        table: astropy.table.Table
-            An astropy table containing the uncertainty data.
-        """
-
-        data = {
-            "shift_mean": self.shift_mean,
-            "shift_cov": self.shift_cov,
-        }
-        table = Table(data=data)
-        table.meta["N_TRACERS"] = len(self.tracer_names)
-        for i, tracer_name in enumerate(self.tracer_names):
-            table.meta[f"TRACER_NAME_{i}"] = tracer_name
-            table.meta[f"TRACER_NAME_{i}_NPARAMS"] = self.nparams
-        return table
+        super().__init__(
+            name,
+            tracer_names,
+            mean,
+            chol,
+            transformation_type="chol"
+            )
