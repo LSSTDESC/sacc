@@ -36,7 +36,8 @@ def get_from_wiki(url):
     return local_file_name
 
 
-def get_filled_sacc():
+@pytest.fixture
+def filled_sacc():
     s = sacc.Sacc()
 
     # Tracer
@@ -71,9 +72,16 @@ def get_filled_sacc():
 
     return s
 
+def make_full_cov(n):
+    """
+    Make a full covariance matrix of shape (n, n)
+    """
+    cov = np.random.uniform(size=(n, n))
+    cov = (cov + cov.T) / 2  # make symmetric
+    return cov
 
-def test_add_covariance():
-    s = get_filled_sacc()
+def test_add_covariance(filled_sacc):
+    s = filled_sacc.copy()
     cov = np.ones((s.mean.size, s.mean.size))
     s.add_covariance(cov)
 
@@ -83,13 +91,12 @@ def test_add_covariance():
     s.add_covariance(0 * cov, overwrite=True)
     assert np.all(s.covariance.covmat == 0 * cov)
 
-def test_get_sigma():
-    s_base = get_filled_sacc()
-    n = len(s_base)
+def test_get_sigma(filled_sacc):
+    n = len(filled_sacc)
 
     # first check it works with a diagonal cov
     # for the full matrix
-    s = s_base.copy()
+    s = filled_sacc.copy()
     variance = np.random.uniform(size=n)
     s.add_covariance(variance)
     assert isinstance(s.covariance, sacc.covariance.DiagonalCovariance)
@@ -104,10 +111,8 @@ def test_get_sigma():
     assert np.allclose(sigma, variance[-20:] ** 0.5)
 
     # Now check with a dense covariance
-    s = s_base.copy()
-    cov = np.random.uniform(size=(n, n))
-    # make symmetric out of habit
-    cov = (cov + cov.T) / 2
+    s = filled_sacc.copy()
+    cov = make_full_cov(n)
     s.add_covariance(cov)
     assert isinstance(s.covariance, sacc.covariance.FullCovariance)
 
@@ -121,7 +126,7 @@ def test_get_sigma():
     assert np.allclose(sigma, np.sqrt(np.diagonal(cov))[-20:])
 
     # now block-diagonal
-    s = s_base.copy()
+    s = filled_sacc.copy()
     cov = [
         np.random.uniform(size=(n//4, n//4))
         for i in range(4)
@@ -137,8 +142,8 @@ def test_get_sigma():
 
 
 
-def test_get_data_types():
-    s = get_filled_sacc()
+def test_get_data_types(filled_sacc):
+    s = filled_sacc
     dt1 = [sacc.standard_types.count, sacc.standard_types.galaxy_shear_cl_bb,
            sacc.standard_types.galaxy_shear_cl_ee]
     dt2 = s.get_data_types()
@@ -495,15 +500,15 @@ def test_keep_remove():
     assert len(ind) == 5
 
 
-def test_remove_keep_tracers():
-    s = get_filled_sacc()
+def test_remove_keep_tracers(filled_sacc):
+    s = filled_sacc.copy()
 
     s.remove_tracers(['source_0'])
 
     assert ['source_1', 'source_2'] == list(s.tracers.keys())
     assert [('source_2', 'source_2')] == s.get_tracer_combinations()
 
-    s = get_filled_sacc()
+    s = filled_sacc.copy()
     s.keep_tracers(['source_0'])
     assert ['source_0'] == list(s.tracers.keys())
     assert [('source_0',)] == s.get_tracer_combinations()
@@ -778,8 +783,8 @@ def test_io_maps_bpws():
     assert w.weight.shape == (n_ell_large, n_ell)
 
 
-def test_rename_tracer():
-    s = get_filled_sacc()
+def test_rename_tracer(filled_sacc):
+    s = filled_sacc.copy()
 
     tracer_comb = s.get_tracer_combinations()
 
@@ -846,7 +851,7 @@ def test_qpnz_tracer():
     assert T2a.metadata == md2
 
     # test version without saved z
-    T3 = sacc.BaseTracer.make('QPNZ', 'tracer3', nz_qp_interp, 
+    T3 = sacc.BaseTracer.make('QPNZ', 'tracer3', nz_qp_interp,
                               quantity='galaxy_density',
                               metadata=md1)
     tables = T3.to_tables()
@@ -886,8 +891,8 @@ def test_io_qp():
     for i in range(20):
         assert mu[i] == 0.1 * i
 
-def test_sacc_has_tracer():
-    s = get_filled_sacc()
+def test_sacc_has_tracer(filled_sacc):
+    s = filled_sacc
     assert not s.has_tracer("this_is_not_a_tracer")
     for tracer_name in ['source_0', 'source_1', 'source_2']:
         assert s.has_tracer(tracer_name)
@@ -964,6 +969,63 @@ def test_metadata_round_trip():
     assert s2.metadata["dogs"] == "bad"
     assert s2.metadata["number"] == 42
     assert s2.metadata["pi"] == 3.14159
+
+def test_equality_empty():
+    x = sacc.Sacc()
+    assert x == x
+
+    y = sacc.Sacc()
+    assert x is not y
+    assert x == y
+
+
+def test_equality_sacc_with_covariance(filled_sacc):
+    x = filled_sacc.copy()
+    cov = make_full_cov(len(filled_sacc))
+    x.add_covariance(cov.copy())
+    assert x == x
+
+    y = filled_sacc.copy()
+    y.add_covariance(cov.copy())
+    assert x is not y
+    assert x == y
+
+    y.remove_tracers(['source_0'])
+    assert x != y
+
+def test_equality_mismatched_tracers(filled_sacc):
+    z = np.arange(0., 1.0, 0.01)
+    nz = (z-0.5)**2/0.1**2
+    x = filled_sacc.copy()
+
+    # If add a tracer, x and y should not longer be equal
+    y = filled_sacc.copy()
+    assert x == y
+    y.add_tracer('NZ', 'source_100', z, nz)
+    assert x != y
+
+    # If we modify a tracer, x and y should not longer be equal
+    y = filled_sacc.copy()
+    assert x == y
+    nz = y.tracers['source_0'].nz.copy()
+    nz += 1.0
+    assert np.all(y.tracers['source_0'].nz != nz)
+
+    y.tracers['source_0'].nz = nz
+    assert np.all(y.tracers['source_0'].nz != x.tracers['source_0'].nz)
+    assert x != y
+
+    # y = filled_sacc.copy()
+    # assert x == y
+    # y.add_data_point("dt1", ('source_100',), 0.1, tracers_later=True)
+    # assert x != y
+
+
+def test_equality_wrong_type():
+    x = sacc.Sacc()
+    y = 0
+    assert x != y
+
 
 
 if __name__ == "__main__":

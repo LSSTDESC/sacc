@@ -1,3 +1,4 @@
+import numpy as np
 from ..utils import Namespace, unique_list
 from ..io import BaseIO, ONE_OBJECT_PER_TABLE, MULTIPLE_OBJECTS_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 
@@ -48,6 +49,49 @@ class BaseTracer(BaseIO):
         self.name = name
         self.quantity = quantity
         self.metadata = kwargs.pop('metadata', {})
+
+    def __eq__(self, other):
+        """"
+        Compare two Tracers for equality.
+
+        Tracers can only be equal if they have the same type.
+        Tracers of the same type are equal if they have all the same
+        attribute values.
+
+        There is no need to override this method in subclasses.
+
+        Parameters
+        ----------
+        other: Tracer
+            The other Tracer to compare against.
+
+        Returns
+        -------
+        value: bool
+            True if the two Tracers are equal, else False
+        """
+        if not isinstance(other, self.__class__):
+            return NotImplemented  # not False, to help ensure symmetry
+        vars1, vars2 = vars(self), vars(other)
+
+        if len(vars1) != len(vars2):
+            return False
+
+        varnames1 = vars1.keys()
+        varnames2 = vars2.keys()
+        if varnames1 != varnames2:
+            return False
+
+        for name in varnames1:
+            v1 = vars1[name]
+            v2 = vars2[name]
+            try:
+                if v1 != v2:
+                    return False
+            except ValueError:  # raised by numpy arrays
+                if not np.array_equal(v1, v2):
+                    return False
+        return True
 
 
     @classmethod
