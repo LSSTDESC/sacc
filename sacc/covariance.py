@@ -1,5 +1,3 @@
-from platform import android_ver
-
 from astropy.io import fits
 from astropy.table import Table
 import scipy.linalg
