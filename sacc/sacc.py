@@ -67,7 +67,7 @@ class Sacc:
 
         if len(self.tracers) != len(other.tracers):
             return False
-        if list(self.tracers.keys()) != list(other.tracers.keys()):
+        if set(self.tracers.keys()) != set(other.tracers.keys()):
             return False
         for k1, v1 in self.tracers.items():
             v2 = other.tracers[k1]

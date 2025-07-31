@@ -58,10 +58,14 @@ class BaseCovariance(BaseIO):
         """
         if not isinstance(other, self.__class__):
             return False
+        # We do not test the inverse; we rely on the fact that
+        # if the dense matrices are equal, then the inverses will be equal.
+        # We are also relying on each subclass to have an instance variable
+        # 'size'.
         return self.name == other.name and \
             self.size == other.size and \
-            self._dense == other._dense and \
-            self._dense_inverse == other._dense_inverse
+            ((self._dense is None and other._dense is None) or \
+            np.allclose(self._dense, other._dense))
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -182,8 +186,7 @@ class FullCovariance(BaseCovariance, type_name='full'):
 
     def __eq__(self, other):
         return super().__eq__(other) and \
-            self.size == other.size and \
-            np.all(self.covmat == other.covmat)
+            np.allclose(self.covmat, other.covmat)
 
     @classmethod
     def from_hdu(cls, hdu):
@@ -322,9 +325,10 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
 
     def __eq__(self, other):
         return super().__eq__(other) and \
-            self.size == other.size and \
             self.block_sizes == other.block_sizes and \
-            np.all([np.all(b1 == b2) for b1, b2 in zip(self.blocks, other.blocks)])
+            all(np.allclose(b1, b2)
+                for b1, b2
+                in zip(self.blocks, other.blocks))
 
     @classmethod
     def from_hdu(cls, hdu):

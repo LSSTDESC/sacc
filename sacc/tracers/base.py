@@ -77,8 +77,8 @@ class BaseTracer(BaseIO):
         if len(vars1) != len(vars2):
             return False
 
-        varnames1 = vars1.keys()
-        varnames2 = vars2.keys()
+        varnames1 = set(vars1.keys())
+        varnames2 = set(vars2.keys())
         if varnames1 != varnames2:
             return False
 
@@ -89,7 +89,7 @@ class BaseTracer(BaseIO):
                 if v1 != v2:
                     return False
             except ValueError:  # raised by numpy arrays
-                if not np.array_equal(v1, v2):
+                if not np.allclose(v1, v2):
                     return False
         return True
 
