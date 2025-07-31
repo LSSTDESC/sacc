@@ -384,7 +384,7 @@ class DataPoint(BaseIO, type_name="DataPoint"):
         tags = list(tags)
         tracers = [f'tracer_{i}' for i in range(ntracer)]
         return tracers, tags
-    
+
     @classmethod
     def to_tables(cls, data, lookups=None):
         data_by_type = {}
@@ -405,11 +405,11 @@ class DataPoint(BaseIO, type_name="DataPoint"):
             table.meta['SACCTYPE'] = 'data'
             table.meta['SACCNAME'] = data_type
             tables[data_type] = table
-        
+
         # Now remove the temporary ordering tag
         for d in data:
             del d.tags['sacc_ordering']
-        
+
         return tables
 
     @classmethod

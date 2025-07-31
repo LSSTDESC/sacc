@@ -157,7 +157,7 @@ class BinLogMTracer(BaseTracer, type_name="bin_logM"):  # type: ignore
             tracers[name] = cls(name, quantity=quantity, lower=lower, upper=upper)
         return tracers
 
-         
+
 class BinRichnessTracer(BaseTracer, type_name="bin_richness"):  # type: ignore
     """A tracer for a single richness bin. The tracer shall
     be used for binned data where we want a desired quantity

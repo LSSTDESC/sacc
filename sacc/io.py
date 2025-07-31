@@ -41,7 +41,7 @@ class BaseIO:
     a smaller number of tables. For some tracer types we want to store many tracers
     in a single table, while for others we want to store each tracer in its own table.
 
-    New hierarchies of objects can be created 
+    New hierarchies of objects can be created
     """
     _base_subclasses = {}
     storage_type = "NOT_DEFINED"
@@ -57,21 +57,21 @@ class BaseIO:
             if not hasattr(cls, '_sub_classes'):
                 raise RuntimeError("Base subclasses of BaseIO must have a dictionary class variable _sub_classes, but"
                                   f" {cls.__name__} does not have one defined.")
-            
+
             return
-        
+
         if type_name == "":
             raise RuntimeError("Subclasses that use the table IO system like tracers must have a type_name set when defining them.")
-        
+
         # Check that the storage_type is defined and valid
         if cls.storage_type == "NOT_DEFINED":
             raise RuntimeError(f"Subclasses of BaseIO must define a class variable storage_type, but {cls.__name__} does not have one defined.")
-        
+
         if cls.storage_type not in (ONE_OBJECT_PER_TABLE, MULTIPLE_OBJECTS_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES):
             raise RuntimeError(f"Subclasses of BaseIO must have a class variable storage_type set to one of "
                                f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
                                f"but {cls.__name__} has {cls.storage_type}.")
-        
+
 
         # We could probably be using an Abstract Base Class rather than doing this.
         # Then you wouldn't get a warning until instantiation. That might be good
@@ -79,7 +79,7 @@ class BaseIO:
         if cls.storage_type == ONE_OBJECT_PER_TABLE:
             check_has_standard_method(cls, 'to_table')
             check_has_class_method(cls, 'from_table')
-            
+
         elif cls.storage_type == ONE_OBJECT_MULTIPLE_TABLES:
             check_has_standard_method(cls, 'to_tables')
             check_has_class_method(cls, 'from_tables')
@@ -91,7 +91,7 @@ class BaseIO:
             raise RuntimeError(f"Subclasses of BaseIO must have a class variable storage_type set to one of "
                                f"{ONE_OBJECT_PER_TABLE}, {MULTIPLE_OBJECTS_PER_TABLE}, or {ONE_OBJECT_MULTIPLE_TABLES}, "
                                f"but {cls.__name__} has {cls.storage_type}.")
-    
+
 
         if type_name.lower() in cls._sub_classes:
             raise RuntimeError(f"Subclasses of BaseIO must have unique type_name, "
@@ -197,7 +197,7 @@ def to_tables(category_dict):
     # Handle data points separately, since they are a special case
     data = category_dict.get('data', [])
     lookups = category_dict.get('window', {})
-    
+
     # Because lots of objects share the same window function
     # we map a code number for a window to the window object
     # when serializing.
@@ -221,7 +221,7 @@ def from_tables(table_list):
 
     This is used when loading data from a file.
 
-    This class method takes a list of astropy tables, typically read from 
+    This class method takes a list of astropy tables, typically read from
     a file, and converts them all into instances of BaseIO subclasses.
 
     Parameters
@@ -337,14 +337,14 @@ def astropy_buffered_fits_write(filename, hdu_list):
 
 def is_class_method(method):
     return callable(method) and inspect.ismethod(method) and not inspect.isfunction(method)
-    
+
 
 def check_has_class_method(cls, method_name):
     """Check if a class has a class method with the given name."""
     method = getattr(cls, method_name, None)
     if method is None:
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} should have a class method {method_name} defined.")
-    
+
     if not is_class_method(method):
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is not defined as a class method.")
 
@@ -353,10 +353,10 @@ def check_has_standard_method(cls, method_name):
     method = getattr(cls, method_name, None)
     if method is None:
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} should have a method {method_name} defined.")
-    
+
     if not callable(method):
         raise RuntimeError(f"As a BaseIO subclass, class {cls.__name__} has {method_name}, but it is not a method.")
-    
+
     if is_class_method(method):
         raise RuntimeError(f"As a BaseIO subclass, {cls.__name__} has {method_name}, but it is defined as a class method or something else like that")
 

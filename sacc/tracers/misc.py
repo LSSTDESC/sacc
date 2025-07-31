@@ -85,4 +85,3 @@ class MiscTracer(BaseTracer, type_name='Misc'):
             remove_dict_null_values(metadata)
             tracers[name] = cls(name, quantity=quantity, metadata=metadata)
         return tracers
-
