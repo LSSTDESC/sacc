@@ -308,7 +308,7 @@ class DataPoint(BaseIO, type_name="DataPoint"):
         return st
 
     def __eq__(self, other):
-       """
+        """
         Check equality with another DataPoint.
 
         This method compares the current DataPoint instance with another
@@ -325,12 +325,12 @@ class DataPoint(BaseIO, type_name="DataPoint"):
         bool
             True if the DataPoints are equal, False otherwise.
         """
-       if not isinstance(other, DataPoint):
-           return False
-       return (self.data_type == other.data_type and
-               self.tracers == other.tracers and
-               self.value == other.value and
-               self.tags == other.tags)
+        if not isinstance(other, DataPoint):
+            return False
+        return (self.data_type == other.data_type and
+                self.tracers == other.tracers and
+                self.value == other.value and
+                self.tags == other.tags)
 
     def get_tag(self, tag, default=None):
         """
