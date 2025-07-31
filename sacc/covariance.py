@@ -1,4 +1,3 @@
-from astropy.io import fits
 from astropy.table import Table
 import scipy.linalg
 import numpy as np
@@ -119,16 +118,15 @@ class BaseCovariance(BaseIO):
                     raise ValueError("Covariance block has wrong size "
                                      f"or shape {block.shape}")
             return BlockDiagonalCovariance(cov)
-        else:
-            cov = np.array(cov).squeeze()
-            if cov.ndim == 0:
-                return DiagonalCovariance(np.atleast_1d(cov))
-            if cov.ndim == 1:
-                return DiagonalCovariance(cov)
-            if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]):
-                raise ValueError("Covariance is not a 2D square matrix "
-                                 f"- shape: {cov.shape}")
-            return FullCovariance(cov)
+        cov = np.array(cov).squeeze()
+        if cov.ndim == 0:
+            return DiagonalCovariance(np.atleast_1d(cov))
+        if cov.ndim == 1:
+            return DiagonalCovariance(cov)
+        if (cov.ndim != 2) or (cov.shape[0] != cov.shape[1]):
+            raise ValueError("Covariance is not a 2D square matrix "
+                             f"- shape: {cov.shape}")
+        return FullCovariance(cov)
 
     @property
     def dense(self):
@@ -466,7 +464,7 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
             blocks = [self.blocks[i][m][:, m] for i, m in
                       enumerate(block_masks)]
             return self.__class__(blocks)
-        elif (np.diff(indices) > 0).all():
+        if (np.diff(indices) > 0).all():
             s = 0
             sub_blocks = []
             for block, sz in zip(self.blocks, self.block_sizes):
@@ -475,10 +473,9 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
                 sub_blocks.append(block[m][:, m])
                 s += sz
             return self.__class__(sub_blocks)
-        else:
-            C = scipy.linalg.block_diag(*self.blocks)
-            C = C[indices][:, indices]
-            return FullCovariance(C)
+        C = scipy.linalg.block_diag(*self.blocks)
+        C = C[indices][:, indices]
+        return FullCovariance(C)
 
     def _get_dense_inverse(self):
         # Invert all the blocks individually and then
