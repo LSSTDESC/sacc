@@ -253,18 +253,17 @@ def from_tables(table_list):
             table_class = DataPoint
             data_point_tables.append(table)
             continue
-        elif table_category == 'metadata':
+        if table_category == 'metadata':
             # This is a metadata table, which we treat as a special case.
             outputs[table_category] = table_to_metadata(table)
             continue
 
-        else:
-            table_class_name = table.meta['SACCCLSS'].lower()
-            # The class that represents this specific subtype
-            base_class = BaseIO._base_subclasses[table_category]
-            table_class = base_class._sub_classes[table_class_name]
-            if table_category not in outputs:
-                outputs[table_category] = {}
+        table_class_name = table.meta['SACCCLSS'].lower()
+        # The class that represents this specific subtype
+        base_class = BaseIO._base_subclasses[table_category]
+        table_class = base_class._sub_classes[table_class_name]
+        if table_category not in outputs:
+            outputs[table_category] = {}
 
         # We will be doing the types where an object is split up
         # over multiple tables separately, so we store them

@@ -113,10 +113,9 @@ class Sacc:
             # Otherwise just use whatever we have.
             if 'ell' in row.tags:
                 return (dt, row.tracers, row.tags['ell'])
-            elif 'theta' in row.tags:
+            if 'theta' in row.tags:
                 return (dt, row.tracers, row.tags['theta'])
-            else:
-                return (dt, row.tracers, 0.0)
+            return (dt, row.tracers, 0.0)
         # This from
         # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
         indices = [i[0] for i in sorted(enumerate(self.data),
@@ -388,7 +387,7 @@ class Sacc:
             # Skip things with the wrong type or tracer
             if not ((tracers is None) or (d.tracers == tracers)):
                 continue
-            if not ((data_type is None or d.data_type == data_type)):
+            if not (data_type is None or d.data_type == data_type):
                 continue
             # Remove any objects that don't match the required tags,
             # including the fact that we can specify tag__lt and tag__gt
@@ -1046,13 +1045,10 @@ class Sacc:
             cov_block = self.covariance.get_block(ind)
             if return_ind:
                 return angle, mu, cov_block, ind
-            else:
-                return angle, mu, cov_block
-        else:
-            if return_ind:
-                return angle, mu, ind
-            else:
-                return angle, mu
+            return angle, mu, cov_block
+        if return_ind:
+            return angle, mu, ind
+        return angle, mu
 
     def get_bandpower_windows(self, indices):
         """
@@ -1081,10 +1077,8 @@ class Sacc:
         if not isinstance(ws, BandpowerWindow):
             warnings.warn("No bandpower windows associated with these data")
             return None
-        else:
-            w_inds = np.array(self._get_tags_by_index(['window_ind'],
-                                                      indices)[0])
-            return ws.get_section(w_inds)
+        w_inds = np.array(self._get_tags_by_index(['window_ind'],indices)[0])
+        return ws.get_section(w_inds)
 
     def get_ell_cl(self, data_type, tracer1, tracer2,
                    return_cov=False, return_ind=False):
@@ -1185,7 +1179,7 @@ class Sacc:
                                 tracers_later=tracers_later, **t)
             return
         # multiple ell/theta values but same bin
-        elif np.isscalar(tracer1):
+        if np.isscalar(tracer1):
             n1 = len(x)
             n2 = len(tag_val)
             if tag_extra_name is None:
@@ -1193,7 +1187,7 @@ class Sacc:
                 n3 = n1
             else:
                 n3 = len(tag_extra)
-            if not (n1 == n2 == n3):
+            if not n1 == n2 == n3:
                 raise ValueError("Length of inputs do not match in"
                                  f"added 2pt data ({n1},{n2},{n3})")
             if window is None:
@@ -1218,7 +1212,7 @@ class Sacc:
                 n5 = n1
             else:
                 n5 = len(tag_extra)
-            if not (n1 == n2 == n3 == n4 == n5):
+            if not n1 == n2 == n3 == n4 == n5:
                 raise ValueError("Length of inputs do not match in "
                                  f"added 2pt data ({n1},{n2},{n3},{n4},{n5})")
             if window is None:
@@ -1247,7 +1241,7 @@ class Sacc:
                 n6 = n1
             else:
                 n6 = len(tag_extra)
-            if not (n1 == n2 == n3 == n4 == n5 == n6):
+            if not n1 == n2 == n3 == n4 == n5 == n6:
                 raise ValueError("Length of inputs do not match in added "
                                  f"2pt data ({n1},{n2},{n3},{n4},{n5},{n6})")
             if window is None:

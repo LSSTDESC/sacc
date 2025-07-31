@@ -221,8 +221,7 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
                                                 for s in properties[1:]])
     if subtype:
         return f"{sources}_{properties}_{statistic}_{subtype}"
-    else:
-        return f"{sources}_{properties}_{statistic}"
+    return f"{sources}_{properties}_{statistic}"
 
 
 # This makes a namespace object, so you can do:

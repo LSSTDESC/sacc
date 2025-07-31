@@ -104,7 +104,6 @@ class LogTopHatWindow(TopHatWindow, type_name='LogTopHat'):
     the min and max values it is assumed to be constant in the log of the
     argument.  The difference arises when this object is used elsewhere.
     """
-    pass
 
 
 class Window(BaseWindow, type_name='Standard'):
