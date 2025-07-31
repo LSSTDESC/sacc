@@ -1,5 +1,5 @@
 import numpy as np
-from ..utils import Namespace, unique_list
+from ..utils import Namespace
 from ..io import BaseIO, ONE_OBJECT_PER_TABLE, MULTIPLE_OBJECTS_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 
 

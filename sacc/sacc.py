@@ -1,14 +1,13 @@
 import copy
 import warnings
 import os
-from io import BytesIO
 
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
 from .tracers import BaseTracer
-from .windows import BaseWindow, BandpowerWindow
+from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint

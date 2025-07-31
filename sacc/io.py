@@ -1,5 +1,4 @@
-from .utils import unique_list, numpy_to_vanilla
-import numpy as np
+from .utils import numpy_to_vanilla
 from io import BytesIO
 import inspect
 from astropy.table import Table
