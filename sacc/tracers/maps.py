@@ -56,7 +56,7 @@ class MapTracer(BaseTracer, type_name='Map'):
 
         return table
 
-    
+
     @classmethod
     def from_table(cls, table):
         """Convert a single astropy table into a MapTracer instance.
@@ -77,11 +77,11 @@ class MapTracer(BaseTracer, type_name='Map'):
         map_unit = table.meta['MAP_UNIT']
         spin = table.meta['SPIN']
         metadata = {key[5:]: value for key, value in table.meta.items() if key.startswith("META_")}
-        
+
         ell = table['ell']
         beam = table['beam']
         beam_extra = {col.name: col.data for col in table.columns.values() if col.name not in ['ell', 'beam']}
-        
+
         return cls(name, spin, ell, beam, beam_extra=beam_extra, map_unit=map_unit, quantity=quantity, metadata=metadata)
 
 

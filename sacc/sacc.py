@@ -1,14 +1,13 @@
 import copy
 import warnings
 import os
-from io import BytesIO
 
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
 from .tracers import BaseTracer
-from .windows import BaseWindow, BandpowerWindow
+from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
 from .utils import unique_list
 from .data_types import standard_types, DataPoint
@@ -41,6 +40,48 @@ class Sacc:
         """
         return len(self.data)
 
+    def __eq__(self, other):
+        """
+        Test for equality between two Sacc instances.
+
+        Checks whether the two values are equal.  This is a
+        complete equality check, and will check that the data points,
+        tracers, covariance and metadata are all the same.
+
+        Parameters
+        ----------
+        other: Sacc instance
+            The other data set to compare with
+
+        Returns
+        -------
+        equal: bool
+            True if the two data sets are the same, False otherwise.
+        """
+        if not isinstance(other, Sacc):
+            return False
+
+        if self.data != other.data:
+            return False
+
+        if len(self.tracers) != len(other.tracers):
+            return False
+        if set(self.tracers.keys()) != set(other.tracers.keys()):
+            return False
+        for k1, v1 in self.tracers.items():
+            v2 = other.tracers[k1]
+            if not v1 == v2:
+                return False
+
+        if self.covariance != other.covariance:
+            return False
+
+        if self.metadata != other.metadata:
+            return False
+
+        return True
+
+
     def copy(self):
         """
         Create a copy of the data set with no data shared with the original.
@@ -72,10 +113,9 @@ class Sacc:
             # Otherwise just use whatever we have.
             if 'ell' in row.tags:
                 return (dt, row.tracers, row.tags['ell'])
-            elif 'theta' in row.tags:
+            if 'theta' in row.tags:
                 return (dt, row.tracers, row.tags['theta'])
-            else:
-                return (dt, row.tracers, 0.0)
+            return (dt, row.tracers, 0.0)
         # This from
         # https://stackoverflow.com/questions/6422700/how-to-get-indices-of-a-sorted-array-in-python
         indices = [i[0] for i in sorted(enumerate(self.data),
@@ -347,7 +387,7 @@ class Sacc:
             # Skip things with the wrong type or tracer
             if not ((tracers is None) or (d.tracers == tracers)):
                 continue
-            if not ((data_type is None or d.data_type == data_type)):
+            if not (data_type is None or d.data_type == data_type):
                 continue
             # Remove any objects that don't match the required tags,
             # including the fact that we can specify tag__lt and tag__gt
@@ -821,7 +861,7 @@ class Sacc:
         windows = unique_list(windows)
         window_ids = {id(w):w for w in windows}
         return window_ids
-        
+
     def to_tables(self):
         """
         Convert this data set to a collection of astropy tables.
@@ -939,7 +979,7 @@ class Sacc:
             tables.append(io.metadata_to_table(metadata))
 
         return cls.from_tables(tables, cov=cov)
-    
+
     @classmethod
     def from_tables(cls, tables, cov=None):
         """
@@ -980,7 +1020,7 @@ class Sacc:
 
         if cov is not None:
             s.add_covariance(cov)
-        
+
         return s
 
 
@@ -1005,13 +1045,10 @@ class Sacc:
             cov_block = self.covariance.get_block(ind)
             if return_ind:
                 return angle, mu, cov_block, ind
-            else:
-                return angle, mu, cov_block
-        else:
-            if return_ind:
-                return angle, mu, ind
-            else:
-                return angle, mu
+            return angle, mu, cov_block
+        if return_ind:
+            return angle, mu, ind
+        return angle, mu
 
     def get_bandpower_windows(self, indices):
         """
@@ -1040,10 +1077,8 @@ class Sacc:
         if not isinstance(ws, BandpowerWindow):
             warnings.warn("No bandpower windows associated with these data")
             return None
-        else:
-            w_inds = np.array(self._get_tags_by_index(['window_ind'],
-                                                      indices)[0])
-            return ws.get_section(w_inds)
+        w_inds = np.array(self._get_tags_by_index(['window_ind'],indices)[0])
+        return ws.get_section(w_inds)
 
     def get_ell_cl(self, data_type, tracer1, tracer2,
                    return_cov=False, return_ind=False):
@@ -1144,7 +1179,7 @@ class Sacc:
                                 tracers_later=tracers_later, **t)
             return
         # multiple ell/theta values but same bin
-        elif np.isscalar(tracer1):
+        if np.isscalar(tracer1):
             n1 = len(x)
             n2 = len(tag_val)
             if tag_extra_name is None:
@@ -1152,7 +1187,7 @@ class Sacc:
                 n3 = n1
             else:
                 n3 = len(tag_extra)
-            if not (n1 == n2 == n3):
+            if not n1 == n2 == n3:
                 raise ValueError("Length of inputs do not match in"
                                  f"added 2pt data ({n1},{n2},{n3})")
             if window is None:
@@ -1177,7 +1212,7 @@ class Sacc:
                 n5 = n1
             else:
                 n5 = len(tag_extra)
-            if not (n1 == n2 == n3 == n4 == n5):
+            if not n1 == n2 == n3 == n4 == n5:
                 raise ValueError("Length of inputs do not match in "
                                  f"added 2pt data ({n1},{n2},{n3},{n4},{n5})")
             if window is None:
@@ -1206,7 +1241,7 @@ class Sacc:
                 n6 = n1
             else:
                 n6 = len(tag_extra)
-            if not (n1 == n2 == n3 == n4 == n5 == n6):
+            if not n1 == n2 == n3 == n4 == n5 == n6:
                 raise ValueError("Length of inputs do not match in added "
                                  f"2pt data ({n1},{n2},{n3},{n4},{n5},{n6})")
             if window is None:
@@ -1482,7 +1517,7 @@ def fix_data_ordering(data_points):
     Returns
     -------
     ordered_data_points: list of DataPoint objects
-    
+
     """
     # Older versions of SACC did not have this column, so we
     # check for that situation and if not then add it here, in the
