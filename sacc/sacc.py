@@ -919,9 +919,7 @@ class Sacc:
         for table in tables:
             typ = table.meta['SACCTYPE']
             name = table.meta['SACCNAME']
-            if typ == 'data':
-                extname = f'{typ}:{name}'
-            else:
+            if typ != 'data':
                 cls = table.meta['SACCCLSS']
                 extname = f'{typ}:{cls}:{name}'
                 table.meta['EXTNAME'] = extname
