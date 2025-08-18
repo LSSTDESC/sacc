@@ -1,11 +1,12 @@
 import copy
-import warnings
 import os
+import re
+import warnings
 
-import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 import h5py
+import numpy as np
 
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
@@ -1021,19 +1022,34 @@ class Sacc:
 
     @classmethod
     def load_hdf5(cls, filename):
+        """
+        Load a Sacc object from an HDF5 file.
+
+        Parameters
+        ----------
+        filename: str
+            Path to the HDF5 file.
+
+        Returns
+        -------
+        sacc_obj: Sacc
+            A Sacc object reconstructed from the tables in the HDF5 file.
+        """
         recovered_tables = []
         with h5py.File(filename, 'r') as f:
-            # Get table paths and sort by index to preserve order
+            # Filter datasets to only include data tables (e.g., 'table0', 'table1')
             table_paths = sorted(
-                [key for key in f.keys() if key.startswith('table')],
+                [key for key in f.keys() if re.match(r'^table\d+$', key)],
                 key=lambda x: int(x.replace('table', ''))
             )
+
             for path in table_paths:
+                # Read the table with its metadata
                 table = Table.read(f, path=path)
                 recovered_tables.append(table)
+
         sacc_obj = cls.from_tables(recovered_tables)
         return sacc_obj
-
 
     @classmethod
     def from_tables(cls, tables, cov=None):

@@ -737,7 +737,7 @@ def test_io():
         s2 = sacc.Sacc.load_fits(sacc_filename)
         s3 = sacc.Sacc.load_hdf5(hdf_filename)
         assert s2 == s
-        #assert s3 == s
+        assert s3 == s
 
     assert len(s2) == 20
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
