@@ -776,9 +776,12 @@ def test_io_maps_bpws():
     s.add_ell_cl('cl_00', 'gc', 'sz', ell, c_ell, window=wins)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        sacc_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(sacc_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(sacc_filename)
+        assert s2 == s
 
     assert len(s2) == 30
     l, cl, ind = s2.get_ell_cl('cl_00', 'gc', 'sz',
@@ -786,7 +789,6 @@ def test_io_maps_bpws():
     w = s2.get_bandpower_windows(ind)
     assert np.all(cl == c_ell)
     assert w.weight.shape == (n_ell_large, n_ell)
-
 
 def test_rename_tracer(filled_sacc):
     s = filled_sacc.copy()
