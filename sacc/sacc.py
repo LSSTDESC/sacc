@@ -5,6 +5,7 @@ import os
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import h5py
 
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
@@ -977,6 +978,62 @@ class Sacc:
             tables.append(io.metadata_to_table(metadata))
 
         return cls.from_tables(tables, cov=cov)
+
+    def save_hdf5(self, filename, overwrite=False, compression='gzip', compression_opts=4):
+        """
+        Save this data to a HDF5 format Sacc file.
+
+        Parameters
+        ----------
+        filename: str
+            Destination HDF5 file name
+        overwrite: bool
+            If False (the default), raise an error if the file already exists
+            If True, overwrite the file silently.
+        compression: str, optional
+            Compression filter to use ('gzip', 'lzf', 'szip', or None). Default is 'gzip'.
+        compression_opts : int, optional
+            Compression level (0-9 for gzip, where 0 is no compression and 9 is maximum).
+            Default is 4 (moderate compression).
+        """
+        if os.path.exists(filename) and not overwrite:
+            raise FileExistsError(f"File {filename} already exists. "
+                                  "Use overwrite=True to overwrite it.")
+        tables = self.to_tables()
+
+        # Add the EXTNAME metadata value to each table.
+        for table in tables:
+            typ = table.meta['SACCTYPE']
+            name = table.meta['SACCNAME']
+            if typ != 'data':
+                cls = table.meta['SACCCLSS']
+                extname = f'{typ}:{cls}:{name}'
+                table.meta['EXTNAME'] = extname
+
+        with h5py.File(filename, 'w') as f:
+            for i, table in enumerate(tables):
+                table.write(f,
+                            path=f'table{i}',
+                            serialize_meta=True,
+                            compression=compression,
+                            compression_opts=compression_opts
+                            )
+
+    @classmethod
+    def load_hdf5(cls, filename):
+        recovered_tables = []
+        with h5py.File(filename, 'r') as f:
+            # Get table paths and sort by index to preserve order
+            table_paths = sorted(
+                [key for key in f.keys() if key.startswith('table')],
+                key=lambda x: int(x.replace('table', ''))
+            )
+            for path in table_paths:
+                table = Table.read(f, path=path)
+                recovered_tables.append(table)
+        sacc_obj = cls.from_tables(recovered_tables)
+        return sacc_obj
+
 
     @classmethod
     def from_tables(cls, tables, cov=None):

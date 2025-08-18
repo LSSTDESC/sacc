@@ -730,9 +730,14 @@ def test_io():
                          tracers, ee, ell=10.0*i)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        sacc_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(sacc_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(sacc_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        #assert s3 == s
 
     assert len(s2) == 20
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
