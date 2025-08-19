@@ -817,6 +817,7 @@ def test_rename_tracer(filled_sacc):
         filename = os.path.join(tmpdir, 'test.sacc')
         s.save_fits(filename)
         s2 = sacc.Sacc.load_fits(filename)
+        assert s2 == s
 
     assert ('source_0' not in s2.tracers) and ('src_0' in s2.tracers)
     assert sorted(tracer_comb_new) == sorted(s2.get_tracer_combinations())
@@ -824,6 +825,7 @@ def test_rename_tracer(filled_sacc):
     # points
     s.to_canonical_order()
     s2.to_canonical_order()
+    assert s2 == s
     assert np.all(s.mean == s2.mean)
     assert np.all(s.indices(tracers=('src_0', 'source_1')) ==
                   s2.indices(tracers=('src_0', 'source_1')))
@@ -892,6 +894,7 @@ def test_io_qp():
         filename = os.path.join(tmpdir, 'test.sacc')
         s.save_fits(filename)
         s2 = sacc.Sacc.load_fits(filename)
+        assert s2 == s
 
     assert len(s2) == 20
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
