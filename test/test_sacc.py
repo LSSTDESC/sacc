@@ -924,6 +924,7 @@ def test_save_order_maintained():
         filename = os.path.join(tmpdir, 'test.sacc')
         s.save_fits(filename)
         s2 = sacc.Sacc.load_fits(filename)
+        assert s2 == s
 
     # check that the order of the data points is maintained
     assert len(s2) == 4
@@ -972,6 +973,7 @@ def test_metadata_round_trip():
         filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
         s.save_fits(filename)
         s2 = sacc.Sacc.load_fits(filename)
+        assert s2 == s
 
     assert s2.metadata["mouse"] is True
     assert s2.metadata["rat"] is False
@@ -1034,6 +1036,30 @@ def test_equality_mismatched_tracers(filled_sacc):
 def test_equality_wrong_type():
     x = sacc.Sacc()
     y = 0
+    assert x != y
+
+def test_equality_mismatched_tracer_names():
+    x = sacc.Sacc()
+    y = sacc.Sacc()
+    x.add_tracer('NZ', 'source_0', np.array([0., 1.]), np.array([1., 1.]))
+    y.add_tracer('NZ', 'source_1', np.array([0., 1.]), np.array([1., 1.]))
+    assert x != y
+
+def test_equality_mismatched_covariance(filled_sacc):
+    x = filled_sacc.copy()
+    cov = make_full_cov(len(filled_sacc))
+    x.add_covariance(cov.copy())
+    assert x == x
+
+    y = filled_sacc.copy()
+    assert x != y
+
+def test_equality_mismatched_metadata(filled_sacc):
+    x = filled_sacc.copy()
+    x.metadata['test'] = 'value'
+    assert x == x
+
+    y = filled_sacc.copy()
     assert x != y
 
 
