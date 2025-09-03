@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup python
       uses: actions/setup-python@v4
@@ -31,11 +31,20 @@ jobs:
 
     - name: Run tests and measure coverage
       run: |
-        pytest  --cov sacc --cov-report xml:coverage.xml   ./test
+        pytest  --cov sacc --cov-report xml:coverage.xml --cov-branch  ./test
 
-    - name: Report coverage
+    - name: Report coverage in GitHub PR
       uses: orgoro/coverage@v3.2
       if: matrix.python-version == '3.11'
       with:
         coverageFile: ./coverage.xml
         token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload coverage reports to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        verbose: true
+        use_oidc: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

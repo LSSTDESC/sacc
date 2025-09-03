@@ -48,5 +48,3 @@ include = ["sacc"]
 [tool.setuptools.dynamic]
 version = {attr = "sacc.__version__"}
 
-[tool.coverage.run]
-relative_paths = true

@@ -1,7 +1,7 @@
 from .base import BaseTracer, ONE_OBJECT_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 from astropy.table import Table
 import numpy as np
-from ..utils import remove_dict_null_values, convert_to_astropy_table
+from ..utils import remove_dict_null_values
 
 class NZTracer(BaseTracer, type_name='NZ'):
     """

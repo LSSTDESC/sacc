@@ -221,8 +221,7 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
                                                 for s in properties[1:]])
     if subtype:
         return f"{sources}_{properties}_{statistic}_{subtype}"
-    else:
-        return f"{sources}_{properties}_{statistic}"
+    return f"{sources}_{properties}_{statistic}"
 
 
 # This makes a namespace object, so you can do:
@@ -300,11 +299,37 @@ class DataPoint(BaseIO, type_name="DataPoint"):
                                      f"{data_type} "
                                      "(ignore_missing_tags=False)")
 
+
     def __repr__(self):
         t = ", ".join(f'{k}={v}' for (k, v) in self.tags.items() if k != 'sacc_ordering')
         st = f"DataPoint(data_type='{self.data_type}', "
         st += f"tracers={self.tracers}, value={self.value}, {t})"
         return st
+
+    def __eq__(self, other):
+        """
+        Check equality with another DataPoint.
+
+        This method compares the current DataPoint instance with another
+        to determine if they are equivalent. Two DataPoints are considered
+        equal if they have the same data_type, tracers, value, and tags.
+
+        Parameters
+        ----------
+        other: DataPoint
+            The other DataPoint instance to compare against.
+
+        Returns
+        -------
+        bool
+            True if the DataPoints are equal, False otherwise.
+        """
+        if not isinstance(other, DataPoint):
+            return False
+        return (self.data_type == other.data_type and
+                self.tracers == other.tracers and
+                self.value == other.value and
+                self.tags == other.tags)
 
     def get_tag(self, tag, default=None):
         """
@@ -358,7 +383,7 @@ class DataPoint(BaseIO, type_name="DataPoint"):
         tags = list(tags)
         tracers = [f'tracer_{i}' for i in range(ntracer)]
         return tracers, tags
-    
+
     @classmethod
     def to_tables(cls, data, lookups=None):
         data_by_type = {}
@@ -379,11 +404,11 @@ class DataPoint(BaseIO, type_name="DataPoint"):
             table.meta['SACCTYPE'] = 'data'
             table.meta['SACCNAME'] = data_type
             tables[data_type] = table
-        
+
         # Now remove the temporary ordering tag
         for d in data:
             del d.tags['sacc_ordering']
-        
+
         return tables
 
     @classmethod

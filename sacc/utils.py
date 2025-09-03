@@ -151,8 +151,7 @@ def invert_spd_matrix(M, strict=True):
         invM, info = scipy.linalg.lapack.dpotri(L)
         if info:
             raise ValueError("Matrix is not symmetric-positive-definite")
-        else:
-            invM = np.triu(invM) + np.triu(invM, k=1).T
+        invM = np.triu(invM) + np.triu(invM, k=1).T
     # Otherwise we use the generic (and also slower) method that will
     # work if, due to numerical issues, the matrix is not quite SPD
     else:
@@ -183,10 +182,9 @@ def convert_to_astropy_table(obj):
 
     if version == 1:
         return convertToApTables(obj)
-    elif version == 2:
+    if version == 2:
         return convert_table(obj, "astropyTable")
-    else:
-        raise ValueError("Unknown version of tables_io conversion tool.")
+    raise ValueError("Unknown version of tables_io conversion tool.")
 
 
 def numpy_to_vanilla(x):

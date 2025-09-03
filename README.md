@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/LSSTDESC/sacc/graph/badge.svg?token=YZf4IXbzA0)](https://codecov.io/github/LSSTDESC/sacc)
+
 Sacc
 ====
 
