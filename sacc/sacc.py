@@ -941,7 +941,8 @@ class Sacc:
 
         # Create the actual fits object
         primary_header = fits.Header()
-        with warnings.catch_warnings(category=fits.verify.VerifyWarning, action='ignore'):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=fits.verify.VerifyWarning)
             hdus = [fits.PrimaryHDU(header=primary_header)] + \
                     [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
