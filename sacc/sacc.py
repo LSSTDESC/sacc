@@ -901,8 +901,9 @@ class Sacc:
 
         # Create the actual fits object
         primary_header = fits.Header()
-        hdus = [fits.PrimaryHDU(header=primary_header)] + \
-                [fits.table_to_hdu(table) for table in tables]
+        with warnings.catch_warnings(category=fits.verify.VerifyWarning, action='ignore'):
+            hdus = [fits.PrimaryHDU(header=primary_header)] + \
+                    [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
         io.astropy_buffered_fits_write(filename, hdu_list)
 
