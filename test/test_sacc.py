@@ -11,8 +11,12 @@ import time
 import warnings
 try:
     import qp
+    QP_AVAILABLE = True
 except:
-    pass
+    QP_AVAILABLE = False
+
+# Decorator to skip tests if qp is not available.
+skip_if_no_qp = pytest.mark.skipif(not QP_AVAILABLE, reason="qp not available")
 
 test_dir = pathlib.Path(__file__).resolve().parent
 test_data_dir = test_dir / 'data'
@@ -847,8 +851,8 @@ def test_rename_tracer(filled_sacc):
                   s3.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
+@skip_if_no_qp
 def test_qpnz_tracer():
-    import qp
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     z = np.linspace(0., 1., 101)
@@ -883,7 +887,7 @@ def test_qpnz_tracer():
     assert D.name == 'tracer3'
 
 
-
+@skip_if_no_qp
 def test_io_qp():
     s = sacc.Sacc()
 
@@ -979,6 +983,7 @@ def test_warn_empty():
     with pytest.warns(UserWarning, match="Empty index selected"):
         s.indices(data_type='non_existent_data_type', warn_empty=True)
 
+@skip_if_no_qp
 def test_old_qp_sacc_readable():
     s = sacc.Sacc.load_fits("test/legacy_files/old_qp_sacc.fits")
     t = s.tracers['tracer1']
