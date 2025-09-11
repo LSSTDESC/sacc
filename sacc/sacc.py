@@ -5,7 +5,6 @@ import warnings
 
 from astropy.io import fits
 from astropy.table import Table
-import h5py
 import numpy as np
 
 from .tracers import BaseTracer
@@ -997,6 +996,7 @@ class Sacc:
             Compression level (0-9 for gzip, where 0 is no compression and 9 is maximum).
             Default is 4 (moderate compression).
         """
+        import h5py
         if os.path.exists(filename) and not overwrite:
             raise FileExistsError(f"File {filename} already exists. "
                                   "Use overwrite=True to overwrite it.")
@@ -1035,6 +1035,7 @@ class Sacc:
         sacc_obj: Sacc
             A Sacc object reconstructed from the tables in the HDF5 file.
         """
+        import h5py
         recovered_tables = []
         with h5py.File(filename, 'r') as f:
             # Filter datasets to only include data tables (e.g., 'table0', 'table1')
