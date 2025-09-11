@@ -1015,7 +1015,7 @@ class Sacc:
             for i, table in enumerate(tables):
                 table.write(f,
                             path=f'table{i}',
-                            serialize_meta=True,
+                            serialize_meta=False,
                             compression=compression,
                             compression_opts=compression_opts
                             )
