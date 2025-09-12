@@ -1012,9 +1012,42 @@ class Sacc:
                 table.meta['EXTNAME'] = extname
 
         with h5py.File(filename, 'w') as f:
-            for i, table in enumerate(tables):
+            used_names = {}
+            for table in tables:
+                # Build a meaningful dataset name
+                typ = table.meta.get('SACCTYPE', 'unknown')
+                name = table.meta.get('SACCNAME', None)
+                cls = table.meta.get('SACCCLSS', None)
+                part = table.meta.get('SACCPART', None)
+
+                # Compose base dataset name
+                if typ == 'data' and name:
+                    dset_name = f"data_{name}"
+                elif typ == 'tracer' and name:
+                    dset_name = f"tracer_{name}"
+                elif typ == 'window' and name:
+                    dset_name = f"window_{name}"
+                    if part:
+                        dset_name += f"_{part}"
+                elif typ == 'covariance' and name:
+                    dset_name = f"covariance_{name}"
+                elif typ == 'metadata':
+                    dset_name = "metadata"
+                elif name:
+                    dset_name = f"{typ}_{name}"
+                else:
+                    dset_name = typ
+
+                # Ensure uniqueness by appending an index if needed
+                base_name = dset_name
+                idx = used_names.get(base_name, 0)
+                while dset_name in f:
+                    idx += 1
+                    dset_name = f"{base_name}_{idx}"
+                used_names[base_name] = idx
+
                 table.write(f,
-                            path=f'table{i}',
+                            path=dset_name,
                             serialize_meta=False,
                             compression=compression,
                             compression_opts=compression_opts
@@ -1038,17 +1071,12 @@ class Sacc:
         import h5py
         recovered_tables = []
         with h5py.File(filename, 'r') as f:
-            # Filter datasets to only include data tables (e.g., 'table0', 'table1')
-            table_paths = sorted(
-                [key for key in f.keys() if re.match(r'^table\d+$', key)],
-                key=lambda x: int(x.replace('table', ''))
-            )
-
-            for path in table_paths:
-                # Read the table with its metadata
-                table = Table.read(f, path=path)
-                recovered_tables.append(table)
-
+            # Read all datasets (not groups) in the order they appear
+            for key in f.keys():
+                item = f[key]
+                if isinstance(item, h5py.Dataset):
+                    table = Table.read(f, path=key)
+                    recovered_tables.append(table)
         sacc_obj = cls.from_tables(recovered_tables)
         return sacc_obj
 
