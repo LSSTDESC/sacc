@@ -1022,11 +1022,11 @@ class Sacc:
 
                 # Compose base dataset name
                 if typ == 'data' and name:
-                    dset_name = f"data_{name}"
+                    dset_name = f"data/{name}"
                 elif typ == 'tracer' and name:
-                    dset_name = f"tracer_{name}"
+                    dset_name = f"tracer/{name}"
                 elif typ == 'window' and name:
-                    dset_name = f"window_{name}"
+                    dset_name = f"window/{name}"
                     if part:
                         dset_name += f"_{part}"
                 elif typ == 'covariance' and name:
@@ -1077,6 +1077,12 @@ class Sacc:
                 if isinstance(item, h5py.Dataset):
                     table = Table.read(f, path=key)
                     recovered_tables.append(table)
+                elif isinstance(item, h5py.Group):
+                    for subkey in item.keys():
+                        subitem = item[subkey]
+                        if isinstance(subitem, h5py.Dataset):
+                            table = Table.read(item, path=f"{subkey}")
+                            recovered_tables.append(table)
         sacc_obj = cls.from_tables(recovered_tables)
         return sacc_obj
 
