@@ -1,10 +1,11 @@
 import copy
-import warnings
 import os
+import re
+import warnings
 
-import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import numpy as np
 
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
@@ -932,9 +933,7 @@ class Sacc:
         for table in tables:
             typ = table.meta['SACCTYPE']
             name = table.meta['SACCNAME']
-            if typ == 'data':
-                extname = f'{typ}:{name}'
-            else:
+            if typ != 'data':
                 cls = table.meta['SACCCLSS']
                 extname = f'{typ}:{cls}:{name}'
                 table.meta['EXTNAME'] = extname
@@ -994,6 +993,115 @@ class Sacc:
             tables.append(io.metadata_to_table(metadata))
 
         return cls.from_tables(tables, cov=cov)
+
+    def save_hdf5(self, filename, overwrite=False, compression='gzip', compression_opts=4):
+        """
+        Save this data to a HDF5 format Sacc file.
+
+        Parameters
+        ----------
+        filename: str
+            Destination HDF5 file name
+        overwrite: bool
+            If False (the default), raise an error if the file already exists
+            If True, overwrite the file silently.
+        compression: str, optional
+            Compression filter to use ('gzip', 'lzf', 'szip', or None). Default is 'gzip'.
+        compression_opts : int, optional
+            Compression level (0-9 for gzip, where 0 is no compression and 9 is maximum).
+            Default is 4 (moderate compression).
+        """
+        import h5py
+        if os.path.exists(filename) and not overwrite:
+            raise FileExistsError(f"File {filename} already exists. "
+                                  "Use overwrite=True to overwrite it.")
+        tables = self.to_tables()
+
+        # Add the EXTNAME metadata value to each table.
+        for table in tables:
+            typ = table.meta['SACCTYPE']
+            name = table.meta['SACCNAME']
+            if typ != 'data':
+                cls = table.meta['SACCCLSS']
+                extname = f'{typ}:{cls}:{name}'
+                table.meta['EXTNAME'] = extname
+
+        with h5py.File(filename, 'w') as f:
+            used_names = {}
+            for table in tables:
+                # Build a meaningful dataset name
+                typ = table.meta.get('SACCTYPE', 'unknown')
+                name = table.meta.get('SACCNAME', None)
+                cls = table.meta.get('SACCCLSS', None)
+                part = table.meta.get('SACCPART', None)
+
+                # Compose base dataset name
+                if typ == 'data' and name:
+                    dset_name = f"data/{name}"
+                elif typ == 'tracer' and name:
+                    dset_name = f"tracer/{name}"
+                elif typ == 'traceruncertainty' and name:
+                    dset_name = f"traceruncertainty/{name}"
+                elif typ == 'window' and name:
+                    dset_name = f"window/{name}"
+                    if part:
+                        dset_name += f"_{part}"
+                elif typ == 'covariance' and name:
+                    dset_name = f"covariance_{name}"
+                elif typ == 'metadata':
+                    dset_name = "metadata"
+                elif name:
+                    dset_name = f"{typ}_{name}"
+                else:
+                    dset_name = typ
+
+                # Ensure uniqueness by appending an index if needed
+                base_name = dset_name
+                idx = used_names.get(base_name, 0)
+                while dset_name in f:
+                    idx += 1
+                    dset_name = f"{base_name}_{idx}"
+                used_names[base_name] = idx
+
+                table.write(f,
+                            path=dset_name,
+                            serialize_meta=False,
+                            compression=compression,
+                            compression_opts=compression_opts
+                            )
+
+    @classmethod
+    def load_hdf5(cls, filename):
+        """
+        Load a Sacc object from an HDF5 file.
+
+        Parameters
+        ----------
+        filename: str
+            Path to the HDF5 file.
+
+        Returns
+        -------
+        sacc_obj: Sacc
+            A Sacc object reconstructed from the tables in the HDF5 file.
+        """
+        import h5py
+        recovered_tables = []
+        with h5py.File(filename, 'r') as f:
+            # Read all datasets (not groups) in the order they appear
+            for key in f.keys():
+                item = f[key]
+                if isinstance(item, h5py.Dataset):
+                    table = Table.read(f, path=key)
+                    recovered_tables.append(table)
+                elif isinstance(item, h5py.Group):
+                    for subkey in item.keys():
+                        subitem = item[subkey]
+                        if isinstance(subitem, h5py.Dataset):
+                            table = Table.read(item, path=f"{subkey}")
+                            recovered_tables.append(table)
+        sacc_obj = cls.from_tables(recovered_tables)
+        return sacc_obj
 
     @classmethod
     def from_tables(cls, tables, cov=None):

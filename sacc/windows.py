@@ -54,6 +54,33 @@ class TopHatWindow(BaseWindow, type_name='TopHat'):
         self.min = range_min
         self.max = range_max
 
+    def __eq__(self, other):
+        """Equality test.
+
+        Two TopHatWindows are equal if they have the same min and max.
+
+        Parameters
+        ----------
+        other: object
+            The other object to test for equality
+        """
+        if not isinstance(other, type(self)):
+            return False
+        return self.min == other.min and self.max == other.max
+
+    def __hash__(self):
+        """Hash function.
+
+        This uses the same attributes as __eq__ to ensure consistent
+        behaviour.
+
+        Returns
+        -------
+        hash: int
+
+        """
+        return hash((self.min, self.max))
+
     @classmethod
     def to_table(cls, window_list):
         """Convert a list of Top-Hat windows to a list of astropy tables.
@@ -129,6 +156,34 @@ class Window(BaseWindow, type_name='Standard'):
         self.values = np.array(values)
         self.weight = np.array(weight)
 
+    def __eq__(self, other):
+        """Equality test
+
+        Two Windows are equal if they have equivalent values and weights.
+
+        Parameters
+        ----------
+        other: Window
+            The other Window to compare
+
+        """
+        if not isinstance(other, type(self)):
+            return False
+        return np.allclose(self.values, other.values) and np.allclose(self.weight, other.weight)
+
+    def __hash__(self):
+        """Hash function.
+
+        This uses the identity of the object. Caution: this is not
+        ideal, because it means that two windows with equivalent values and
+        weights may not have the same hash.
+
+        Returns
+        -------
+        hash: int
+        """
+        return id(self)
+
     def to_table(self):
         """Convert a list of windows to a list of astropy tables.
 
@@ -199,6 +254,41 @@ class BandpowerWindow(BaseWindow, type_name='Bandpower'):
         self.nv = nv
         self.values = np.array(values)
         self.weight = np.array(weight)
+
+    def __eq__(self, other):
+        """Equality test
+
+        Two BandpowerWindows are equal if they have the same values and weights.
+
+        Parameters
+        ----------
+        other: BandpowerWindow
+            The other BandpowerWindow to compare
+
+        Returns
+        -------
+        bool
+            True if the windows are equal, False otherwise
+        """
+        if not isinstance(other, type(self)):
+            return False
+        return self.nell == other.nell and \
+            self.nv == other.nv and \
+            np.allclose(self.values, other.values) and \
+            np.allclose(self.weight, other.weight)
+
+    def __hash__(self):
+        """Hash function.
+
+        This uses the identity of the object. Caution: this is not ideal,
+        because it means that two windows with equivalent values and
+        weights may not have the same hash.
+
+        Returns
+        -------
+        hash: int
+        """
+        return id(self)
 
     def to_table(self):
         """Convert a list of windows to a list of astropy tables.

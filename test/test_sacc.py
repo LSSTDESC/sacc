@@ -11,8 +11,12 @@ import time
 import warnings
 try:
     import qp
+    QP_AVAILABLE = True
 except:
-    pass
+    QP_AVAILABLE = False
+
+# Decorator to skip tests if qp is not available.
+skip_if_no_qp = pytest.mark.skipif(not QP_AVAILABLE, reason="qp not available")
 
 test_dir = pathlib.Path(__file__).resolve().parent
 test_data_dir = test_dir / 'data'
@@ -730,15 +734,19 @@ def test_io():
                          tracers, ee, ell=10.0*i)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        sacc_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(sacc_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(sacc_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
-    assert len(s2) == 20
-    mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
-    for i in range(20):
-        assert mu[i] == 0.1 * i
-
+    for sn in [s2, s3]:
+        mu = sn.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
+        for i in range(20):
+            assert mu[i] == 0.1 * i
 
 def test_io_maps_bpws():
     s = sacc.Sacc()
@@ -771,9 +779,14 @@ def test_io_maps_bpws():
     s.add_ell_cl('cl_00', 'gc', 'sz', ell, c_ell, window=wins)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        sacc_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(sacc_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(sacc_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
     assert len(s2) == 30
     l, cl, ind = s2.get_ell_cl('cl_00', 'gc', 'sz',
@@ -781,7 +794,6 @@ def test_io_maps_bpws():
     w = s2.get_bandpower_windows(ind)
     assert np.all(cl == c_ell)
     assert w.weight.shape == (n_ell_large, n_ell)
-
 
 def test_rename_tracer(filled_sacc):
     s = filled_sacc.copy()
@@ -807,9 +819,14 @@ def test_rename_tracer(filled_sacc):
 
     # Check it is permanent
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        fits_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(fits_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(fits_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
     assert ('source_0' not in s2.tracers) and ('src_0' in s2.tracers)
     assert sorted(tracer_comb_new) == sorted(s2.get_tracer_combinations())
@@ -817,15 +834,25 @@ def test_rename_tracer(filled_sacc):
     # points
     s.to_canonical_order()
     s2.to_canonical_order()
+    s3.to_canonical_order()
+    assert s2 == s
+    assert s3 == s
     assert np.all(s.mean == s2.mean)
+    assert np.all(s.mean == s3.mean)
+
     assert np.all(s.indices(tracers=('src_0', 'source_1')) ==
-                  s2.indices(tracers=('src_0', 'source_1')))
+              s2.indices(tracers=('src_0', 'source_1')))
+    assert np.all(s.indices(tracers=('src_0', 'source_1')) ==
+              s3.indices(tracers=('src_0', 'source_1')))
+
     assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
                   s2.indices(tracers=('source_1', 'source_1', 'src_0')))
+    assert np.all(s.indices(tracers=('source_1', 'source_1', 'src_0')) ==
+                  s3.indices(tracers=('source_1', 'source_1', 'src_0')))
 
 
+@skip_if_no_qp
 def test_qpnz_tracer():
-    import qp
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     md2 = {'potato': 'never'}
     z = np.linspace(0., 1., 101)
@@ -860,7 +887,7 @@ def test_qpnz_tracer():
     assert D.name == 'tracer3'
 
 
-
+@skip_if_no_qp
 def test_io_qp():
     s = sacc.Sacc()
 
@@ -882,12 +909,22 @@ def test_io_qp():
                          tracers, ee, ell=10.0*i)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        fits_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(fits_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(fits_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
     assert len(s2) == 20
     mu = s2.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
+    for i in range(20):
+        assert mu[i] == 0.1 * i
+
+    assert len(s3) == 20
+    mu = s3.get_mean(sacc.standard_types.galaxy_shear_cl_ee)
     for i in range(20):
         assert mu[i] == 0.1 * i
 
@@ -911,21 +948,27 @@ def test_save_order_maintained():
     s.add_data_point("dt2", ('source_0',), 0.1, b=-2)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        fits_filename = os.path.join(tmpdir, 'test.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test.hdf5')
+        s.save_fits(fits_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(fits_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
     # check that the order of the data points is maintained
-    assert len(s2) == 4
-    assert s2.data[0].data_type == "dt1"
-    assert s2.data[1].data_type == "dt2"
-    assert s2.data[2].data_type == "dt1"
-    assert s2.data[3].data_type == "dt2"
-    # and that the tags are all okay
-    assert s2.data[0].get_tag('a') == 1
-    assert s2.data[1].get_tag('b') == 2
-    assert s2.data[2].get_tag('a') == -1
-    assert s2.data[3].get_tag('b') == -2
+    for ss in [s2, s3]:
+        assert len(ss) == 4
+        assert ss.data[0].data_type == "dt1"
+        assert ss.data[1].data_type == "dt2"
+        assert ss.data[2].data_type == "dt1"
+        assert ss.data[3].data_type == "dt2"
+        # and that the tags are all okay
+        assert ss.data[0].get_tag('a') == 1
+        assert ss.data[1].get_tag('b') == 2
+        assert ss.data[2].get_tag('a') == -1
+        assert ss.data[3].get_tag('b') == -2
 
 def test_warn_empty():
     s = sacc.Sacc()
@@ -940,6 +983,7 @@ def test_warn_empty():
     with pytest.warns(UserWarning, match="Empty index selected"):
         s.indices(data_type='non_existent_data_type', warn_empty=True)
 
+@skip_if_no_qp
 def test_old_qp_sacc_readable():
     s = sacc.Sacc.load_fits("test/legacy_files/old_qp_sacc.fits")
     t = s.tracers['tracer1']
@@ -959,16 +1003,22 @@ def test_metadata_round_trip():
     s.metadata["pi"] = 3.14159
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
-        s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        fits_filename = os.path.join(tmpdir, 'test_metadata_round_trip.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test_metadata_round_trip.hdf5')
+        s.save_fits(fits_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(fits_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
-    assert s2.metadata["mouse"] is True
-    assert s2.metadata["rat"] is False
-    assert s2.metadata["cats"] == "good"
-    assert s2.metadata["dogs"] == "bad"
-    assert s2.metadata["number"] == 42
-    assert s2.metadata["pi"] == 3.14159
+    for sn in [s2, s3]:
+        assert sn.metadata["mouse"] is True
+        assert sn.metadata["rat"] is False
+        assert sn.metadata["cats"] == "good"
+        assert sn.metadata["dogs"] == "bad"
+        assert sn.metadata["number"] == 42
+        assert sn.metadata["pi"] == 3.14159
 
 def test_equality_empty():
     x = sacc.Sacc()
@@ -1015,15 +1065,37 @@ def test_equality_mismatched_tracers(filled_sacc):
     assert np.all(y.tracers['source_0'].nz != x.tracers['source_0'].nz)
     assert x != y
 
-    # y = filled_sacc.copy()
-    # assert x == y
-    # y.add_data_point("dt1", ('source_100',), 0.1, tracers_later=True)
-    # assert x != y
+def test_equality_mismatched_datapoints(filled_sacc):
+    x = filled_sacc.copy()
+    y = filled_sacc.copy()
+    assert x == y
+
+    # Adding a datapoint should also make them not equal
+    y.add_data_point("dt1", ('source_100',), 0.5, tracers_later=True)
+    assert x != y
+
+    # Adding the same data point to x should make them equal again
+    x.add_data_point("dt1", ('source_100',), 0.5, tracers_later=True)
+
+    # Changing any data point value should also make them not equal
+    data = y.get_data_points()
+    last = data[-1]
+    assert last.value == 0.5
+    last.value *= 2
+    assert last.value == 1.0
+    assert x != y
 
 
 def test_equality_wrong_type():
     x = sacc.Sacc()
     y = 0
+    assert x != y
+
+def test_equality_mismatched_tracer_names():
+    x = sacc.Sacc()
+    y = sacc.Sacc()
+    x.add_tracer('NZ', 'source_0', np.array([0., 1.]), np.array([1., 1.]))
+    y.add_tracer('NZ', 'source_1', np.array([0., 1.]), np.array([1., 1.]))
     assert x != y
 
 def test_nzshift_saving():
@@ -1046,16 +1118,22 @@ def test_nzshift_saving():
     with tempfile.TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, 'test_nzshift.sacc')
         s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        s2a = sacc.Sacc.load_fits(filename)
 
-    assert len(s2.tracer_uncertainties) == 1
-    assert "shift" in s2.tracer_uncertainties
-    shift2 = s2.tracer_uncertainties["shift"]
-    assert shift2.name == "shift"
-    assert isinstance(shift2, sacc.NZShiftUncertainty)
-    assert shift2.tracer_names == tracer_names
-    assert np.allclose(shift2.mean, mu)
-    assert np.allclose(shift2.linear_transformation, np.diag(cholesky))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_hdf5(filename)
+        s2b = sacc.Sacc.load_hdf5(filename)
+
+    for s2 in [s2a, s2b]:
+        assert len(s2.tracer_uncertainties) == 1
+        assert "shift" in s2.tracer_uncertainties
+        shift2 = s2.tracer_uncertainties["shift"]
+        assert shift2.name == "shift"
+        assert isinstance(shift2, sacc.NZShiftUncertainty)
+        assert shift2.tracer_names == tracer_names
+        assert np.allclose(shift2.mean, mu)
+        assert np.allclose(shift2.linear_transformation, np.diag(cholesky))
 
 
 def test_nzshift_stretch_saving():
@@ -1148,6 +1226,36 @@ def test_nzlinear_uncertainty_saving():
     assert np.allclose(linear2.mean, mean)
     assert np.allclose(linear2.linear_transformation, np.diag(sigma))
 
+def test_equality_mismatched_covariance(filled_sacc):
+    x = filled_sacc.copy()
+    cov = make_full_cov(len(filled_sacc))
+    x.add_covariance(cov.copy())
+    assert x == x
+
+    y = filled_sacc.copy()
+    assert x != y
+
+def test_equality_mismatched_metadata(filled_sacc):
+    x = filled_sacc.copy()
+    x.metadata['test'] = 'value'
+    assert x == x
+
+    y = filled_sacc.copy()
+    assert x != y
+
+def test_covariance_io(filled_sacc):
+    s = filled_sacc.copy()
+    cov = make_full_cov(len(filled_sacc))
+    s.add_covariance(cov.copy())
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fits_filename = os.path.join(tmpdir, 'test_covariance_io.sacc')
+        hdf_filename = os.path.join(tmpdir, 'test_covariance_io.hdf5')
+        s.save_fits(fits_filename)
+        s.save_hdf5(hdf_filename)
+        s2 = sacc.Sacc.load_fits(fits_filename)
+        s3 = sacc.Sacc.load_hdf5(hdf_filename)
+        assert s2 == s
+        assert s3 == s
 
 if __name__ == "__main__":
     test_bandpower_window()

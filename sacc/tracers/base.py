@@ -1,4 +1,8 @@
 import numpy as np
+try:
+    from qp.core.ensemble import Ensemble
+except:
+    Ensemble = None
 from ..utils import Namespace
 from ..io import BaseIO, ONE_OBJECT_PER_TABLE, MULTIPLE_OBJECTS_PER_TABLE, ONE_OBJECT_MULTIPLE_TABLES
 
@@ -85,6 +89,10 @@ class BaseTracer(BaseIO):
         for name in varnames1:
             v1 = vars1[name]
             v2 = vars2[name]
+            # TODO: Remove this work-around one we have a way to test Ensembles for equality.
+            # If we do not have qp installed, then we do not attempt to compare Ensembles.
+            if Ensemble is not None and isinstance(v1, Ensemble):
+                continue
             try:
                 if v1 != v2:
                     return False
