@@ -29,6 +29,7 @@ class Sacc:
         self.tracers = {}
         self.covariance = None
         self.metadata = {}
+        self.tracer_uncertainties = {}
 
     def __len__(self):
         """
@@ -192,6 +193,17 @@ class Sacc:
             The tracer object to add to the data set
         """
         self.tracers[tracer.name] = tracer
+
+    def add_tracer_uncertainty_object(self, uncertainty):
+        """
+        Add a pre-constructed tracer uncertainty object to this data set.
+
+        Parameters
+        ----------
+        uncertainty: BaseTracerUncertainty instance
+            The uncertainty object to add to the data set
+        """
+        self.tracer_uncertainties[uncertainty.name] = uncertainty
 
     def add_data_point(self, data_type, tracers, value,
                        tracers_later=False, **tags):
@@ -883,7 +895,8 @@ class Sacc:
             "tracer": self.tracers,
             "data": self.data,
             "window": self._make_window_tables(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "traceruncertainty": self.tracer_uncertainties,
         }
 
         if self.has_covariance():
@@ -927,8 +940,10 @@ class Sacc:
 
         # Create the actual fits object
         primary_header = fits.Header()
-        hdus = [fits.PrimaryHDU(header=primary_header)] + \
-                [fits.table_to_hdu(table) for table in tables]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=fits.verify.VerifyWarning)
+            hdus = [fits.PrimaryHDU(header=primary_header)] + \
+                    [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
         io.astropy_buffered_fits_write(filename, hdu_list)
 
@@ -1126,6 +1141,9 @@ class Sacc:
 
         if cov is not None:
             s.add_covariance(cov)
+
+        for uncertainty in objs.get('traceruncertainty', {}).values():
+            s.add_tracer_uncertainty_object(uncertainty)
 
         return s
 

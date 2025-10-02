@@ -1098,6 +1098,128 @@ def test_equality_mismatched_tracer_names():
     y.add_tracer('NZ', 'source_1', np.array([0., 1.]), np.array([1., 1.]))
     assert x != y
 
+def test_nzshift_saving():
+    s = sacc.Sacc()
+    z = np.linspace(0, 1, 100)
+    nz1 = np.exp(-((z - 0.3) ** 2) / (0.1 ** 2))
+    nz2 = np.exp(-((z - 0.6) ** 2) / (0.1 ** 2))
+    s.add_tracer('NZ', 'source1', z, nz1)
+    s.add_tracer('NZ', 'source2', z, nz2)
+
+    tracer_names = ["source1", "source2"]
+    mu = [0.001, 0.002]
+
+    # check with a 1D array for cholesky, representing a diagonal covariance
+    cholesky = [0.01, 0.02]
+    shift = sacc.NZShiftUncertainty("shift", tracer_names, mu, cholesky)
+    s.add_tracer_uncertainty_object(shift)
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2.tracer_uncertainties) == 1
+    assert "shift" in s2.tracer_uncertainties
+    shift2 = s2.tracer_uncertainties["shift"]
+    assert shift2.name == "shift"
+    assert isinstance(shift2, sacc.NZShiftUncertainty)
+    assert shift2.tracer_names == tracer_names
+    assert np.allclose(shift2.mean, mu)
+    assert np.allclose(shift2.linear_transformation, np.diag(cholesky))
+
+
+def test_nzshift_stretch_saving():
+    s = sacc.Sacc()
+    z = np.linspace(0, 1, 100)
+    nz1 = np.exp(-((z - 0.3) ** 2) / (0.1 ** 2))
+    nz2 = np.exp(-((z - 0.6) ** 2) / (0.1 ** 2))
+    s.add_tracer('NZ', 'source1', z, nz1)
+    s.add_tracer('NZ', 'source2', z, nz2)
+
+    tracer_names = ["source1", "source2"]
+    mu = [0.001, 0.002]
+
+    # this time test with a matrix
+    chol = np.array([[0.01, 0], [0, 0.02]])
+    shift = sacc.NZShiftStretchUncertainty("shift", tracer_names, mu, chol)
+    s.add_tracer_uncertainty_object(shift)
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2.tracer_uncertainties) == 1
+    assert "shift" in s2.tracer_uncertainties
+    shift2 = s2.tracer_uncertainties["shift"]
+    assert shift2.name == "shift"
+    assert isinstance(shift2, sacc.NZShiftStretchUncertainty)
+    assert shift2.tracer_names == tracer_names
+    assert np.allclose(shift2.mean, mu)
+    assert np.allclose(shift2.linear_transformation, np.diag(chol))
+
+def test_nzshift_stretch_saving():
+    s = sacc.Sacc()
+    z = np.linspace(0, 1, 100)
+    nz1 = np.exp(-((z - 0.3) ** 2) / (0.1 ** 2))
+    nz2 = np.exp(-((z - 0.6) ** 2) / (0.1 ** 2))
+    s.add_tracer('NZ', 'source1', z, nz1)
+    s.add_tracer('NZ', 'source2', z, nz2)
+
+    tracer_names = ["source1", "source2"]
+    mu = [0.001, 0.002]
+    # now test with a filled matrix
+    chol = np.array([[0.01, 0], [0, 0.02]])
+    shift = sacc.NZShiftStretchUncertainty("shift", tracer_names, mu, chol)
+    s.add_tracer_uncertainty_object(shift)
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2.tracer_uncertainties) == 1
+    assert "shift" in s2.tracer_uncertainties
+    shift2 = s2.tracer_uncertainties["shift"]
+    assert shift2.name == "shift"
+    assert isinstance(shift2, sacc.NZShiftStretchUncertainty)
+    assert shift2.tracer_names == tracer_names
+    assert np.allclose(shift2.mean, mu)
+    assert np.allclose(shift2.linear_transformation, chol)
+
+def test_nzlinear_uncertainty_saving():
+    s = sacc.Sacc()
+    z = np.linspace(0, 1, 100)
+    nz1 = np.exp(-((z - 0.3) ** 2) / (0.1 ** 2))
+    nz2 = np.exp(-((z - 0.6) ** 2) / (0.1 ** 2))
+    s.add_tracer('NZ', 'source1', z, nz1)
+    s.add_tracer('NZ', 'source2', z, nz2)
+
+    tracer_names = ["source1", "source2"]
+    mean = [0.0, -0.001]
+    sigma = [0.01, 0.02]
+    linear = sacc.NZLinearUncertainty("linear", tracer_names, mean, sigma)
+    s.add_tracer_uncertainty_object(linear)
+
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzlinear.sacc')
+        s.save_fits(filename)
+        s2 = sacc.Sacc.load_fits(filename)
+
+    assert len(s2.tracer_uncertainties) == 1
+    assert "linear" in s2.tracer_uncertainties
+    linear2 = s2.tracer_uncertainties["linear"]
+    assert linear2.name == "linear"
+    assert isinstance(linear2, sacc.NZLinearUncertainty)
+    assert linear2.tracer_names == tracer_names
+    assert np.allclose(linear2.mean, mean)
+    assert np.allclose(linear2.linear_transformation, np.diag(sigma))
+
 def test_equality_mismatched_covariance(filled_sacc):
     x = filled_sacc.copy()
     cov = make_full_cov(len(filled_sacc))
