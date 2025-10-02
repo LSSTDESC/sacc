@@ -1040,6 +1040,8 @@ class Sacc:
                     dset_name = f"data/{name}"
                 elif typ == 'tracer' and name:
                     dset_name = f"tracer/{name}"
+                elif typ == 'traceruncertainty' and name:
+                    dset_name = f"traceruncertainty/{name}"
                 elif typ == 'window' and name:
                     dset_name = f"window/{name}"
                     if part:

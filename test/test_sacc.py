@@ -1118,16 +1118,22 @@ def test_nzshift_saving():
     with tempfile.TemporaryDirectory() as tmpdir:
         filename = os.path.join(tmpdir, 'test_nzshift.sacc')
         s.save_fits(filename)
-        s2 = sacc.Sacc.load_fits(filename)
+        s2a = sacc.Sacc.load_fits(filename)
 
-    assert len(s2.tracer_uncertainties) == 1
-    assert "shift" in s2.tracer_uncertainties
-    shift2 = s2.tracer_uncertainties["shift"]
-    assert shift2.name == "shift"
-    assert isinstance(shift2, sacc.NZShiftUncertainty)
-    assert shift2.tracer_names == tracer_names
-    assert np.allclose(shift2.mean, mu)
-    assert np.allclose(shift2.linear_transformation, np.diag(cholesky))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filename = os.path.join(tmpdir, 'test_nzshift.sacc')
+        s.save_hdf5(filename)
+        s2b = sacc.Sacc.load_hdf5(filename)
+
+    for s2 in [s2a, s2b]:
+        assert len(s2.tracer_uncertainties) == 1
+        assert "shift" in s2.tracer_uncertainties
+        shift2 = s2.tracer_uncertainties["shift"]
+        assert shift2.name == "shift"
+        assert isinstance(shift2, sacc.NZShiftUncertainty)
+        assert shift2.tracer_names == tracer_names
+        assert np.allclose(shift2.mean, mu)
+        assert np.allclose(shift2.linear_transformation, np.diag(cholesky))
 
 
 def test_nzshift_stretch_saving():
