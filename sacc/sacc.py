@@ -940,6 +940,7 @@ class Sacc:
 
         # Create the actual fits object
         primary_header = fits.Header()
+        primary_header['SACCFVER'] = 2
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=fits.verify.VerifyWarning)
             hdus = [fits.PrimaryHDU(header=primary_header)] + \
@@ -962,36 +963,34 @@ class Sacc:
         """
         cov = None
         metadata = None
+        fitsver = None
 
         with fits.open(filename, mode="readonly") as f:
             tables = []
-            for hdu in f:
+            for idx, hdu in enumerate(f):
                 if hdu.name.lower() == 'primary':
-                    # The primary table is not a data table,
-                    # but in older files it was used to store metadata
                     header = hdu.header
+                    fitsver = header.get('SACCFVER', None)
+                    if fitsver is None:
+                        fitsver = 1
+                    if fitsver > 2:
+                        raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
                     if "NMETA" in header:
                         metadata = {}
-                        # Older format metadata is kept in the primary
-                        # header, with keys KEY0, VAL0, etc.
                         n_meta = header['NMETA']
                         for i in range(n_meta):
                             k = header[f'KEY{i}']
                             v = header[f'VAL{i}']
                             metadata[k] = v
                 elif hdu.name.lower() == 'covariance':
-                    # Legacy covariance - HDU will just be called covariance
-                    # instead of the full name given by BaseIO.
-                    # Note that this will also allow us to use multiple
-                    # covariances in future.
                     cov = BaseCovariance.from_hdu(hdu)
                 else:
                     tables.append(Table.read(hdu))
 
-        # add the metadata table, if we are in the legacy format
         if metadata is not None:
             tables.append(io.metadata_to_table(metadata))
 
+        # Pass version to from_tables if needed (future-proofing)
         return cls.from_tables(tables, cov=cov)
 
     def save_hdf5(self, filename, overwrite=False, compression='gzip', compression_opts=4):
@@ -1027,6 +1026,8 @@ class Sacc:
                 table.meta['EXTNAME'] = extname
 
         with h5py.File(filename, 'w') as f:
+            # Write version dataset
+            f.create_dataset('sacc_hdf5_version', data=np.array([1], dtype='i4'))
             used_names = {}
             for table in tables:
                 # Build a meaningful dataset name
@@ -1087,9 +1088,19 @@ class Sacc:
         """
         import h5py
         recovered_tables = []
+        hdf5ver = None
         with h5py.File(filename, 'r') as f:
+            # Check version
+            if 'sacc_hdf5_version' in f:
+                hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
+            else:
+                hdf5ver = 1
+            if hdf5ver > 1:
+                raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
             # Read all datasets (not groups) in the order they appear
             for key in f.keys():
+                if key == 'sacc_hdf5_version':
+                    continue
                 item = f[key]
                 if isinstance(item, h5py.Dataset):
                     table = Table.read(f, path=key)
