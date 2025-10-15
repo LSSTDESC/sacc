@@ -5,6 +5,10 @@ import warnings
 
 from astropy.io import fits
 from astropy.table import Table
+
+# Module-level constants for Sacc file format versions
+SACCFVER = 2  # Current FITS version
+SACCHDF5VER = 1  # Current HDF5 version
 import numpy as np
 
 from .tracers import BaseTracer
@@ -940,11 +944,10 @@ class Sacc:
 
         # Create the actual fits object
         primary_header = fits.Header()
-        primary_header['SACCFVER'] = 2
+        primary_header['SACCFVER'] = SACCFVER
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=fits.verify.VerifyWarning)
-            hdus = [fits.PrimaryHDU(header=primary_header)] + \
-                    [fits.table_to_hdu(table) for table in tables]
+            hdus = [fits.PrimaryHDU(header=primary_header)] + [fits.table_to_hdu(table) for table in tables]
         hdu_list = fits.HDUList(hdus)
         io.astropy_buffered_fits_write(filename, hdu_list)
 
@@ -973,7 +976,7 @@ class Sacc:
                     fitsver = header.get('SACCFVER', None)
                     if fitsver is None:
                         fitsver = 1
-                    if fitsver > 2:
+                    if fitsver > SACCFVER:
                         raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
                     if "NMETA" in header:
                         metadata = {}
@@ -1027,7 +1030,7 @@ class Sacc:
 
         with h5py.File(filename, 'w') as f:
             # Write version dataset
-            f.create_dataset('sacc_hdf5_version', data=np.array([1], dtype='i4'))
+            f.create_dataset('sacc_hdf5_version', data=np.array([SACCHDF5VER], dtype='i4'))
             used_names = {}
             for table in tables:
                 # Build a meaningful dataset name
@@ -1095,7 +1098,7 @@ class Sacc:
                 hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
             else:
                 hdf5ver = 1
-            if hdf5ver > 1:
+            if hdf5ver > SACCHDF5VER:
                 raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
             # Read all datasets (not groups) in the order they appear
             for key in f.keys():
