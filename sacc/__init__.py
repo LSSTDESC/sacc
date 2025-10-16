@@ -6,4 +6,4 @@ from .covariance import BaseCovariance  # noqa
 from .tracer_uncertainty import NZLinearUncertainty, NZShiftUncertainty, NZShiftStretchUncertainty  # noqa
 from .io import BaseIO  # noqa
 from . import io  # noqa
-__version__ = '2.0.2' #noqa
+__version__ = '2.1' #noqa
