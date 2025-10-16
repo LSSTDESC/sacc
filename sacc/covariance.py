@@ -1,4 +1,4 @@
-from astropy.table import Table
+from astropy.table import Table, Column
 import scipy.linalg
 import numpy as np
 import warnings
@@ -218,9 +218,9 @@ class FullCovariance(BaseCovariance, type_name='full'):
         table: astropy.table.Table instance
             Table that can be used to reconstruct the object.
         """
-        col_names = [f'col_{i}' for i in range(self.size)]
-        cols = [self.covmat[i] for i in range(self.size)]
-        table = Table(data=cols, names=col_names)
+        # Store as a single vector column ('row') to avoid FITS TFIELDS>999
+        # Each table row is one row of the covariance matrix
+        table = Table([Column(name='row', data=self.covmat)])
         table.meta['SIZE'] = self.size
         return table
 
@@ -239,7 +239,11 @@ class FullCovariance(BaseCovariance, type_name='full'):
             Loaded covariance object
         """
         size = table.meta['SIZE']
-        covmat = np.array([table[f'col_{i}'] for i in range(size)])
+        # Support both legacy many-column format and new single-column format
+        if 'row' in table.colnames:
+            covmat = np.array(list(table['row']))
+        else:
+            covmat = np.array([table[f'col_{i}'] for i in range(size)])
         return cls(covmat)
 
 
@@ -375,8 +379,12 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
         for i in range(nblock):
             table = tables[f'block_{i}']
             block_size = table.meta['SACCBSZE']
-            cols = [table[f'block_col_{i}'] for i in range(block_size)]
-            blocks.append(np.array(cols))
+            if 'block_row' in table.colnames:
+                block = np.array(list(table['block_row']))
+            else:
+                cols = [table[f'block_col_{j}'] for j in range(block_size)]
+                block = np.array(cols)
+            blocks.append(block)
         return cls(blocks)
 
     def to_tables(self):
@@ -396,9 +404,8 @@ class BlockDiagonalCovariance(BaseCovariance, type_name='block'):
         nblock = len(self.blocks)
         for j, block in enumerate(self.blocks):
             b = len(block)
-            col_names = [f'block_col_{i}' for i in range(b)]
-            cols = [block[i] for i in range(b)]
-            table = Table(data=cols, names=col_names)
+            # Use single vector column to minimize TFIELDS
+            table = Table([Column(name='block_row', data=block)])
             table.meta['SIZE'] = self.size
             table.meta['SACCBIDX'] = j
             table.meta['SACCBCNT'] = nblock
