@@ -44,6 +44,9 @@ def create_simple_sacc():
 if __name__ == "__main__":
     create_simple_sacc()
 fits.info("simple_mock_clusters.sacc")
+
+# if not hasattr(np, 'bool'):
+#     np.bool = bool  # add alias if missing
 t2 = sacc.Sacc.load_fits("simple_mock_clusters.sacc")
 print("\n\n")
 print(sacc.__version__)
