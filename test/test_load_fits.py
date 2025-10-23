@@ -2,7 +2,6 @@
 
 import numpy as np
 import sacc
-from astropy.io import fits
 
 def create_simple_sacc():
     # Create a new Sacc object
@@ -18,11 +17,13 @@ def create_simple_sacc():
     s.add_tracer("bin_richness", "rich_0", 10, 20)
     s.add_tracer("bin_richness", "rich_1", 20, 40)
     print(type(s.tracers["zbin_0"]))
+
     # --- 2️⃣ Add mock data ---
     # We’ll use a standard type — cluster counts
     cluster_count = sacc.standard_types.cluster_counts
 
-    rng = np.random.default_rng(42)  # reproducible random numbers
+    # reproducible random numbers
+    rng = np.random.default_rng(42)
 
     for zbin in ["zbin_0", "zbin_1"]:
         for rbin in ["rich_0", "rich_1"]:
@@ -37,16 +38,10 @@ def create_simple_sacc():
 
     # --- 4️⃣ Save the SACC file ---
     s.to_canonical_order()
-    s.save_fits("simple_mock_clusters.sacc", overwrite=True)
+    s.save_fits("test/data/simple_mock_clusters.sacc", overwrite=True)
 
-    print(f"SACC file saved with {ndata} data points: simple_mock_clusters.sacc")
+    print(f"SACC file saved with {ndata} data points: test/data/simple_mock_clusters.sacc")
 
-if __name__ == "__main__":
+def test_bool_numpy_error():
     create_simple_sacc()
-fits.info("simple_mock_clusters.sacc")
-
-# if not hasattr(np, 'bool'):
-#     np.bool = bool  # add alias if missing
-t2 = sacc.Sacc.load_fits("simple_mock_clusters.sacc")
-print("\n\n")
-print(sacc.__version__)
+    t2 = sacc.Sacc.load_fits("test/data/simple_mock_clusters.sacc")
