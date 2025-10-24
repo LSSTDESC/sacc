@@ -194,7 +194,7 @@ def numpy_to_vanilla(x):
     Parameters
     ----------
     x : numpy scalar
-        A NumPy scalar value (e.g., np.str_, np.int64, np.float64, np.bool).
+        A NumPy scalar value (e.g., np.str_, np.int64, np.float64, np.bool_).
 
     Returns
     -------
@@ -207,6 +207,6 @@ def numpy_to_vanilla(x):
         x = int(x)
     elif type(x) == np.float64:
         x = float(x)
-    elif type(x) == np.bool:
+    elif type(x) == np.bool_:
         x = bool(x)
     return x
