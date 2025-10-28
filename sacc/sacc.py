@@ -1033,6 +1033,13 @@ class Sacc:
             f.create_dataset('sacc_hdf5_version', data=np.array([SACCHDF5VER], dtype='i4'))
             used_names = {}
             for table in tables:
+                # Convert numpy string types to Python str to avoid HDF5 warnings
+                for key, value in list(table.meta.items()):
+                    if hasattr(value, 'item'):  # numpy scalar
+                        table.meta[key] = value.item()
+                    elif isinstance(value, str):
+                        table.meta[key] = str(value)
+
                 # Build a meaningful dataset name
                 typ = table.meta.get('SACCTYPE', 'unknown')
                 name = table.meta.get('SACCNAME', None)
