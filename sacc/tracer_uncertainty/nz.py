@@ -177,7 +177,7 @@ class NZLinearUncertainty(
             as well as the linear transformation of the parameters.
         """
 
-        mean = np.zeros(matrix.shape[0])
+        mean = np.zeros(len(matrix))
 
         super().__init__(
             name,
