@@ -187,6 +187,32 @@ class NZLinearUncertainty(
             linear_transformation_type="linear_model"
         )
 
+    @classmethod
+    def from_table(cls, table):
+        """
+        Create an instance of one of the NZGaussianTracerUncertainty subclasses
+        from an astropy table.
+
+        This method is inherited by all subclasses, so the cls argument will be the
+        subclass that calls this method.
+
+        Parameters
+        ----------
+        table: astropy.table.Table
+            An astropy table containing the uncertainty data.
+
+        Returns
+        -------
+        instance: NZGaussianTracerUncertainty
+            An instance of a NZGaussianTracerUncertainty subclass.
+        """
+        # All the subclasses have the same table structure
+        transformation_type = table.meta["LINEAR_TRANSFORMATION_TYPE"]
+        cholesky = table[transformation_type]
+        tracer_names = [table.meta[f"TRACER_NAME_{i}"] for i in range(table.meta["N_TRACERS"])]
+        name = table.meta["SACCNAME"]
+        return cls(name, tracer_names, cholesky)
+
 
 class NZShiftUncertainty(
     BaseNZGaussianTracerUncertainty,
