@@ -1206,9 +1206,8 @@ def test_nzlinear_uncertainty_saving():
     s.add_tracer('NZ', 'source2', z, nz2)
 
     tracer_names = ["source1", "source2"]
-    mean = [0.0, -0.001]
     sigma = [0.01, 0.02]
-    linear = sacc.NZLinearUncertainty("linear", tracer_names, mean, sigma)
+    linear = sacc.NZLinearUncertainty("linear", tracer_names, sigma)
     s.add_tracer_uncertainty_object(linear)
 
 
@@ -1223,7 +1222,7 @@ def test_nzlinear_uncertainty_saving():
     assert linear2.name == "linear"
     assert isinstance(linear2, sacc.NZLinearUncertainty)
     assert linear2.tracer_names == tracer_names
-    assert np.allclose(linear2.mean, mean)
+    assert np.allclose(linear2.mean, 0)
     assert np.allclose(linear2.linear_transformation, np.diag(sigma))
 
 def test_equality_mismatched_covariance(filled_sacc):
