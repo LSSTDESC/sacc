@@ -78,7 +78,7 @@ class BaseNZGaussianTracerUncertainty(BaseTracerUncertainty):
             raise ValueError(f"Unknown transformation type: {linear_transformation_type}")
 
         # Params per tracer
-        self.nparams = self.linear_transformation.shape[0] // len(tracer_names)
+        self.nparams = self.linear_transformation.shape[1] // len(tracer_names)
         
 
     @classmethod
