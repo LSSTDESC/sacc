@@ -1027,6 +1027,14 @@ def test_previously_saved_sacc_readable():
         nz = s.get_tracer('nz')
         assert np.allclose(nz.z, make_test_data.x)
         assert np.allclose(nz.nz, make_test_data.y)
+        mu1 = s.get_mean()
+        mu2 = make_test_data.s.get_mean()
+        n1 = len(mu1)
+        # we may add more data points to the end of the test
+        # data later, so for now we just want to check that
+        # the start is the same
+        assert n1 <= len(mu2)
+        assert np.allclose(mu1, mu2[:n1])
 
 
 def test_metadata_round_trip():
