@@ -967,6 +967,7 @@ class Sacc:
         cov = None
         metadata = None
         fitsver = None
+        metadata = {}
 
         with fits.open(filename, mode="readonly") as f:
             tables = []
@@ -979,7 +980,6 @@ class Sacc:
                     if fitsver > SACCFVER:
                         raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
                     if "NMETA" in header:
-                        metadata = {}
                         n_meta = header['NMETA']
                         for i in range(n_meta):
                             k = header[f'KEY{i}']
@@ -990,7 +990,7 @@ class Sacc:
                 else:
                     tables.append(Table.read(hdu))
 
-        if metadata is not None:
+        if metadata:
             tables.append(io.metadata_to_table(metadata))
 
         # Pass version to from_tables if needed (future-proofing)
