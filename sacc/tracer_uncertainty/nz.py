@@ -149,7 +149,7 @@ class NZLinearUncertainty(
     In this case to draw a sample of an n(z) you would generate a vector
     of standard normal variables and apply:
 
-    n_i -> n_i + mean + matrix @ normal_vector
+    n_i -> n_i + matrix @ normal_vector
     """
 
     storage_type = ONE_OBJECT_PER_TABLE
@@ -158,20 +158,18 @@ class NZLinearUncertainty(
             self,
             name,
             tracer_names,
-            mean, 
             matrix,
             ):
         """
         Initialize the NZLinearUncertainty object.
 
+        The mean attribute of the parent class is set to zero, so
+        it doesn't matter if you use it.
+
         Parameters
         ----------
         tracer_names : list of str
             List of tracer names to which the uncertainty applies.
-
-        mean: array-like
-            Intercept of the linear uncertainty model.
-            Can be interpreted as the mean of the parameters of the model.
 
         matrix: array-like
             Linear transformation matrix of the linear uncertainty model.
@@ -179,13 +177,41 @@ class NZLinearUncertainty(
             as well as the linear transformation of the parameters.
         """
 
+        mean = np.zeros(len(matrix))
+
         super().__init__(
             name,
             tracer_names,
             mean,
             matrix,
             linear_transformation_type="linear_model"
-            )
+        )
+
+    @classmethod
+    def from_table(cls, table):
+        """
+        Create an instance of one of the NZGaussianTracerUncertainty subclasses
+        from an astropy table.
+
+        This method is inherited by all subclasses, so the cls argument will be the
+        subclass that calls this method.
+
+        Parameters
+        ----------
+        table: astropy.table.Table
+            An astropy table containing the uncertainty data.
+
+        Returns
+        -------
+        instance: NZGaussianTracerUncertainty
+            An instance of a NZGaussianTracerUncertainty subclass.
+        """
+        # All the subclasses have the same table structure
+        transformation_type = table.meta["LINEAR_TRANSFORMATION_TYPE"]
+        cholesky = table[transformation_type]
+        tracer_names = [table.meta[f"TRACER_NAME_{i}"] for i in range(table.meta["N_TRACERS"])]
+        name = table.meta["SACCNAME"]
+        return cls(name, tracer_names, cholesky)
 
 
 class NZShiftUncertainty(
