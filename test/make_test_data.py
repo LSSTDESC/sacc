@@ -1,7 +1,5 @@
 import sacc
 import numpy as np
-from packaging import version
-
 
 # Dummy metadata
 vecsize = 100
