@@ -11,8 +11,8 @@ import time
 import warnings
 import glob
 
-# we don't generate the test data bere but
-# we compare to it, so we need to import the values
+# We don't generate the test data here, but
+# we compare to it, so we need to import the values
 from . import make_test_data
 try:
     import qp
@@ -1000,6 +1000,7 @@ def test_old_qp_sacc_readable():
 
 def test_previously_saved_sacc_readable():
     files = glob.glob("test/legacy_files/dummy*.fits") + glob.glob("test/legacy_files/dummy*.hdf5")
+    assert files, "No legacy dummy files found under test/legacy_files (expected dummy*.fits and/or dummy*.hdf5)"
     for filename in files:
         if filename.endswith('.fits'):
             s = sacc.Sacc.load_fits(filename)

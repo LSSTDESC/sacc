@@ -965,9 +965,8 @@ class Sacc:
             A FITS format sacc file
         """
         cov = None
-        metadata = None
-        fitsver = None
         metadata = {}
+        fitsver = None
 
         with fits.open(filename, mode="readonly") as f:
             tables = []

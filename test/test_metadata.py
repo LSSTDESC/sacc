@@ -28,9 +28,9 @@ def test_lots_of_metadata_fits():
 def test_lots_of_metadata_hdf():
     # Create a new Sacc object
     s = sacc.Sacc()
-    # This will when the header gets too large.
-    # For these choices it's at N=1313 but it will 
-    # presumably depend on the length of the keys and values.
+    # This will fail when the header gets too large.
+    # For these choices it's at N=1313, but it presumably depends on the length
+    # of the keys and values.
     N = 1500
     with tempfile.TemporaryDirectory() as tmpdir:
         # Add some metadata
