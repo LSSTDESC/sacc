@@ -14,7 +14,7 @@ import numpy as np
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
-from .utils import unique_list
+from .utils import unique_list, detect_sacc_file_type
 from .data_types import standard_types, DataPoint
 from . import io
 
@@ -952,6 +952,16 @@ class Sacc:
         io.astropy_buffered_fits_write(filename, hdu_list)
 
     @classmethod
+    def load(cls, filename):
+        file_type = detect_sacc_file_type(filename)
+        if file_type == 'fits':
+            return cls.load_fits(filename)
+        elif file_type == 'hdf5':
+            return cls.load_hdf5(filename)
+        else:
+            raise ValueError(f"Unrecognized SACC file type for file {filename}")
+
+    @classmethod
     def load_fits(cls, filename):
         """
         Load a Sacc data set from a FITS file.
@@ -967,6 +977,10 @@ class Sacc:
         cov = None
         metadata = None
         fitsver = None
+
+        file_type = detect_sacc_file_type(filename)
+        if file_type != 'fits':
+            raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or sacc.load_{file_type} to load it.")
 
         with fits.open(filename, mode="readonly") as f:
             tables = []
@@ -1092,6 +1106,11 @@ class Sacc:
         import h5py
         recovered_tables = []
         hdf5ver = None
+
+        file_type = detect_sacc_file_type(filename)
+        if file_type != 'hdf5':
+            raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or sacc.load_{file_type} to load it.")
+
         with h5py.File(filename, 'r') as f:
             # Check version
             if 'sacc_hdf5_version' in f:
