@@ -214,7 +214,7 @@ def numpy_to_vanilla(x):
 def detect_sacc_file_type(filename):
     """
     Detect the SACC file type based on the filename extension,
-    or, if that is ambigious, based on markers at the start of the file.
+    or, if that is ambiguous, based on markers at the start of the file.
 
     Parameters
     ----------
@@ -224,7 +224,12 @@ def detect_sacc_file_type(filename):
     Returns
     -------
     str
-        The detected file type ('fits', 'hdf5', or 'unknown').
+        The detected file type ('fits' or 'hdf5').
+
+    Raises
+    ------
+    ValueError
+        If the file type cannot be detected from the filename or file content.
     """
     if filename.endswith('.fits'):
         return 'fits'

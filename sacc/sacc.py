@@ -980,7 +980,7 @@ class Sacc:
 
         file_type = detect_sacc_file_type(filename)
         if file_type != 'fits':
-            raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or sacc.load_{file_type} to load it.")
+            raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
         with fits.open(filename, mode="readonly") as f:
             tables = []
@@ -1109,7 +1109,7 @@ class Sacc:
 
         file_type = detect_sacc_file_type(filename)
         if file_type != 'hdf5':
-            raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or sacc.load_{file_type} to load it.")
+            raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
         with h5py.File(filename, 'r') as f:
             # Check version
