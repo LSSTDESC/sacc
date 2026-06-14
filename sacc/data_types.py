@@ -1,7 +1,8 @@
 from collections import namedtuple
+from enum import StrEnum, auto
 from astropy.table import Table
 
-from .utils import (Namespace, hide_null_values, numpy_to_vanilla,
+from .utils import (hide_null_values, numpy_to_vanilla,
                     null_values, camel_case_split_and_lowercase)
 from .io import BaseIO, MULTIPLE_OBJECTS_PER_TABLE
 
@@ -225,12 +226,149 @@ def build_data_type_name(sources, properties, statistic, subtype=None):
     return f"{sources}_{properties}_{statistic}"
 
 
-# This makes a namespace object, so you can do:
-# standard_types.ggl_e == "ggl_e"
-# also, for convenience, you can do standard_types.index('ggl_e')
-# and 'ggl_e' in standard_types
+class standard_types(StrEnum):
+    """Enumeration of all recognised SACC data type names.
 
-standard_types = Namespace(*required_tags.keys())
+    Members compare equal to their string values, so existing code such as
+    ``sacc.standard_types.cluster_counts == "cluster_counts"`` continues to
+    work unchanged.  Type checkers understand ``StrEnum`` natively, so
+    attribute access is validated at type-check time.
+
+    ``_generate_next_value_`` is overridden so that ``auto()`` preserves the
+    exact member name (including camelCase) rather than lowercasing it.
+    """
+
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+    # concise types
+    cl_00 = auto()
+    cl_0e = auto()
+    cl_0b = auto()
+    cl_e0 = auto()
+    cl_b0 = auto()
+    cl_ee = auto()
+    cl_eb = auto()
+    cl_be = auto()
+    cl_bb = auto()
+    xi_00 = auto()
+    xi_0e = auto()
+    xi_0b = auto()
+    xi_e0 = auto()
+    xi_b0 = auto()
+    xi_plus_re = auto()
+    xi_plus_im = auto()
+    xi_minus_re = auto()
+    xi_minus_im = auto()
+    count = auto()
+    cluster_counts = auto()
+    cluster_mean_log_mass = auto()
+    cluster_shear = auto()
+    cluster_delta_sigma = auto()
+
+    # verbose types
+    clusterGalaxy_densityConvergence_cl = auto()
+    clusterGalaxy_densityConvergence_xi = auto()
+    clusterGalaxy_densityShear_cl_b = auto()
+    clusterGalaxy_densityShear_cl_e = auto()
+    clusterGalaxy_densityShear_xi_t = auto()
+    clusterGalaxy_densityShear_xi_x = auto()
+    clusterGalaxy_density_cl = auto()
+    clusterGalaxy_density_xi = auto()
+    cluster_density_cl = auto()
+    cluster_density_xi = auto()
+    cluster_mass_count_wl = auto()
+    cluster_mass_count_xray = auto()
+    cmbCluster_polarizationDensity_cl_b = auto()
+    cmbCluster_polarizationDensity_cl_e = auto()
+    cmbCluster_polarizationDensity_xi_t = auto()
+    cmbCluster_polarizationDensity_xi_x = auto()
+    cmbCluster_temperatureDensity_cl = auto()
+    cmbCluster_temperatureDensity_xi = auto()
+    cmbCluster_convergenceDensity_cl = auto()
+    cmbCluster_convergenceDensity_xi = auto()
+    cmbGalaxy_convergenceDensity_cl = auto()
+    cmbGalaxy_convergenceDensity_xi = auto()
+    cmbGalaxy_convergenceShear_cl_b = auto()
+    cmbGalaxy_convergenceShear_cl_e = auto()
+    cmbGalaxy_convergenceShear_xi_t = auto()
+    cmbGalaxy_convergenceShear_xi_x = auto()
+    cmbGalaxy_convergence_cl = auto()
+    cmbGalaxy_convergence_xi = auto()
+    cmbGalaxy_polarizationConvergence_cl_b = auto()
+    cmbGalaxy_polarizationConvergence_cl_e = auto()
+    cmbGalaxy_polarizationConvergence_xi_t = auto()
+    cmbGalaxy_polarizationConvergence_xi_x = auto()
+    cmbGalaxy_polarizationDensity_cl_b = auto()
+    cmbGalaxy_polarizationDensity_cl_e = auto()
+    cmbGalaxy_polarizationDensity_xi_t = auto()
+    cmbGalaxy_polarizationDensity_xi_x = auto()
+    cmbGalaxy_polarizationShear_cl_bb = auto()
+    cmbGalaxy_polarizationShear_cl_be = auto()
+    cmbGalaxy_polarizationShear_cl_eb = auto()
+    cmbGalaxy_polarizationShear_cl_ee = auto()
+    cmbGalaxy_polarizationShear_xi_minus = auto()
+    cmbGalaxy_polarizationShear_xi_plus = auto()
+    cmbGalaxy_polarizationShear_xi_imagMinus = auto()
+    cmbGalaxy_polarizationShear_xi_imagPlus = auto()
+    cmbGalaxy_polarizationShear_cosebi_e = auto()
+    cmbGalaxy_polarizationShear_cosebi_b = auto()
+    cmbGalaxy_temperatureConvergence_cl = auto()
+    cmbGalaxy_temperatureConvergence_xi = auto()
+    cmbGalaxy_temperatureDensity_cl = auto()
+    cmbGalaxy_temperatureDensity_xi = auto()
+    cmbGalaxy_temperatureShear_cl_b = auto()
+    cmbGalaxy_temperatureShear_cl_e = auto()
+    cmbGalaxy_temperatureShear_xi_t = auto()
+    cmbGalaxy_temperatureShear_xi_x = auto()
+    cmb_convergence_cl = auto()
+    cmb_convergence_xi = auto()
+    cmb_polarization_cl_bb = auto()
+    cmb_polarization_cl_be = auto()
+    cmb_polarization_cl_eb = auto()
+    cmb_polarization_cl_ee = auto()
+    cmb_polarization_xi_minus = auto()
+    cmb_polarization_xi_plus = auto()
+    cmb_polarization_xi_imagMinus = auto()
+    cmb_polarization_xi_imagPlus = auto()
+    cmb_polarization_cosebi_e = auto()
+    cmb_polarization_cosebi_b = auto()
+    cmb_polarizationConvergence_cl_e = auto()
+    cmb_polarizationConvergence_cl_b = auto()
+    cmb_polarizationConvergence_xi_t = auto()
+    cmb_polarizationConvergence_xi_x = auto()
+    cmb_temperaturePolarization_cl_e = auto()
+    cmb_temperaturePolarization_cl_b = auto()
+    cmb_temperaturePolarization_xi_t = auto()
+    cmb_temperaturePolarization_xi_x = auto()
+    cmb_temperature_cl = auto()
+    cmb_temperatureConvergence_cl = auto()
+    cmb_temperatureConvergence_xi = auto()
+    galaxy_convergenceDensity_cl = auto()
+    galaxy_convergenceDensity_xi = auto()
+    galaxy_convergence_cl = auto()
+    galaxy_convergence_xi = auto()
+    galaxy_density_cl = auto()
+    galaxy_density_xi = auto()
+    galaxy_shearConvergence_cl_b = auto()
+    galaxy_shearConvergence_cl_e = auto()
+    galaxy_shearConvergence_xi_t = auto()
+    galaxy_shearConvergence_xi_x = auto()
+    galaxy_shearDensity_cl_b = auto()
+    galaxy_shearDensity_cl_e = auto()
+    galaxy_shearDensity_xi_t = auto()
+    galaxy_shearDensity_xi_x = auto()
+    galaxy_shear_cl_bb = auto()
+    galaxy_shear_cl_be = auto()
+    galaxy_shear_cl_eb = auto()
+    galaxy_shear_cl_ee = auto()
+    galaxy_shear_cosebi_bb = auto()
+    galaxy_shear_cosebi_ee = auto()
+    galaxy_shear_xi_minus = auto()
+    galaxy_shear_xi_plus = auto()
+    galaxy_shear_xi_imagMinus = auto()
+    galaxy_shear_xi_imagPlus = auto()
 
 
 class DataPoint(BaseIO, type_name="DataPoint"):
@@ -287,7 +425,7 @@ class DataPoint(BaseIO, type_name="DataPoint"):
             Dictionary of further data point metadata, such as binning
             info, angles, etc.
         """
-        self.data_type = data_type
+        self.data_type = str(data_type)
         self.tracers = tracers
         self.value = value
         self.tags = tags

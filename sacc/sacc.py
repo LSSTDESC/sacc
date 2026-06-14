@@ -112,7 +112,7 @@ class Sacc:
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
             if row.data_type in standard_types:
-                dt = standard_types.index(row.data_type)
+                dt = list(standard_types._member_names_).index(row.data_type)
             else:
                 dt = hash(row.data_type)
             # If known, order by ell or theta.
