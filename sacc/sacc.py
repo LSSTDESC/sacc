@@ -108,13 +108,13 @@ class Sacc:
         # Define the ordering to be used
         # We need a key function that will return the
         # object that python's default sorted function will use.
+        # Build a name->index mapping once for O(1) lookup inside the key.
+        _type_order = {name: i for i, name in enumerate(standard_types.__members__)}
+
         def order_key(row):
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
-            if row.data_type in standard_types._member_names_:
-                dt = standard_types._member_names_.index(row.data_type)
-            else:
-                dt = hash(row.data_type)
+            dt = _type_order.get(row.data_type, hash(row.data_type))
             # If known, order by ell or theta.
             # Otherwise just use whatever we have.
             if 'ell' in row.tags:
