@@ -111,8 +111,8 @@ class Sacc:
         def order_key(row):
             # Put data types in the order in allowed_types.
             # If not present then just use the hash of the data type.
-            if row.data_type in standard_types:
-                dt = list(standard_types._member_names_).index(row.data_type)
+            if row.data_type in standard_types._member_names_:
+                dt = standard_types._member_names_.index(row.data_type)
             else:
                 dt = hash(row.data_type)
             # If known, order by ell or theta.
