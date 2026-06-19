@@ -90,3 +90,38 @@ def test_load_any():
     assert t1 == t1a
     # and be equal to the original data
     assert t1 == s
+
+
+def test_detect_sacc_file_type_unknown(tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"not a sacc file")
+
+    with pytest.raises(
+        ValueError,
+        match=r"Could not detect file type of .+ from filename or file content",
+    ):
+        sacc.utils.detect_sacc_file_type(str(unknown_file))
+
+
+def test_sacc_load_unknown_file(tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"not a sacc file")
+
+    with pytest.raises(ValueError, match=r"Could not detect file type"):
+        sacc.Sacc.load(str(unknown_file))
+
+
+def test_sacc_load_unrecognized_file_type(monkeypatch, tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"anything")
+
+    def fake_detect(filename):
+        return "json"
+
+    monkeypatch.setattr(sacc.sacc, "detect_sacc_file_type", fake_detect)
+
+    with pytest.raises(
+        ValueError,
+        match=f"Unrecognized SACC file type for file {unknown_file}",
+    ):
+        sacc.Sacc.load(str(unknown_file))
