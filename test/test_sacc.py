@@ -9,6 +9,11 @@ import pathlib
 import urllib
 import time
 import warnings
+import glob
+
+# We don't generate the test data here, but
+# we compare to it, so we need to import the values
+from . import make_test_data
 try:
     import qp
     QP_AVAILABLE = True
@@ -992,6 +997,46 @@ def test_old_qp_sacc_readable():
     md1 = {'potato': 'if_necessary', 'answer': 42, 'height': 1.83}
     for k, v in md1.items():
         assert t.metadata[k] == v
+
+def test_previously_saved_sacc_readable():
+    files = glob.glob("test/legacy_files/dummy*.fits") + glob.glob("test/legacy_files/dummy*.hdf5")
+    assert files, "No legacy dummy files found under test/legacy_files (expected dummy*.fits and/or dummy*.hdf5)"
+    for filename in files:
+        if filename.endswith('.fits'):
+            s = sacc.Sacc.load_fits(filename)
+        elif filename.endswith('.hdf5'):
+            s = sacc.Sacc.load_hdf5(filename)
+        else:
+            continue
+        assert s.metadata['nvec'] == make_test_data.nvec
+        assert s.metadata['vecsize'] == make_test_data.vecsize
+        assert s.metadata['magic'] == make_test_data.magic
+        assert s.metadata['pi'] == make_test_data.pi
+        assert s.metadata['greeting'] == make_test_data.greeting
+        ell, cl = s.get_ell_cl('galaxy_density_cl', 'nz', 'nz')
+        assert np.allclose(ell, make_test_data.x)
+        assert np.allclose(cl, make_test_data.y)
+        ell, cl = s.get_theta_xi('galaxy_density_xi', 'nz', 'nz')
+        assert np.allclose(ell, make_test_data.x)
+        assert np.allclose(cl, make_test_data.y)
+        tracers = [
+            "nz", "nz_b", "msc", "map", "nap"
+        ]
+        for t in tracers:
+            assert t in s.tracers
+            s.get_tracer(t)
+        nz = s.get_tracer('nz')
+        assert np.allclose(nz.z, make_test_data.x)
+        assert np.allclose(nz.nz, make_test_data.y)
+        mu1 = s.get_mean()
+        mu2 = make_test_data.s.get_mean()
+        n1 = len(mu1)
+        # we may add more data points to the end of the test
+        # data later, so for now we just want to check that
+        # the start is the same
+        assert n1 <= len(mu2)
+        assert np.allclose(mu1, mu2[:n1])
+
 
 def test_metadata_round_trip():
     s = sacc.Sacc()
