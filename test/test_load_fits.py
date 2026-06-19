@@ -68,7 +68,7 @@ def test_load_any():
 
     s.save_fits(generic_filename, overwrite=True)
     assert sacc.utils.detect_sacc_file_type(generic_filename) == "fits"
-    with pytest.raises(ValueError, match="is of type fits, not hdf5\. Use Sacc\.load or Sacc\.load_fits to load it"):
+    with pytest.raises(ValueError, match=r"is of type fits, not hdf5\. Use Sacc\.load or Sacc\.load_fits to load it"):
         sacc.Sacc.load_hdf5(generic_filename)
 
     # Load with the generic method, which should detect the format
@@ -77,7 +77,7 @@ def test_load_any():
 
     s.save_hdf5(generic_filename, overwrite=True)
     assert sacc.utils.detect_sacc_file_type(generic_filename) == "hdf5"
-    with pytest.raises(ValueError, match="is of type hdf5, not fits\. Use Sacc\.load or Sacc\.load_hdf5 to load it"):
+    with pytest.raises(ValueError, match=r"is of type hdf5, not fits\. Use Sacc\.load or Sacc\.load_hdf5 to load it"):
         sacc.Sacc.load_fits(generic_filename)
 
     # should be able to load from either format with Sacc.load
