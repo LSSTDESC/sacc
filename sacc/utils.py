@@ -210,3 +210,38 @@ def numpy_to_vanilla(x):
     elif type(x) == np.bool_:
         x = bool(x)
     return x
+
+def detect_sacc_file_type(filename):
+    """
+    Detect the SACC file type based on the filename extension,
+    or, if that is ambiguous, based on markers at the start of the file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file to check.
+
+    Returns
+    -------
+    str
+        The detected file type ('fits' or 'hdf5').
+
+    Raises
+    ------
+    ValueError
+        If the file type cannot be detected from the filename or file content.
+    """
+    if filename.endswith('.fits'):
+        return 'fits'
+    elif filename.endswith('.hdf5'):
+        return 'hdf5'
+
+    with open(filename, 'rb') as f:
+        marker = f.read(8)
+        if marker ==  b"\x89HDF\r\n\x1a\n":
+            return 'hdf5'
+        elif marker[:6] == b"SIMPLE":
+            return 'fits'
+
+    raise ValueError(f"Could not detect file type of {filename} from filename or file content.")
+

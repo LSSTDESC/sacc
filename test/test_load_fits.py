@@ -2,6 +2,8 @@
 
 import numpy as np
 import sacc
+import pytest
+
 
 def create_simple_sacc():
     # Create a new Sacc object
@@ -38,10 +40,88 @@ def create_simple_sacc():
 
     # --- 4️⃣ Save the SACC file ---
     s.to_canonical_order()
-    s.save_fits("test/data/simple_mock_clusters.sacc", overwrite=True)
+    return s
 
-    print(f"SACC file saved with {ndata} data points: test/data/simple_mock_clusters.sacc")
 
 def test_bool_numpy_error():
-    create_simple_sacc()
+    s = create_simple_sacc()
+    s.save_fits("test/data/simple_mock_clusters.sacc", overwrite=True)
+    print(f"SACC file saved with {len(s.data)} data points: test/data/simple_mock_clusters.sacc")
     t2 = sacc.Sacc.load_fits("test/data/simple_mock_clusters.sacc")
+
+
+def test_load_any():
+    s = create_simple_sacc()
+    fits_filename = "test/data/simple_mock_clusters.fits"
+    hdf5_filename = "test/data/simple_mock_clusters.hdf5"
+    generic_filename = "test/data/simple_mock_clusters.sacc"
+
+    # Check the generic loader works when the file extension is explicitly .fits
+    s.save_fits(fits_filename, overwrite=True)
+    assert sacc.utils.detect_sacc_file_type(fits_filename) == "fits"
+    sacc.Sacc.load_fits(fits_filename)
+
+    # and the same check for HDF5
+    s.save_hdf5(hdf5_filename, overwrite=True)
+    assert sacc.utils.detect_sacc_file_type(hdf5_filename) == "hdf5"
+    sacc.Sacc.load_hdf5(hdf5_filename)
+
+    s.save_fits(generic_filename, overwrite=True)
+    assert sacc.utils.detect_sacc_file_type(generic_filename) == "fits"
+    with pytest.raises(ValueError, match=r"is of type fits, not hdf5\. Use Sacc\.load or Sacc\.load_fits to load it"):
+        sacc.Sacc.load_hdf5(generic_filename)
+
+    # Load with the generic method, which should detect the format
+    t1 = sacc.Sacc.load(generic_filename)
+    t1a = sacc.Sacc.load_fits(generic_filename)
+
+    s.save_hdf5(generic_filename, overwrite=True)
+    assert sacc.utils.detect_sacc_file_type(generic_filename) == "hdf5"
+    with pytest.raises(ValueError, match=r"is of type hdf5, not fits\. Use Sacc\.load or Sacc\.load_hdf5 to load it"):
+        sacc.Sacc.load_fits(generic_filename)
+
+    # should be able to load from either format with Sacc.load
+    t2 = sacc.Sacc.load(generic_filename)
+    t2a = sacc.Sacc.load_hdf5(generic_filename)
+
+    # All the loaded objects should be identical
+    assert t1 == t2
+    assert t1a == t2a
+    assert t1 == t1a
+    # and be equal to the original data
+    assert t1 == s
+
+
+def test_detect_sacc_file_type_unknown(tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"not a sacc file")
+
+    with pytest.raises(
+        ValueError,
+        match=r"Could not detect file type of .+ from filename or file content",
+    ):
+        sacc.utils.detect_sacc_file_type(str(unknown_file))
+
+
+def test_sacc_load_unknown_file(tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"not a sacc file")
+
+    with pytest.raises(ValueError, match=r"Could not detect file type"):
+        sacc.Sacc.load(str(unknown_file))
+
+
+def test_sacc_load_unrecognized_file_type(monkeypatch, tmp_path):
+    unknown_file = tmp_path / "unknown.sacc"
+    unknown_file.write_bytes(b"anything")
+
+    def fake_detect(filename):
+        return "json"
+
+    monkeypatch.setattr(sacc.sacc, "detect_sacc_file_type", fake_detect)
+
+    with pytest.raises(
+        ValueError,
+        match=f"Unrecognized SACC file type for file {unknown_file}",
+    ):
+        sacc.Sacc.load(str(unknown_file))
