@@ -14,7 +14,7 @@ import numpy as np
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
-from .utils import unique_list, detect_sacc_file_type
+from .utils import unique_list, detect_sacc_file_type, decompress_gzip_to_tempfile
 from .data_types import standard_types, DataPoint
 from . import io
 
@@ -972,7 +972,7 @@ class Sacc:
         Parameters
         ----------
         filename: str
-            A FITS format sacc file
+            A FITS format sacc file (can be gzip-compressed, e.g., *.fits.gz)
         """
         cov = None
         metadata = {}
@@ -982,32 +982,44 @@ class Sacc:
         if file_type != 'fits':
             raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        with fits.open(filename, mode="readonly") as f:
-            tables = []
-            for idx, hdu in enumerate(f):
-                if hdu.name.lower() == 'primary':
-                    header = hdu.header
-                    fitsver = header.get('SACCFVER', None)
-                    if fitsver is None:
-                        fitsver = 1
-                    if fitsver > SACCFVER:
-                        raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
-                    if "NMETA" in header:
-                        n_meta = header['NMETA']
-                        for i in range(n_meta):
-                            k = header[f'KEY{i}']
-                            v = header[f'VAL{i}']
-                            metadata[k] = v
-                elif hdu.name.lower() == 'covariance':
-                    cov = BaseCovariance.from_hdu(hdu)
-                else:
-                    tables.append(Table.read(hdu))
+        # Handle gzip-compressed files
+        temp_file = None
+        actual_filename = filename
+        try:
+            if filename.endswith('.gz'):
+                temp_file = decompress_gzip_to_tempfile(filename)
+                actual_filename = temp_file
 
-        if metadata:
-            tables.append(io.metadata_to_table(metadata))
+            with fits.open(actual_filename, mode="readonly") as f:
+                tables = []
+                for idx, hdu in enumerate(f):
+                    if hdu.name.lower() == 'primary':
+                        header = hdu.header
+                        fitsver = header.get('SACCFVER', None)
+                        if fitsver is None:
+                            fitsver = 1
+                        if fitsver > SACCFVER:
+                            raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
+                        if "NMETA" in header:
+                            n_meta = header['NMETA']
+                            for i in range(n_meta):
+                                k = header[f'KEY{i}']
+                                v = header[f'VAL{i}']
+                                metadata[k] = v
+                    elif hdu.name.lower() == 'covariance':
+                        cov = BaseCovariance.from_hdu(hdu)
+                    else:
+                        tables.append(Table.read(hdu))
 
-        # Pass version to from_tables if needed (future-proofing)
-        return cls.from_tables(tables, cov=cov)
+            if metadata:
+                tables.append(io.metadata_to_table(metadata))
+
+            # Pass version to from_tables if needed (future-proofing)
+            return cls.from_tables(tables, cov=cov)
+        finally:
+            # Clean up temporary file if created
+            if temp_file is not None and os.path.exists(temp_file):
+                os.remove(temp_file)
 
     def save_hdf5(self, filename, overwrite=False, compression='gzip', compression_opts=4):
         """
@@ -1095,7 +1107,7 @@ class Sacc:
         Parameters
         ----------
         filename: str
-            Path to the HDF5 file.
+            Path to the HDF5 file (can be gzip-compressed, e.g., *.hdf5.gz).
 
         Returns
         -------
@@ -1110,30 +1122,42 @@ class Sacc:
         if file_type != 'hdf5':
             raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        with h5py.File(filename, 'r') as f:
-            # Check version
-            if 'sacc_hdf5_version' in f:
-                hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
-            else:
-                hdf5ver = 1
-            if hdf5ver > SACCHDF5VER:
-                raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
-            # Read all datasets (not groups) in the order they appear
-            for key in f.keys():
-                if key == 'sacc_hdf5_version':
-                    continue
-                item = f[key]
-                if isinstance(item, h5py.Dataset):
-                    table = Table.read(f, path=key)
-                    recovered_tables.append(table)
-                elif isinstance(item, h5py.Group):
-                    for subkey in item.keys():
-                        subitem = item[subkey]
-                        if isinstance(subitem, h5py.Dataset):
-                            table = Table.read(item, path=f"{subkey}")
-                            recovered_tables.append(table)
-        sacc_obj = cls.from_tables(recovered_tables)
-        return sacc_obj
+        # Handle gzip-compressed files
+        temp_file = None
+        actual_filename = filename
+        try:
+            if filename.endswith('.gz'):
+                temp_file = decompress_gzip_to_tempfile(filename)
+                actual_filename = temp_file
+
+            with h5py.File(actual_filename, 'r') as f:
+                # Check version
+                if 'sacc_hdf5_version' in f:
+                    hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
+                else:
+                    hdf5ver = 1
+                if hdf5ver > SACCHDF5VER:
+                    raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
+                # Read all datasets (not groups) in the order they appear
+                for key in f.keys():
+                    if key == 'sacc_hdf5_version':
+                        continue
+                    item = f[key]
+                    if isinstance(item, h5py.Dataset):
+                        table = Table.read(f, path=key)
+                        recovered_tables.append(table)
+                    elif isinstance(item, h5py.Group):
+                        for subkey in item.keys():
+                            subitem = item[subkey]
+                            if isinstance(subitem, h5py.Dataset):
+                                table = Table.read(item, path=f"{subkey}")
+                                recovered_tables.append(table)
+            sacc_obj = cls.from_tables(recovered_tables)
+            return sacc_obj
+        finally:
+            # Clean up temporary file if created
+            if temp_file is not None and os.path.exists(temp_file):
+                os.remove(temp_file)
 
     @classmethod
     def from_tables(cls, tables, cov=None):

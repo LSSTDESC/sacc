@@ -1,4 +1,7 @@
+import gzip
+import os
 import re
+import tempfile
 
 from astropy.table import Column
 import numpy as np
@@ -211,10 +214,55 @@ def numpy_to_vanilla(x):
         x = bool(x)
     return x
 
+
+def decompress_gzip_to_tempfile(filename):
+    """
+    Decompress a gzip-compressed file to a temporary file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the gzip-compressed file.
+
+    Returns
+    -------
+    str
+        Path to the temporary decompressed file.
+        The caller is responsible for deleting this file when done.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the compressed file does not exist.
+    """
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"File {filename} does not exist.")
+
+    # Create a temporary file with appropriate extension
+    base_name = os.path.basename(filename)
+    if base_name.endswith('.gz'):
+        temp_name = base_name[:-3]  # Remove .gz extension
+    else:
+        temp_name = base_name
+
+    # Create temporary file in the system's temp directory
+    fd, temp_path = tempfile.mkstemp(prefix=temp_name.split('.')[0], suffix='')
+    os.close(fd)  # Close the file descriptor, we'll write using gzip
+
+    # Decompress
+    with gzip.open(filename, 'rb') as f_in:
+        with open(temp_path, 'wb') as f_out:
+            f_out.write(f_in.read())
+
+    return temp_path
+
+
 def detect_sacc_file_type(filename):
     """
     Detect the SACC file type based on the filename extension,
     or, if that is ambiguous, based on markers at the start of the file.
+
+    Supports both uncompressed and gzip-compressed files (*.gz).
 
     Parameters
     ----------
@@ -231,17 +279,29 @@ def detect_sacc_file_type(filename):
     ValueError
         If the file type cannot be detected from the filename or file content.
     """
-    if filename.endswith('.fits'):
+    # Handle files with known extensions
+    if filename.endswith('.fits.gz'):
+        return 'fits'
+    elif filename.endswith('.hdf5.gz'):
+        return 'hdf5'
+    elif filename.endswith('.fits'):
         return 'fits'
     elif filename.endswith('.hdf5'):
         return 'hdf5'
 
-    with open(filename, 'rb') as f:
-        marker = f.read(8)
-        if marker ==  b"\x89HDF\r\n\x1a\n":
-            return 'hdf5'
-        elif marker[:6] == b"SIMPLE":
-            return 'fits'
+    # For .sacc.gz files or files without recognized extensions,
+    # we need to check the file content
+    open_func = gzip.open if filename.endswith('.gz') else open
+    try:
+        with open_func(filename, 'rb') as f:
+            marker = f.read(8)
+            if marker == b"\x89HDF\r\n\x1a\n":
+                return 'hdf5'
+            elif marker[:6] == b"SIMPLE":
+                return 'fits'
+    except Exception as e:
+        raise ValueError(f"Could not detect file type of {filename} from filename or file content: {e}")
 
     raise ValueError(f"Could not detect file type of {filename} from filename or file content.")
+
 
