@@ -1,3 +1,4 @@
+import contextlib
 import gzip
 import os
 import re
@@ -255,6 +256,41 @@ def decompress_gzip_to_tempfile(filename):
             f_out.write(f_in.read())
 
     return temp_path
+
+
+@contextlib.contextmanager
+def maybe_decompress(filename):
+    """
+    Context manager that yields an effective filename for reading.
+
+    If *filename* ends with ``'.gz'``, the file is decompressed to a
+    temporary file, that temporary path is yielded, and the temp file is
+    deleted when the ``with`` block exits (whether normally or via an
+    exception).
+
+    If *filename* does not end with ``'.gz'``, the original path is yielded
+    unchanged and no temporary file is created or deleted.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to open.  May or may not be gzip-compressed.
+
+    Yields
+    ------
+    str
+        The path to use when opening the file for reading.
+    """
+    temp_file = None
+    try:
+        if filename.endswith('.gz'):
+            temp_file = decompress_gzip_to_tempfile(filename)
+            yield temp_file
+        else:
+            yield filename
+    finally:
+        if temp_file is not None and os.path.exists(temp_file):
+            os.remove(temp_file)
 
 
 def detect_sacc_file_type(filename):

@@ -14,7 +14,7 @@ import numpy as np
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
-from .utils import unique_list, detect_sacc_file_type, decompress_gzip_to_tempfile
+from .utils import unique_list, detect_sacc_file_type, maybe_decompress
 from .data_types import standard_types, DataPoint
 from . import io
 
@@ -982,14 +982,8 @@ class Sacc:
         if file_type != 'fits':
             raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        # Handle gzip-compressed files
-        temp_file = None
-        actual_filename = filename
-        try:
-            if filename.endswith('.gz'):
-                temp_file = decompress_gzip_to_tempfile(filename)
-                actual_filename = temp_file
-
+        # Handle gzip-compressed files transparently via the context manager
+        with maybe_decompress(filename) as actual_filename:
             with fits.open(actual_filename, mode="readonly") as f:
                 tables = []
                 for idx, hdu in enumerate(f):
@@ -1011,15 +1005,11 @@ class Sacc:
                     else:
                         tables.append(Table.read(hdu))
 
-            if metadata:
-                tables.append(io.metadata_to_table(metadata))
+        if metadata:
+            tables.append(io.metadata_to_table(metadata))
 
-            # Pass version to from_tables if needed (future-proofing)
-            return cls.from_tables(tables, cov=cov)
-        finally:
-            # Clean up temporary file if created
-            if temp_file is not None and os.path.exists(temp_file):
-                os.remove(temp_file)
+        # Pass version to from_tables if needed (future-proofing)
+        return cls.from_tables(tables, cov=cov)
 
     def save_hdf5(self, filename, overwrite=False, compression='gzip', compression_opts=4):
         """
@@ -1122,14 +1112,8 @@ class Sacc:
         if file_type != 'hdf5':
             raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        # Handle gzip-compressed files
-        temp_file = None
-        actual_filename = filename
-        try:
-            if filename.endswith('.gz'):
-                temp_file = decompress_gzip_to_tempfile(filename)
-                actual_filename = temp_file
-
+        # Handle gzip-compressed files transparently via the context manager
+        with maybe_decompress(filename) as actual_filename:
             with h5py.File(actual_filename, 'r') as f:
                 # Check version
                 if 'sacc_hdf5_version' in f:
@@ -1152,12 +1136,8 @@ class Sacc:
                             if isinstance(subitem, h5py.Dataset):
                                 table = Table.read(item, path=f"{subkey}")
                                 recovered_tables.append(table)
-            sacc_obj = cls.from_tables(recovered_tables)
-            return sacc_obj
-        finally:
-            # Clean up temporary file if created
-            if temp_file is not None and os.path.exists(temp_file):
-                os.remove(temp_file)
+        sacc_obj = cls.from_tables(recovered_tables)
+        return sacc_obj
 
     @classmethod
     def from_tables(cls, tables, cov=None):
