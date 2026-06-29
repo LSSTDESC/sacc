@@ -240,6 +240,12 @@ class standard_types(StrEnum):
 
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
+        """Return the member name unchanged so auto() preserves camelCase.
+
+        StrEnum by default converts auto() values to lowercase. This override
+        ensures that type names like ``clusterGalaxy_density_cl`` keep their
+        original capitalization.
+        """
         return name
 
     # concise types
