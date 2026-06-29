@@ -1130,10 +1130,25 @@ class Sacc:
                     if isinstance(item, h5py.Dataset):
                         table = Table.read(f, path=key)
                         recovered_tables.append(table)
-                    elif isinstance(item, h5py.Group):
+                    elif isinstance(item, h5py.Group):  # pragma: no branch
+                        # Every root-level item written by save_hdf5 is either a
+                        # Dataset (e.g. 'sacc_hdf5_version', 'covariance_*',
+                        # 'metadata') or a Group (e.g. 'data/', 'tracer/',
+                        # 'window/', 'traceruncertainty/').  The only other h5py
+                        # type that could appear here is h5py.Datatype (a
+                        # committed/named HDF5 datatype), which save_hdf5 never
+                        # produces.  The False branch of this elif – reached only
+                        # when an item is neither a Dataset nor a Group – is
+                        # therefore structurally unreachable for any file this
+                        # library writes, so we annotate it accordingly.
                         for subkey in item.keys():
                             subitem = item[subkey]
-                            if isinstance(subitem, h5py.Dataset):
+                            if isinstance(subitem, h5py.Dataset):  # pragma: no branch
+                                # save_hdf5 places only Datasets inside its
+                                # top-level Groups; it never nests a Group inside
+                                # another Group.  The False branch here – skipping
+                                # a sub-item that is not a Dataset – is therefore
+                                # unreachable for any Sacc-generated file.
                                 table = Table.read(item, path=f"{subkey}")
                                 recovered_tables.append(table)
         sacc_obj = cls.from_tables(recovered_tables)
