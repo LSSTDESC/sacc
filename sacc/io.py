@@ -7,6 +7,10 @@ ONE_OBJECT_PER_TABLE = "ONE_OBJECT_PER_TABLE"
 MULTIPLE_OBJECTS_PER_TABLE = "MULTIPLE_OBJECTS_PER_TABLE"
 ONE_OBJECT_MULTIPLE_TABLES = "ONE_OBJECT_MULTIPLE_TABLES"
 
+# The FITS limit is 1000, but the HDF5 limit depends on the
+# column names, so we set a more conservative limit here.
+MAX_TABLE_COLUMNS = 500
+
 
 """
 if storage_type == ONE_OBJECT_PER_TABLE then class must have
@@ -210,8 +214,15 @@ def to_tables(category_dict):
 
     # Also handle metadata separately. Could consider a metadata class
     # that subclasses BaseIO and dict?
-    tables.append(metadata_to_table(category_dict.get('metadata', {})))
-
+    metadata_table = metadata_to_table(category_dict.get('metadata', {}))
+    # FITS tables have a limit of 999 columns, and HDF table saving
+    # crashes if the header information gets too large, so if we have a lot
+    # of metadata we need to split it up into separate tables.
+    if len(metadata_table.colnames) > MAX_TABLE_COLUMNS:
+        # Split the metadata table into multiple tables
+        tables.extend(split_table_by_columns(metadata_table, MAX_TABLE_COLUMNS))
+    else:
+        tables.append(metadata_table)
 
     return tables
 
@@ -255,7 +266,10 @@ def from_tables(table_list):
             continue
         if table_category == 'metadata':
             # This is a metadata table, which we treat as a special case.
-            outputs[table_category] = table_to_metadata(table)
+            if table_category in outputs:
+                outputs[table_category].update(table_to_metadata(table))
+            else:
+                outputs[table_category] = table_to_metadata(table)
             continue
 
         table_class_name = table.meta['SACCCLSS'].lower()
@@ -412,3 +426,30 @@ def table_to_metadata(table):
     for key in table.colnames:
         metadata[key] = numpy_to_vanilla(table[key][0])
     return metadata
+
+
+def split_table_by_columns(table, n_col_max):
+    """Split an astropy table into multiple tables with at most n_col_max columns.
+    
+    Metadata is copied to each table.
+
+    Parameters
+    ----------
+    table: astropy.table.Table
+        The table to split.
+    n_col_max: int
+        The maximum number of columns in each output table.
+
+    Returns
+    -------
+    tables: list[astropy.table.Table]
+        A list of tables, where the original table has been split into multiple tables with at most n_col_max columns.
+    """
+    tables = []
+    for i in range(0, len(table.colnames), n_col_max):
+        cols = table.colnames[i : i + n_col_max]
+        sub_table = table[cols]
+        sub_table.meta = table.meta.copy()
+        tables.append(sub_table)
+    assert len(table.columns) == sum(len(t.colnames) for t in tables)
+    return tables
