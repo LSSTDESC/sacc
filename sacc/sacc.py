@@ -14,7 +14,7 @@ import numpy as np
 from .tracers import BaseTracer
 from .windows import BandpowerWindow
 from .covariance import BaseCovariance, concatenate_covariances
-from .utils import unique_list, detect_sacc_file_type
+from .utils import unique_list, detect_sacc_file_type, maybe_decompress
 from .data_types import standard_types, DataPoint
 from . import io
 
@@ -972,7 +972,7 @@ class Sacc:
         Parameters
         ----------
         filename: str
-            A FITS format sacc file
+            A FITS format sacc file (can be gzip-compressed, e.g., *.fits.gz)
         """
         cov = None
         metadata = {}
@@ -982,26 +982,28 @@ class Sacc:
         if file_type != 'fits':
             raise ValueError(f"File {filename} is of type {file_type}, not fits. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        with fits.open(filename, mode="readonly") as f:
-            tables = []
-            for idx, hdu in enumerate(f):
-                if hdu.name.lower() == 'primary':
-                    header = hdu.header
-                    fitsver = header.get('SACCFVER', None)
-                    if fitsver is None:
-                        fitsver = 1
-                    if fitsver > SACCFVER:
-                        raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
-                    if "NMETA" in header:
-                        n_meta = header['NMETA']
-                        for i in range(n_meta):
-                            k = header[f'KEY{i}']
-                            v = header[f'VAL{i}']
-                            metadata[k] = v
-                elif hdu.name.lower() == 'covariance':
-                    cov = BaseCovariance.from_hdu(hdu)
-                else:
-                    tables.append(Table.read(hdu))
+        # Handle gzip-compressed files transparently via the context manager
+        with maybe_decompress(filename) as actual_filename:
+            with fits.open(actual_filename, mode="readonly") as f:
+                tables = []
+                for idx, hdu in enumerate(f):
+                    if hdu.name.lower() == 'primary':
+                        header = hdu.header
+                        fitsver = header.get('SACCFVER', None)
+                        if fitsver is None:
+                            fitsver = 1
+                        if fitsver > SACCFVER:
+                            raise RuntimeError(f"Unsupported SACC FITS version: {fitsver}")
+                        if "NMETA" in header:
+                            n_meta = header['NMETA']
+                            for i in range(n_meta):
+                                k = header[f'KEY{i}']
+                                v = header[f'VAL{i}']
+                                metadata[k] = v
+                    elif hdu.name.lower() == 'covariance':
+                        cov = BaseCovariance.from_hdu(hdu)
+                    else:
+                        tables.append(Table.read(hdu))
 
         if metadata:
             tables.append(io.metadata_to_table(metadata))
@@ -1095,7 +1097,7 @@ class Sacc:
         Parameters
         ----------
         filename: str
-            Path to the HDF5 file.
+            Path to the HDF5 file (can be gzip-compressed, e.g., *.hdf5.gz).
 
         Returns
         -------
@@ -1110,28 +1112,45 @@ class Sacc:
         if file_type != 'hdf5':
             raise ValueError(f"File {filename} is of type {file_type}, not hdf5. Use Sacc.load or Sacc.load_{file_type} to load it.")
 
-        with h5py.File(filename, 'r') as f:
-            # Check version
-            if 'sacc_hdf5_version' in f:
-                hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
-            else:
-                hdf5ver = 1
-            if hdf5ver > SACCHDF5VER:
-                raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
-            # Read all datasets (not groups) in the order they appear
-            for key in f.keys():
-                if key == 'sacc_hdf5_version':
-                    continue
-                item = f[key]
-                if isinstance(item, h5py.Dataset):
-                    table = Table.read(f, path=key)
-                    recovered_tables.append(table)
-                elif isinstance(item, h5py.Group):
-                    for subkey in item.keys():
-                        subitem = item[subkey]
-                        if isinstance(subitem, h5py.Dataset):
-                            table = Table.read(item, path=f"{subkey}")
-                            recovered_tables.append(table)
+        # Handle gzip-compressed files transparently via the context manager
+        with maybe_decompress(filename) as actual_filename:
+            with h5py.File(actual_filename, 'r') as f:
+                # Check version
+                if 'sacc_hdf5_version' in f:
+                    hdf5ver = int(np.array(f['sacc_hdf5_version'])[0])
+                else:
+                    hdf5ver = 1
+                if hdf5ver > SACCHDF5VER:
+                    raise RuntimeError(f"Unsupported SACC HDF5 version: {hdf5ver}")
+                # Read all datasets (not groups) in the order they appear
+                for key in f.keys():
+                    if key == 'sacc_hdf5_version':
+                        continue
+                    item = f[key]
+                    if isinstance(item, h5py.Dataset):
+                        table = Table.read(f, path=key)
+                        recovered_tables.append(table)
+                    elif isinstance(item, h5py.Group):  # pragma: no branch
+                        # Every root-level item written by save_hdf5 is either a
+                        # Dataset (e.g. 'sacc_hdf5_version', 'covariance_*',
+                        # 'metadata') or a Group (e.g. 'data/', 'tracer/',
+                        # 'window/', 'traceruncertainty/').  The only other h5py
+                        # type that could appear here is h5py.Datatype (a
+                        # committed/named HDF5 datatype), which save_hdf5 never
+                        # produces.  The False branch of this elif – reached only
+                        # when an item is neither a Dataset nor a Group – is
+                        # therefore structurally unreachable for any file this
+                        # library writes, so we annotate it accordingly.
+                        for subkey in item.keys():
+                            subitem = item[subkey]
+                            if isinstance(subitem, h5py.Dataset):  # pragma: no branch
+                                # save_hdf5 places only Datasets inside its
+                                # top-level Groups; it never nests a Group inside
+                                # another Group.  The False branch here – skipping
+                                # a sub-item that is not a Dataset – is therefore
+                                # unreachable for any Sacc-generated file.
+                                table = Table.read(item, path=f"{subkey}")
+                                recovered_tables.append(table)
         sacc_obj = cls.from_tables(recovered_tables)
         return sacc_obj
 
