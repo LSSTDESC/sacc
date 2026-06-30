@@ -1,5 +1,9 @@
 from collections import namedtuple
-from enum import StrEnum, auto
+try:
+    from enum import StrEnum
+except ImportError:
+    from backports.strenum import StrEnum
+from enum import auto
 from astropy.table import Table
 
 from .utils import (hide_null_values, numpy_to_vanilla,
