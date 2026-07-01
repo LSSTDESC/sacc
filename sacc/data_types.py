@@ -1,7 +1,8 @@
 from collections import namedtuple
 try:
     from enum import StrEnum
-except ImportError:
+except ImportError:  # pragma: no cover
+    # These lines are never executed under Python 3.11 or newer
     from backports.strenum import StrEnum
 from enum import auto
 from astropy.table import Table
